@@ -23,6 +23,8 @@ in
     tmux
     alacritty
     gopass
+    firefox
+    chromium
     ];
   };
 

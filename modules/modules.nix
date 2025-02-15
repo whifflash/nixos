@@ -5,6 +5,7 @@
     ./core/base_packages.nix
     ./core/virtualization_guest.nix 
     ./desktop/lightdm.nix
+    ./desktop/gdm.nix
     ./desktop/greetd.nix
     ./desktop/hyprland.nix
     ./desktop/budgie.nix
