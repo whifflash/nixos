@@ -20,6 +20,17 @@
                   inputs.home-manager.nixosModules.default          
                 ];
     };
+    nixosConfigurations.mia = nixpkgs.lib.nixosSystem {
+      specialArgs = { inherit inputs;
+      hostName = "mia";
+      WM = "sway"; };
+      system = "x86_64-linux";
+      modules = [ 
+                  ./hosts/mia/configuration.nix
+                  ./modules/modules.nix  
+                  inputs.home-manager.nixosModules.default          
+                ];
+    };
     nixosConfigurations.nixboxmia = nixpkgs.lib.nixosSystem {
       specialArgs = { inherit inputs;
       hostName = "mianixbox";

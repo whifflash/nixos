@@ -1,22 +1,17 @@
-{ pkgs, config, lib, ... }:
+{ inputs, lib, config, pkgs, ... }:
 let 
-id = "base_packages";
+id = "desktop_gdm";
 cfg = config.${id};
 in 
 {
+
   options.${id} = {
     enable = lib.mkEnableOption "enables ${id} profile";
   };
 
   config = lib.mkIf cfg.enable {
-  environment.systemPackages = with pkgs; [
-    neovim
-    git
-    gopass
-    gnupg
-  ];
+  # Enable the GNOME Desktop Environment.
+  services.xserver.displayManager.gdm.enable = true;
   };
-
-
 
 }
