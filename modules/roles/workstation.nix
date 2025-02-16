@@ -28,11 +28,18 @@ in
     chromium
     ];
 
+    fonts.packages = with pkgs; [
+    font-awesome
+    powerline-fonts
+    powerline-symbols
+    (nerdfonts.override { fonts = [ "NerdFontsSymbolsOnly" ]; })
+    ];
+
     programs.gnupg.agent = {
-    enable = true;
-    pinentryPackage = with pkgs; pinentry-all;
-    enableSSHSupport = true;
-  };
+      enable = true;
+      pinentryPackage = with pkgs; pinentry-all;
+      enableSSHSupport = true;
+    };
 
   };
 
