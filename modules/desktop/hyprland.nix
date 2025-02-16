@@ -11,18 +11,23 @@ in
 
   config = lib.mkIf cfg.enable {
 
-    nix.settings = {
-    substituters = ["https://hyprland.cachix.org"];
-    trusted-public-keys = ["hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="];
-  };
+  #   nix.settings = {
+  #   substituters = ["https://hyprland.cachix.org"];
+  #   trusted-public-keys = ["hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="];
+  # };
+
+  #   programs.hyprland = {
+  #     enable = true;
+  #     xwayland.enable = true;
+  #     # set the flake package
+  #     package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
+  #     # make sure to also set the portal package, so that they are in sync
+  #     portalPackage = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.xdg-desktop-portal-hyprland;
+  #   };
 
     programs.hyprland = {
       enable = true;
       xwayland.enable = true;
-      # set the flake package
-      package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
-      # make sure to also set the portal package, so that they are in sync
-      portalPackage = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.xdg-desktop-portal-hyprland;
     };
 
     # programs.hyprland.enable = true;
@@ -30,6 +35,9 @@ in
     # environment.sessionVariables.WLR_NO_HARDWARE_CURSORS = "1";
 
     environment.systemPackages = with pkgs; [
+    eww
+    wofi
+    kitty
     hyprpicker
     hyprcursor
     hyprlock

@@ -10,6 +10,7 @@
       ./hardware-configuration.nix
       ./../../modules/modules.nix  
       inputs.home-manager.nixosModules.default
+      
     ];
 
   # Bootloader.
@@ -48,6 +49,16 @@
 
   # Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;
+
+#   users.users.mhr.isNormalUser = true;
+#   home-manager.users.mhr = { pkgs, ... }: {
+#   home.packages = [ pkgs.atool pkgs.httpie ];
+#   programs.bash.enable = true;
+
+#   # The state version is required and should stay at the version you
+#   # originally installed.
+#   home.stateVersion = "24.05";
+# };
 
   system.stateVersion = "24.11";
 

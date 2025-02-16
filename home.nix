@@ -36,6 +36,28 @@
     # '')
   ];
 
+  # wayland.windowManager.hyprland.enable = true; # enable Hyprland
+  # wayland.windowManager.hyprland.settings = {
+  #   "$mod" = "SUPER";
+  #   bind =
+  #     [
+  #       "$mod, F, exec, firefox"
+  #       ", Print, exec, grimblast copy area"
+  #     ]
+  #     ++ (
+  #       # workspaces
+  #       # binds $mod + [shift +] {1..9} to [move to] workspace {1..9}
+  #       builtins.concatLists (builtins.genList (i:
+  #           let ws = i + 1;
+  #           in [
+  #             "$mod, code:1${toString i}, workspace, ${toString ws}"
+  #             "$mod SHIFT, code:1${toString i}, movetoworkspace, ${toString ws}"
+  #           ]
+  #         )
+  #         9)
+  #     );
+  # };
+
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
   # plain files is through 'home.file'.
   home.file = {
@@ -50,6 +72,25 @@
     #   org.gradle.daemon.idletimeout=3600000
     # '';
   };
+
+
+  # Include the following for git
+
+# There is also a possibility to configure identity based on filesystem tree path.
+
+# e.g. having in ~/.gitconfig the following fragment
+
+# [includeIf "gitdir:~/dev/private/"]
+#     path = ~/.gitconfig.private
+
+# and in ~/.gitconfig.private
+
+# [user]
+#     name = Real Name 
+#     email = username@whatever.com
+
+# will override default identity properties in global config when a project is placed under a subtree of ~/dev/private/.
+
 
   # Home Manager can also manage your environment variables through
   # 'home.sessionVariables'. These will be explicitly sourced when using a
@@ -68,9 +109,9 @@
   #  /etc/profiles/per-user/mhr/etc/profile.d/hm-session-vars.sh
   #
   home.sessionVariables = {
-    # EDITOR = "emacs";
+    EDITOR = "nvim";
   };
 
   # Let Home Manager install and manage itself.
-  programs.home-manager.enable = true;
+  # programs.home-manager.enable = true;
 }
