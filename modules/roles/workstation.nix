@@ -15,17 +15,25 @@ in
     nixpkgs.config.permittedInsecurePackages = [
     "openssl-1.1.1w"
     ];
+
     environment.systemPackages = with pkgs; [
     sublime4
+    neovim
     thunderbird
     joplin
     joplin-desktop
     tmux
     alacritty
-    gopass
     firefox
     chromium
     ];
+
+    programs.gnupg.agent = {
+    enable = true;
+    pinentryPackage = with pkgs; pinentry-all;
+    enableSSHSupport = true;
+  };
+
   };
 
 }

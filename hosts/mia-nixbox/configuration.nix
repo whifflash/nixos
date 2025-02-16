@@ -45,6 +45,8 @@
   desktop_programs.enable = true;
   base_packages.enable = true;
   base_options.enable = true;
+  user_options.enable = true;
+
   virtualization_guest.enable = false;
   role_workstation.enable = true;
   role_hardware-development.enable = false;

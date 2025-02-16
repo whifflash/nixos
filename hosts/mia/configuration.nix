@@ -21,14 +21,23 @@
   # Enable networking
   networking.networkmanager.enable = true;
 
+  hardware.graphics = {
+    enable = true;
+    extraPackages = with pkgs; [
+      # vpl-gpu-rt # or intel-media-sdk for QSV
+    ];
+  };
+
   desktop_gdm.enable = true;
   desktop_gnome.enable = true;
   desktop_greetd.enable = false;
   desktop_hyprland.enable = true;
-  desktop_sway.enable = false;
+  desktop_sway.enable = true;
   desktop_audio.enable = true;
   base_packages.enable = true;
   base_options.enable = true;
+  user_options.enable = true;
+
   virtualization_guest.enable = false;
   role_workstation.enable = true;
   role_hardware-development.enable = true;
@@ -39,16 +48,6 @@
 
   # Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;
-
-  # Define a user account. Don't forget to set a password with ‘passwd’.
-  users.users.mhr = {
-    isNormalUser = true;
-    description = "mhr";
-    extraGroups = [ "networkmanager" "wheel" ];
-    packages = with pkgs; [
-    #  thunderbird
-    ];
-  };
 
   system.stateVersion = "24.11";
 

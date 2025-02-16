@@ -4,6 +4,7 @@
     ./core/base_options.nix 
     ./core/base_packages.nix
     ./core/virtualization_guest.nix 
+    ./core/user_options.nix 
     ./desktop/lightdm.nix
     ./desktop/gdm.nix
     ./desktop/greetd.nix
