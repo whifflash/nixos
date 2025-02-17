@@ -64,9 +64,9 @@
     # # Building this configuration will create a copy of 'dotfiles/screenrc' in
     # # the Nix store. Activating the configuration will then make '~/.screenrc' a
     # # symlink to the Nix store copy.
-    ".config/hypr/hyprland.conf".source = dotfiles/.config/hypr/hyprland.conf;
-    ".config/waybar/style.css".source = dotfiles/.config/waybar/style.css;
-    ".config/waybar/config.jsonc".source = dotfiles/.config/waybar/config.jsonc;
+    # "/home/mhr/.config/hypr/hyprland.conf".source = ./dotfiles/.config/hypr/hyprland.conf;
+    # "/home/mhr/.config/waybar/style.css".source = ./dotfiles/.config/waybar/style.css;
+    # "/home/mhr/.config/waybar/config.jsonc".source = ./dotfiles/.config/waybar/config.jsonc;
 
     # # You can also set the file content immediately.
     # ".gradle/gradle.properties".text = ''
