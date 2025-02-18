@@ -61,18 +61,9 @@
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
   # plain files is through 'home.file'.
   home.file = {
-    # # Building this configuration will create a copy of 'dotfiles/screenrc' in
-    # # the Nix store. Activating the configuration will then make '~/.screenrc' a
-    # # symlink to the Nix store copy.
-    # "/home/mhr/.config/hypr/hyprland.conf".source = ./dotfiles/.config/hypr/hyprland.conf;
-    # "/home/mhr/.config/waybar/style.css".source = ./dotfiles/.config/waybar/style.css;
-    # "/home/mhr/.config/waybar/config.jsonc".source = ./dotfiles/.config/waybar/config.jsonc;
-
-    # # You can also set the file content immediately.
-    # ".gradle/gradle.properties".text = ''
-    #   org.gradle.console=verbose
-    #   org.gradle.daemon.idletimeout=3600000
-    # '';
+    # ".config/hypr/hyprland.conf".source = ./dotfiles/.config/hypr/hyprland.conf;
+    ".config/waybar/style.css".source = ./dotfiles/.config/waybar/style.css;
+    ".config/waybar/config.jsonc".source = ./dotfiles/.config/waybar/config.jsonc; 
   };
 
 
@@ -93,6 +84,24 @@
 
 # will override default identity properties in global config when a project is placed under a subtree of ~/dev/private/.
 
+  programs.git = {
+    enable = true;
+  };
+  programs.neovim = {
+    enable = true;
+    defaultEditor = true;
+    viAlias = true;
+    vimAlias = true;
+    vimdiffAlias = true;
+    plugins = with pkgs.vimPlugins; [
+      # nvim-lspconfig
+      # nvim-treesitter.withAllGrammars
+      # plenary-nvim
+      gruvbox-material
+      # mini-nvim
+      # (fromGitHub "HEAD" "elihunter173/dirbuf.nvim")
+    ];
+  };
 
   # Home Manager can also manage your environment variables through
   # 'home.sessionVariables'. These will be explicitly sourced when using a
