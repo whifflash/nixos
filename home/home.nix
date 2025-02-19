@@ -69,7 +69,7 @@ in
     home.file = {
       # ".config/hypr/hyprland.conf".source = ./dotfiles/.config/hypr/hyprland.conf;
       ".config/waybar/style.css".source = ./dotfiles/.config/waybar/style.css;
-      ".config/waybar/config.jsonc".source = ./dotfiles/.config/waybar/config.jsonc; 
+      ".config/waybar/config".source = ./dotfiles/.config/waybar/config; 
       ".config/wofi/style.css".source = ./dotfiles/.config/wofi/style.css; 
       ".config/wofi/config".source = ./dotfiles/.config/wofi/config; 
       # ".config/gtk-3.0/gtk.css".source = ./dotfiles/.config/gtk-4.0/gtk.css; 
