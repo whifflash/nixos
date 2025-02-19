@@ -1,7 +1,7 @@
 { config, pkgs, ... }:
 
 let 
-  gruvboxPlus = import ./gruvbox-plus.nix { inherit pkgs; };
+  gruvboxPlus = import ./themes/icons/gruvbox-plus.nix { inherit pkgs; };
 in
 {
   # Home Manager needs a bit of information about you and the paths it should
@@ -114,7 +114,6 @@ in
       platformTheme.name = "gtk";
       style.name = "adwaita-dark";
     };
-
 
     gtk = {
       enable = true;
