@@ -123,8 +123,8 @@ in
         #   package = pkgs.arc-theme;
         # };
         theme = {
-          name = "adw-gtk3";
-          package = pkgs.adw-gtk3;
+          name = "whitesur-gtk-theme";
+          package = pkgs.whitesur-gtk-theme;
         };
         cursorTheme = {
           package = pkgs.bibata-cursors;
@@ -132,7 +132,7 @@ in
         };
         iconTheme = {
           package = gruvboxPlus;
-          name = "GruvboxPlus"; # "WhiteSur-Dark" "WhiteSur-Light"
+          name = "Gruvbox-plus"; # "WhiteSur-Dark" "WhiteSur-Light"
         };
       };
 

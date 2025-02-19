@@ -6,6 +6,7 @@
     ./core/virtualization_guest.nix 
     ./core/user_options.nix 
     ./desktop/lightdm.nix
+    ./desktop/sddm.nix
     ./desktop/gdm.nix
     ./desktop/greetd.nix
     ./desktop/hyprland.nix

@@ -29,7 +29,8 @@
     ];
   };
 
-  desktop_gdm.enable = true;
+  desktop_gdm.enable = false;
+  desktop_sddm.enable = true;
   desktop_gnome.enable = true;
   desktop_greetd.enable = false;
   desktop_hyprland.enable = true;
