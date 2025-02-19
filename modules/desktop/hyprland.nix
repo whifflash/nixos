@@ -48,6 +48,10 @@ in
     hyprlock
     hypridle
     hyprpaper
+
+    # whitesur-gtk-theme
+    # whitesur-cursors
+    # whitesur-icon-theme
     ];
   };
 

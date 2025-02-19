@@ -10,7 +10,7 @@
       ./hardware-configuration.nix
       ./../../modules/modules.nix  
       inputs.home-manager.nixosModules.default
-      
+      inputs.stylix.nixosModules.stylix
     ];
 
   # Bootloader.
@@ -33,7 +33,7 @@
   desktop_gnome.enable = true;
   desktop_greetd.enable = false;
   desktop_hyprland.enable = true;
-  desktop_sway.enable = true;
+  desktop_sway.enable = false;
   desktop_audio.enable = true;
   base_packages.enable = true;
   base_options.enable = true;
@@ -45,6 +45,11 @@
 
   # Enable the X11 windowing system.
   services.xserver.enable = true;
+  # stylix = {
+  #   enable = true;
+  #   base16Scheme = "${pkgs.base16-schemes}/share/themes/gruvbox-dark-medium.yaml";
+  #   image = ../../media/wallpapers/anna-scarfiello.jpg;
+  # };
 
 
   # Enable touchpad support (enabled default in most desktopManager).

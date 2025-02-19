@@ -5,6 +5,10 @@
       url = "github:nix-community/home-manager/release-24.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    stylix = {
+      url = "github:danth/stylix/release-24.11";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     impermanence.url = "github:nix-community/impermanence";
     microvm = {
       url = "github:astro/microvm.nix";
@@ -32,7 +36,8 @@
       modules = [ 
       ./hosts/decafbad-vm/configuration.nix
       ./modules/modules.nix  
-      inputs.home-manager.nixosModules.default        
+      inputs.home-manager.nixosModules.default     
+      inputs.stylix.nixosModules.stylix   
       ];
     };
     nixosConfigurations.mia = nixpkgs.lib.nixosSystem {
@@ -53,7 +58,7 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            home-manager.users.mhr = import ./home.nix;
+            home-manager.users.mhr = import ./home/home.nix;
             # Optionally, use home-manager.extraSpecialArgs to pass arguments to home.nix
           } 
       ];
