@@ -11,7 +11,7 @@ in
 
   config = lib.mkIf cfg.enable {
   # Enable the sddm Display Manager.
-   services.xserver.displayManager.sddm.enable = true; 
+   services.displayManager.sddm.enable = true; 
   };
 
 }
