@@ -70,8 +70,8 @@ in
       # ".config/hypr/hyprland.conf".source = ./dotfiles/.config/hypr/hyprland.conf;
       ".config/waybar/style.css".source = ./dotfiles/.config/waybar/style.css;
       ".config/waybar/config.jsonc".source = ./dotfiles/.config/waybar/config.jsonc; 
-      ".config/gtk-4.0/gtk.css".source = ./dotfiles/.config/gtk-4.0/gtk.css; 
-      ".config/gtk-3.0/gtk.css".source = ./dotfiles/.config/gtk-4.0/gtk.css; # not a typo, can be same file
+      # ".config/gtk-3.0/gtk.css".source = ./dotfiles/.config/gtk-4.0/gtk.css; 
+      # ".config/gtk-3.0/gtk.css".source = ./dotfiles/.config/gtk-3.0/gtk.css;
     };
 
 
@@ -119,14 +119,19 @@ in
 
     gtk = {
       enable = true;
+      gtk3.extraConfig.gtk-decoration-layout = "menu:";
       #   theme = {
         #   name = "Arc-Dark";
         #   package = pkgs.arc-theme;
         # };
         theme = {
-          name = "adw-gtk3";
+          name = "adw-gtk3-dark";
           package = pkgs.adw-gtk3;
         };
+        # theme = {
+        #   name = "Materia-Dark";
+        #   package = pkgs.materia-theme;
+        # };
         # theme = {
         #   name = "whitesur-gtk-theme";
         #   package = pkgs.whitesur-gtk-theme;
