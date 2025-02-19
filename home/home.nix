@@ -71,6 +71,7 @@ in
       ".config/waybar/style.css".source = ./dotfiles/.config/waybar/style.css;
       ".config/waybar/config.jsonc".source = ./dotfiles/.config/waybar/config.jsonc; 
       ".config/wofi/style.css".source = ./dotfiles/.config/wofi/style.css; 
+      ".config/wofi/config".source = ./dotfiles/.config/wofi/config; 
       # ".config/gtk-3.0/gtk.css".source = ./dotfiles/.config/gtk-4.0/gtk.css; 
       # ".config/gtk-3.0/gtk.css".source = ./dotfiles/.config/gtk-3.0/gtk.css;
     };
