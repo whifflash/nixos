@@ -70,6 +70,8 @@ in
       # ".config/hypr/hyprland.conf".source = ./dotfiles/.config/hypr/hyprland.conf;
       ".config/waybar/style.css".source = ./dotfiles/.config/waybar/style.css;
       ".config/waybar/config.jsonc".source = ./dotfiles/.config/waybar/config.jsonc; 
+      ".config/gtk-4.0/gtk.css".source = ./dotfiles/.config/gtk-4.0/gtk.css; 
+      ".config/gtk-3.0/gtk.css".source = ./dotfiles/.config/gtk-4.0/gtk.css; # not a typo, can be same file
     };
 
 
@@ -122,9 +124,13 @@ in
         #   package = pkgs.arc-theme;
         # };
         theme = {
-          name = "whitesur-gtk-theme";
-          package = pkgs.whitesur-gtk-theme;
+          name = "adw-gtk3";
+          package = pkgs.adw-gtk3;
         };
+        # theme = {
+        #   name = "whitesur-gtk-theme";
+        #   package = pkgs.whitesur-gtk-theme;
+        # };
         cursorTheme = {
           package = pkgs.bibata-cursors;
           name = "Bibata-Modern-Ice";
