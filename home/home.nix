@@ -72,6 +72,8 @@ in
       ".config/waybar/config".source = ./dotfiles/.config/waybar/config; 
       ".config/wofi/style.css".source = ./dotfiles/.config/wofi/style.css; 
       ".config/wofi/config".source = ./dotfiles/.config/wofi/config; 
+      ".config/wofi/gopass.switcher.sh".source = ./dotfiles/.config/wofi/gopass.switcher.sh; 
+      ".config/wofi/gopass.launcher.sh".source = ./dotfiles/.config/wofi/gopass.launcher.sh; 
       # ".config/gtk-3.0/gtk.css".source = ./dotfiles/.config/gtk-4.0/gtk.css; 
       # ".config/gtk-3.0/gtk.css".source = ./dotfiles/.config/gtk-3.0/gtk.css;
     };
