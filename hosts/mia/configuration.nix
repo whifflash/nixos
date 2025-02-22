@@ -22,6 +22,9 @@
   # Enable networking
   networking.networkmanager.enable = true;
 
+  # Put in laptop role
+  programs.light.enable = true;
+
   hardware.graphics = {
     enable = true;
     extraPackages = with pkgs; [
