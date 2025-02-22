@@ -7,9 +7,6 @@
 
 stores="$HOME/.config/gopass/stores.local"
 
-dir="$HOME/.config/rofi/"
-theme='config'
-
 # display and choose the folders in which to choose a folder
 newstore=$(cat $stores | wofi -dmenu)
 
