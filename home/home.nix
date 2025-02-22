@@ -67,13 +67,14 @@ in
     # Home Manager is pretty good at managing dotfiles. The primary way to manage
     # plain files is through 'home.file'.
     home.file = {
-      # ".config/hypr/hyprland.conf".source = ./dotfiles/.config/hypr/hyprland.conf;
+      ".config/hypr/hyprland.conf".source = ./dotfiles/.config/hypr/hyprland.conf;
       ".config/waybar/style.css".source = ./dotfiles/.config/waybar/style.css;
       ".config/waybar/config".source = ./dotfiles/.config/waybar/config; 
       ".config/wofi/style.css".source = ./dotfiles/.config/wofi/style.css; 
       ".config/wofi/config".source = ./dotfiles/.config/wofi/config; 
       ".config/wofi/gopass.switcher.sh".source = ./dotfiles/.config/wofi/gopass.switcher.sh; 
-      ".config/wofi/gopass.launcher.sh".source = ./dotfiles/.config/wofi/gopass.launcher.sh; 
+      ".config/wofi/gopass.launcher.sh".source = ./dotfiles/.config/wofi/gopass.launcher.sh;
+      ".config/gopass/stores.local".source = ./dotfiles/.config/gopass/stores.local;  
       # ".config/gtk-3.0/gtk.css".source = ./dotfiles/.config/gtk-4.0/gtk.css; 
       # ".config/gtk-3.0/gtk.css".source = ./dotfiles/.config/gtk-3.0/gtk.css;
     };
