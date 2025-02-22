@@ -1,17 +1,21 @@
-{
+{ 
+// https://github.com/Pipshag/dotfiles_gruvbox/tree/master/.config/waybar
     "layer": "top", // Waybar at top layer
     "position": "top", // Waybar position (top|bottom|left|right)
     
-    // "height": 36, // Waybar height (to be removed for auto height)
+    "height": 30, // Waybar height (to be removed for auto height)
     // Archived modules
     // "custom/gpu",  "custom/weather","hyprland/window", "custom/gpu", ",  
     // Choose the order of the modules
 
     "modules-left": ["clock#time", "clock#date", "custom/arrow1", "custom/arrow2", "idle_inhibitor", "custom/arrow3", "hyprland/window"],
     "modules-center": ["custom/arrow4", "hyprland/workspaces", "custom/arrow5"],
-    "modules-right": ["custom/arrow6", "custom/arrow7",  "temperature", "cpu", "custom/arrow8", "network", "bluetooth", "pulseaudio"],
-
-    // , "tray"
+    "modules-right": ["custom/arrow6", "custom/arrow7",  
+    "temperature", "cpu",
+    "custom/arrow8", 
+    "network", "bluetooth", "pulseaudio", "tray"],
+ 
+    // 
     
     // Modules configuration
     "hyprand/workspaces": {
@@ -85,8 +89,9 @@
         "tooltip": false
     },
     "cpu": {
-        "interval": 5,      
-        "format": "  {max_frequency:1}GHz  􏏴  {usage:2}%",
+        "interval": 5,
+        "format": " {usage:2}%",
+        // "format": "  {max_frequency:1}GHz  􏏴  {usage:2}%",
         "on-click": "kitty -e htop --sort-key PERCENT_CPU",
         "tooltip": false
     },
