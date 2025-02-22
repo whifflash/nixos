@@ -26,7 +26,13 @@ in
     alacritty
     firefox
     chromium
+    blueberry
     ];
+
+    environment.sessionVariables.GTK_THEME = "Adwaita:dark";
+
+      hardware.bluetooth.enable = true; # enables support for Bluetooth
+  hardware.bluetooth.powerOnBoot = true; # powers up the default Bluetooth controller on boot
 
     fonts.packages = with pkgs; [
     font-awesome
