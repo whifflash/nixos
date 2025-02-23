@@ -190,6 +190,7 @@ in
        #
        home.sessionVariables = {
         EDITOR = "nvim";
+        GTK_THEME = "Adwaita:dark";
       };
 
       # Let Home Manager install and manage itself.

@@ -43,7 +43,7 @@ in
 
     programs.gnupg.agent = {
       enable = true;
-      pinentryPackage = with pkgs; pinentry-all;
+      pinentryPackage = with pkgs; pinentry-gnome3;
       enableSSHSupport = true;
     };
 
