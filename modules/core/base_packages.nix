@@ -15,6 +15,7 @@ git
 gopass
 gnupg
 pinentry-curses
+sops
 ];
 };
 
