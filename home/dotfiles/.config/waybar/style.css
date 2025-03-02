@@ -40,7 +40,7 @@
 /*@define-color workspaces @nord_dark_font;*/
 /*@define-color workspacesfocused #655b53;*/
 /*@define-color tray @bg;*/
-/*@define-color workspacesfocused #4C566A;
+@define-color workspacesfocused #4C566A;
 @define-color tray @workspacesfocused;
 @define-color sound #EBCB8B;
 @define-color network #5D7096;
@@ -297,7 +297,7 @@
     font-size: 0.9em;
 }
 /* Workspaces stuff */
-#workspaces {
+workspaces {
 }
 #workspaces button {
     background: @font_gruv_normal;
@@ -307,11 +307,16 @@
 }
 #workspaces button.focused {
     font-weight: bolder; /* Somewhy the bar-wide setting is ignored*/
+    font-color: white;
 }
 #workspaces button.urgent {
-    color: #c9545d;
+    color: @light;
     opacity: 1;
 }
+#workspaces button.current_output.focused {
+    background: #ff0088;
+}
+/*CPU governor stuff*/
 #custom-cpugovernor {
     background-color: @font_dark_alternative;
     color: @font_gruv_normal;
