@@ -2,7 +2,7 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ inputs, config, pkgs, ... }:
+{ inputs, config, pkgs, specialArgs,... }:
 
 {
   imports =
@@ -13,10 +13,15 @@
       inputs.stylix.nixosModules.stylix
       inputs.sops-nix.nixosModules.sops
     ];
-  sops.defaultSopsFile = ../secrets/secrets.yaml;
-  sops.defaltSopsFormat = "yaml";
+  sops.defaultSopsFile = ../../secrets/secrets.yaml;
+  sops.defaultSopsFormat = "yaml";
 
   sops.age.keyFile = "$HOME/.config/age/keys.txt";
+
+  sops.secrets."wireguard/${specialArgs.hostname}/keys/private" = {};
+  sops.secrets."wireguard/vps/keys/public" = {};
+
+
 
   # ${specialArgs.hostname}
 
@@ -69,14 +74,14 @@
       # Note: The private key can also be included inline via the privateKey option,
       # but this makes the private key world-readable; thus, using privateKeyFile is
       # recommended.
-      privateKey = "$(cat ${config.sops.secrets."wireguard.${specialArgs.hostname}.keys.private".path})";
+      privateKey = "$(cat ${config.sops.secrets."wireguard/${specialArgs.hostname}/keys/private".path})";
 
       peers = [
         # For a client configuration, one peer entry for the server will suffice.
 
         {
           # Public key of the server (not a file path).
-          publicKey = "{server public key}";
+          publicKey = "$(cat ${config.sops.secrets."wireguard/vps/keys/public".path})";
 
           # Forward all the traffic via VPN.
           allowedIPs = [ "10.20.0.1/24" ];
