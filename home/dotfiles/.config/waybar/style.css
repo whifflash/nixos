@@ -307,7 +307,7 @@ workspaces {
 }
 #workspaces button.focused {
     font-weight: bolder; /* Somewhy the bar-wide setting is ignored*/
-    font-color: white;
+    color: white;
 }
 #workspaces button.urgent {
     color: @light;

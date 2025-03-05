@@ -21,7 +21,7 @@ config = lib.mkIf cfg.enable {
   users.users.mhr = {
     isNormalUser = true;
     description = "mhr";
-    extraGroups = [ "networkmanager" "wheel" "video" "dialout"];
+    extraGroups = [ "networkmanager" "wheel" "video" "dialout" "plugdev"];
     packages = with pkgs; [
     #  thunderbird
     ];

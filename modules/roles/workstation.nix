@@ -28,6 +28,7 @@ in
     chromium
     blueberry
     wireguard-tools
+    networkmanagerapplet
     ];
 
     environment.sessionVariables.GTK_THEME = "Adwaita:dark";

@@ -16,6 +16,7 @@ gopass
 gnupg
 pinentry-curses
 sops
+gqrx
 ];
 };
 

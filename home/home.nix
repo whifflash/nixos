@@ -68,8 +68,8 @@ in
     # plain files is through 'home.file'.
     home.file = {
       ".config/hypr/hyprland.conf".source = ./dotfiles/.config/hypr/hyprland.conf;
-      ".config/waybar/style.css".source = ./dotfiles/.config/waybar/style.css;
-      ".config/waybar/config".source = ./dotfiles/.config/waybar/config; 
+      # ".config/waybar/style.css".source = ./dotfiles/.config/waybar/style.css;
+      # ".config/waybar/config".source = ./dotfiles/.config/waybar/config; 
       ".config/wofi/style.css".source = ./dotfiles/.config/wofi/style.css; 
       ".config/wofi/config".source = ./dotfiles/.config/wofi/config; 
       ".config/wofi/gopass.switcher.sh".source = ./dotfiles/.config/wofi/gopass.switcher.sh; 
