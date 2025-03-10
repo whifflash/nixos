@@ -20,6 +20,9 @@ pkgs.stdenv.mkDerivation {
     mkdir -p $out
     cp -R ./* $out/
     cd $out/
+    sed -i "s/^Locale=.*/Locale=en/g" $out/theme.conf
+    sed -i "s/^HeaderText=Welcome!/HeaderText=/g" $out/theme.conf
+    sed -i "169s/Font.Capitalize/Font.MixedCase/" $out/Components/Input.qml
     rm Background.jpg
     cp -r ${image} $out/Background.jpg
    '';
