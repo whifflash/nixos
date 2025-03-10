@@ -9,11 +9,11 @@
       url = "github:danth/stylix/release-24.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    impermanence.url = "github:nix-community/impermanence";
-    microvm = {
-      url = "github:astro/microvm.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # impermanence.url = "github:nix-community/impermanence";
+    # microvm = {
+    #   url = "github:astro/microvm.nix";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    # };
     nix-darwin = {
       url = "github:LnL7/nix-darwin/nix-darwin-24.11";
       inputs.nixpkgs.follows = "nixpkgs";

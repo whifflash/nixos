@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # start waybar if not started
 if ! pgrep -x "waybar" > /dev/null; then

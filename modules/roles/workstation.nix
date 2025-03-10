@@ -1,4 +1,4 @@
-{ inputs, lib, config, pkgs, ... }:
+{ inputs, lib, config, pkgs, specialArgs, ... }:
 let 
 id = "role_workstation";
 cfg = config.${id};
@@ -32,6 +32,10 @@ in
     ];
 
     environment.sessionVariables.GTK_THEME = "Adwaita:dark";
+    # environment.sessionVariables.EDITOR = "nvim";
+    # environment.sessionVariables.VISUAL = "nvim";
+
+
 
     hardware.bluetooth.enable = true; # enables support for Bluetooth
     hardware.bluetooth.powerOnBoot = true; # powers up the default Bluetooth controller on boot
@@ -73,6 +77,7 @@ in
 
 
   networking = {
+    wireguard.enable = true;
     # firewall = {
     #   logReversePathDrops = true;
     #   # Do not block NetworkManager WireGuard via reverse path filter
@@ -91,11 +96,7 @@ in
       enable = true;
       ensureProfiles = {
         environmentFiles = [
-          # "/run/secrets/network-manager.env"
-          # ${config.sops.secrets."network-manager.env".path}
-          # "/home/mhr/nm.env"
           config.sops.secrets."network-manager.env".path
-          # "/etc/secrets/network-manager.env"
         ];
         profiles = {
           "$LoT_SSID" = {
@@ -118,6 +119,58 @@ in
               key-mgmt = "wpa-psk";
               psk = "$LoT_PSK";
             };
+          };
+
+          "$BSP_SSID" = {
+            connection = {
+              id = "$BSP_SSID";
+              type = "wifi";
+            };
+            ipv4 = {
+              method = "auto";
+            };
+            ipv6 = {
+              addr-gen-mode = "stable-privacy";
+              method = "auto";
+            };
+            wifi = {
+              mode = "infrastructure";
+              ssid = "$BSP_SSID";
+            };
+            wifi-security = {
+              key-mgmt = "wpa-psk";
+              psk = "$BSP_PSK";
+            };
+          };
+          vpswg = {
+            connection = {
+              autoconnect = false;
+              id = "$VPS_WG";
+              interface-name = "vpswg";
+              type = "wireguard";
+              # secondaries = "32986ce6-f9e4-37c8-96e1-baccfcc38f1a";
+            };
+            wireguard = {
+              mtu = 1380;
+              private-key = "$VPS_WG_PRIVATE_KEY";
+            };
+            "wireguard-peer.$VPS_WG_PUBLIC_KEY" = {
+              allowed-ips = "10.0.0.0/8;::/0;";
+              endpoint = "$VPS_WG:51823";
+              # preshared-key = "$VPS_WG_PRESHARED_KEY";
+              # preshared-key-flags = 0;
+            };
+            ipv4 = {
+              # address1 = "$VPS_WG_IPV4_ADDR_${lib.toUpper specialArgs.hostname}";
+              address1 = "$VPS_WG_IPV4_ADDR_MIA";
+              dns = "$VPS_WG_IPV4_DNS";
+              method = "manual";
+            };
+            # ipv6 = {
+            #   address1 = "$VPS_WG_IPV6_ADDR";
+            #   dns = "$VPS_WG_IPV6_DNS";
+            #   method = "manual";
+            # };
           };
           # "$WORK_WG" = {
           #   connection = {

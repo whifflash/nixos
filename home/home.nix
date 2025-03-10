@@ -77,6 +77,14 @@ in
       ".config/gopass/stores.local".source = ./dotfiles/.config/gopass/stores.local;  
       # ".config/gtk-3.0/gtk.css".source = ./dotfiles/.config/gtk-4.0/gtk.css; 
       # ".config/gtk-3.0/gtk.css".source = ./dotfiles/.config/gtk-3.0/gtk.css;
+      ".config/waybar/launch_waybar.sh".source = ./dotfiles/.config/waybar/launch_waybar.sh;  
+
+    };
+
+    home.sessionVariables = {
+        EDITOR = "nvim";
+        VISUAL="nvim";
+        GTK_THEME = "Adwaita:dark";
     };
 
 
@@ -188,10 +196,7 @@ in
        #
        #  /etc/profiles/per-user/mhr/etc/profile.d/hm-session-vars.sh
        #
-       home.sessionVariables = {
-        EDITOR = "nvim";
-        GTK_THEME = "Adwaita:dark";
-      };
+
 
       # Let Home Manager install and manage itself.
       programs.home-manager.enable = true;

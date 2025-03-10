@@ -11,6 +11,7 @@ enable = lib.mkEnableOption "enables ${id} profile";
 config = lib.mkIf cfg.enable {
 
   programs.zsh.enable = true;
+
   programs.zsh.ohMyZsh = {
     enable = true;
     plugins = ["git"];
