@@ -44,7 +44,7 @@
       specialArgs = { 
         inherit inputs;
         hostname = "mia";
-        wm = "hyprland";
+        wm = "sway";
         user = "mhr";
       };
       system = "x86_64-linux";

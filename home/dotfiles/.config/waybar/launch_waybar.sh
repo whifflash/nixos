@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # start waybar if not started
-if ! pgrep -x "waybar" > /dev/null; then
+if ! pgrep "waybar" > /dev/null; then
 	waybar &
 fi
 
@@ -18,7 +18,7 @@ while true; do
 	# if checksums are different
 	if [ "$current_checksum_config" != "$new_checksum_config" ] || [ "$current_checksum_style" != "$new_checksum_style" ]; then
 		# kill waybar
-		killall waybar
+		pkill waybar
 
 		# start waybar
 		waybar &

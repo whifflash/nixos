@@ -16,7 +16,8 @@ gopass
 gnupg
 pinentry-curses
 sops
-gqrx
+# gqrx TODO move to rf role
+reaction
 ];
 };
 

@@ -52,6 +52,7 @@ in
       pinentryPackage = with pkgs; pinentry-gnome3;
       enableSSHSupport = true;
     };
+    # services.resolved.enable = true;
 
 
     systemd.services = {
@@ -78,22 +79,24 @@ in
 
   networking = {
     wireguard.enable = true;
-    # firewall = {
-    #   logReversePathDrops = true;
-    #   # Do not block NetworkManager WireGuard via reverse path filter
-    #   # https://nixos.wiki/wiki/WireGuard
-    #   extraCommands = ''
-    #     ip46tables -t mangle -I nixos-fw-rpfilter -p udp -m udp --sport 51820 -j RETURN
-    #     ip46tables -t mangle -I nixos-fw-rpfilter -p udp -m udp --dport 51820 -j RETURN
-    #   '';
-    #   extraStopCommands = ''
-    #     ip46tables -t mangle -D nixos-fw-rpfilter -p udp -m udp --sport 51820 -j RETURN || true
-    #     ip46tables -t mangle -D nixos-fw-rpfilter -p udp -m udp --dport 51820 -j RETURN || true
-    #   '';
-    # };
+    firewall = {
+      checkReversePath = false; 
+      logReversePathDrops = true;
+      # Do not block NetworkManager WireGuard via reverse path filter
+      # https://nixos.wiki/wiki/WireGuard
+      # extraCommands = ''
+      #   ip46tables -t mangle -I nixos-fw-rpfilter -p udp -m udp --sport 51823 -j RETURN
+      #   ip46tables -t mangle -I nixos-fw-rpfilter -p udp -m udp --dport 51823 -j RETURN
+      # '';
+      # extraStopCommands = ''
+      #   ip46tables -t mangle -D nixos-fw-rpfilter -p udp -m udp --sport 51823 -j RETURN || true
+      #   ip46tables -t mangle -D nixos-fw-rpfilter -p udp -m udp --dport 51823 -j RETURN || true
+      # '';
+    };
     # hostName = "mia";
     networkmanager = {
       enable = true;
+      # dns = "systemd-resolved";
       ensureProfiles = {
         environmentFiles = [
           config.sops.secrets."network-manager.env".path
@@ -153,6 +156,7 @@ in
             wireguard = {
               mtu = 1380;
               private-key = "$VPS_WG_PRIVATE_KEY";
+              ListenPort = 51823;
             };
             "wireguard-peer.$VPS_WG_PUBLIC_KEY" = {
               allowed-ips = "10.0.0.0/8;::/0;";
