@@ -79,20 +79,21 @@ in
 
   networking = {
     wireguard.enable = true;
-    firewall = {
-      checkReversePath = false; 
-      logReversePathDrops = true;
-      # Do not block NetworkManager WireGuard via reverse path filter
-      # https://nixos.wiki/wiki/WireGuard
-      # extraCommands = ''
-      #   ip46tables -t mangle -I nixos-fw-rpfilter -p udp -m udp --sport 51823 -j RETURN
-      #   ip46tables -t mangle -I nixos-fw-rpfilter -p udp -m udp --dport 51823 -j RETURN
-      # '';
-      # extraStopCommands = ''
-      #   ip46tables -t mangle -D nixos-fw-rpfilter -p udp -m udp --sport 51823 -j RETURN || true
-      #   ip46tables -t mangle -D nixos-fw-rpfilter -p udp -m udp --dport 51823 -j RETURN || true
-      # '';
-    };
+    firewall.enable = false;
+    # firewall = {
+    #   checkReversePath = false; 
+    #   logReversePathDrops = true;
+    #   # Do not block NetworkManager WireGuard via reverse path filter
+    #   # https://nixos.wiki/wiki/WireGuard
+    #   # extraCommands = ''
+    #   #   ip46tables -t mangle -I nixos-fw-rpfilter -p udp -m udp --sport 51823 -j RETURN
+    #   #   ip46tables -t mangle -I nixos-fw-rpfilter -p udp -m udp --dport 51823 -j RETURN
+    #   # '';
+    #   # extraStopCommands = ''
+    #   #   ip46tables -t mangle -D nixos-fw-rpfilter -p udp -m udp --sport 51823 -j RETURN || true
+    #   #   ip46tables -t mangle -D nixos-fw-rpfilter -p udp -m udp --dport 51823 -j RETURN || true
+    #   # '';
+    # };
     # hostName = "mia";
     networkmanager = {
       enable = true;

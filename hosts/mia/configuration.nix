@@ -70,6 +70,7 @@
   virtualization_guest.enable = false;
   role_workstation.enable = true;
   role_hardware-development.enable = true;
+  role_tailscale-node.enable = true;
 
 
 

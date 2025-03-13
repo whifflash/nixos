@@ -14,6 +14,11 @@
     #   url = "github:astro/microvm.nix";
     #   inputs.nixpkgs.follows = "nixpkgs";
     # };
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+
+    };
     nix-darwin = {
       url = "github:LnL7/nix-darwin/nix-darwin-24.11";
       inputs.nixpkgs.follows = "nixpkgs";
