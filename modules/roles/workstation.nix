@@ -156,7 +156,7 @@ in
             };
             wireguard = {
               mtu = 1380;
-              private-key = "$VPS_WG_PRIVATE_KEY";
+              private-key = ''"''$VPS_WG_PRIVATE_KEY_''${lib.toUpper specialArgs.hostname}"'';
               ListenPort = 51823;
             };
             "wireguard-peer.$VPS_WG_PUBLIC_KEY" = {
@@ -166,8 +166,8 @@ in
               # preshared-key-flags = 0;
             };
             ipv4 = {
-              # address1 = "$VPS_WG_IPV4_ADDR_${lib.toUpper specialArgs.hostname}";
-              address1 = "$VPS_WG_IPV4_ADDR_MIA";
+              address1 = ''"''${VPS_WG_IPV4_ADDR_''${lib.toUpper specialArgs.hostname}}"'';
+              # address1 = "$VPS_WG_IPV4_ADDR_MIA";
               dns = "$VPS_WG_IPV4_DNS";
               method = "manual";
             };
