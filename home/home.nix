@@ -230,10 +230,10 @@ in
           package = pkgs.bibata-cursors;
           name = "Bibata-Modern-Ice";
         };
-        iconTheme = {
-          package = gruvboxPlus;
-          name = "Gruvbox-plus"; # "WhiteSur-Dark" "WhiteSur-Light"
-        };
+        # iconTheme = {
+        #   package = gruvboxPlus;
+        #   name = "Gruvbox-plus"; # "WhiteSur-Dark" "WhiteSur-Light"
+        # };
       };
 
 
