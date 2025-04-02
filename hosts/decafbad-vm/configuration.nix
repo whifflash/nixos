@@ -2,7 +2,7 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ inputs, config, pkgs, ... }:
+{ inputs, config, pkgs, specialArgs, ... }:
 
 {
   imports =
@@ -10,7 +10,21 @@
       ./hardware-configuration.nix
       ./../../modules/modules.nix  
       inputs.home-manager.nixosModules.default
+      inputs.home-manager.nixosModules.default
+      inputs.sops-nix.nixosModules.sops
     ];
+
+  sops.defaultSopsFile = ../../secrets/secrets.yaml;
+  sops.defaultSopsFormat = "yaml";
+
+  sops.age.keyFile = "/home/mhr/.config/sops/age/keys.txt";
+
+  sops.secrets."wireguard/vps/keys/public" = {
+    owner = config.users.users."systemd-network".name;
+  };  
+  sops.secrets."network-manager.env" = {
+    owner = config.users.users."systemd-network".name;
+  };
 
   # Bootloader options
   boot.loader.grub.enable = true;

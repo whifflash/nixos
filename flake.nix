@@ -57,8 +57,6 @@
       ./hosts/mia/configuration.nix
       ./modules/modules.nix
       inputs.home-manager.nixosModules.default
-      # make home-manager as a module of nixos
-      # so that home-manager configuration will be deployed automatically when executing `nixos-rebuild switch`
       inputs.home-manager.nixosModules.home-manager
           {
             home-manager.useGlobalPkgs = true;
