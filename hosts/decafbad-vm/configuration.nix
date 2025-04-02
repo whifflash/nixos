@@ -43,7 +43,7 @@
   base_options.enable = true;
   virtualization_guest.enable = true;
   role_workstation.enable = true;
-  role_hardware-development.enable = false;
+  role_hardware-development.enable = true;
 
 
 
