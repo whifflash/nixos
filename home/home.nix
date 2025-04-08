@@ -2,6 +2,11 @@
 
 let 
   gruvboxPlus = import ./themes/icons/gruvbox-plus.nix { inherit pkgs; };
+  lib = pkgs.stdenv.lib;
+  workUser = "TODO";
+  workHosts = [ "todo.net"
+               "192.168.1.*"
+              ];
 in
 {
   # Home Manager needs a bit of information about you and the paths it should
@@ -122,6 +127,36 @@ in
       # mini-nvim
       # (fromGitHub "HEAD" "elihunter173/dirbuf.nvim")
       ];
+    };
+
+    programs.ssh = {
+      controlPersist = "12h";
+      controlMaster = "auto";
+
+      matchBlocks = {
+        "github.com" = {
+          user = "git";
+          hostname = "github.com";
+          identityfile = "/home/mhr/.ssh/githubwhifflash";
+          port = 22;
+        };
+
+        "webdockvps" = {
+          user = "mhr";
+          hostname = "wgbsw.vps.webdock.cloud";
+          identityfile = "/home/mhr/.ssh/webockvps";
+          port = 22;
+        };
+
+        work = {
+          host = (lib.concatStringsSep " " workHosts);
+          user = workUser;
+          # proxyJump = "bastion-proxy";
+          certificateFile = "~/.ssh/id_ecdsa-cert.pub";
+          identitiesOnly = true;
+        };
+
+      };
     };
 
     programs.tmux = {
