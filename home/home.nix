@@ -82,7 +82,11 @@ in
       ".config/gopass/stores.local".source = ./dotfiles/.config/gopass/stores.local;  
       # ".config/gtk-3.0/gtk.css".source = ./dotfiles/.config/gtk-4.0/gtk.css; 
       # ".config/gtk-3.0/gtk.css".source = ./dotfiles/.config/gtk-3.0/gtk.css;
-      ".config/waybar/launch_waybar.sh".source = ./dotfiles/.config/waybar/launch_waybar.sh;  
+      ".config/waybar/launch_waybar.sh".source = ./dotfiles/.config/waybar/launch_waybar.sh;
+      ".config/sway/config".source = ./dotfiles/.config/sway/config;
+      ".config/sway/tmux/tmux_reattach.sh".source = ./dotfiles/.config/sway/tmux/tmux_reattach.sh;  
+
+
 
     };
 
@@ -137,14 +141,16 @@ in
         "github.com" = {
           user = "git";
           hostname = "github.com";
-          identityfile = "/home/mhr/.ssh/githubwhifflash";
+          identityFile = "/home/mhr/.ssh/githubwhifflash";
           port = 22;
         };
 
-        "webdockvps" = {
+        "webdock" = {
+          host = "vps";
           user = "mhr";
           hostname = "wgbsw.vps.webdock.cloud";
-          identityfile = "/home/mhr/.ssh/webockvps";
+          identityFile = "/hme/mhr/.ssh/webdockvps";
+          identitiesOnly = true;
           port = 22;
         };
 
@@ -199,6 +205,7 @@ in
       # }
     ];
 
+
     extraConfig = ''
       # ${pkgs.zsh}
       set -g default-terminal "tmux-256color"
@@ -236,11 +243,16 @@ in
     '';
   };
 
+
+
     qt = {
       enable = true;
       platformTheme.name = "gtk";
       style.name = "adwaita-dark";
     };
+
+    services.ssh-agent.enable = true;
+
 
     gtk = {
       enable = true;
