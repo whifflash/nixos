@@ -2,7 +2,7 @@
 
 let 
   gruvboxPlus = import ./themes/icons/gruvbox-plus.nix { inherit pkgs; };
-  lib = pkgs.stdenv.lib;
+  # lib = pkgs.stdenv.lib;
   workUser = "TODO";
   workHosts = [ "todo.net"
                "192.168.1.*"
@@ -142,25 +142,26 @@ in
           user = "git";
           hostname = "github.com";
           identityFile = "/home/mhr/.ssh/githubwhifflash";
+          identitiesOnly = true;
           port = 22;
         };
 
-        "webdock" = {
-          host = "vps";
+        "wgbsw.vps.webdock.cloud" = {
+          # host = "vps";
           user = "mhr";
-          hostname = "wgbsw.vps.webdock.cloud";
-          identityFile = "/hme/mhr/.ssh/webdockvps";
+          hostname = "vps";
+          identityFile = "/home/mhr/.ssh/webdockvps";
           identitiesOnly = true;
           port = 22;
         };
 
-        work = {
-          host = (lib.concatStringsSep " " workHosts);
-          user = workUser;
-          # proxyJump = "bastion-proxy";
-          certificateFile = "~/.ssh/id_ecdsa-cert.pub";
-          identitiesOnly = true;
-        };
+        # work = {
+        #   host = (lib.concatStringsSep " " workHosts);
+        #   user = workUser;
+        #   # proxyJump = "bastion-proxy";
+        #   certificateFile = "~/.ssh/id_ecdsa-cert.pub";
+        #   identitiesOnly = true;
+        # };
 
       };
     };
@@ -251,7 +252,16 @@ in
       style.name = "adwaita-dark";
     };
 
-    services.ssh-agent.enable = true;
+    programs.ssh.enable = true;
+
+
+    services.gpg-agent = {
+      enable = true;
+      enableSshSupport = true;
+      pinentryPackage = pkgs.pinentry-gnome3;
+    };
+
+    services.ssh-agent.enable = false;
 
 
     gtk = {

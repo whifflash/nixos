@@ -58,9 +58,9 @@
 
   desktop_gdm.enable = false;
   desktop_sddm.enable = true;
-  desktop_gnome.enable = true;
+  desktop_gnome.enable = false;
   desktop_greetd.enable = false;
-  desktop_hyprland.enable = true;
+  desktop_hyprland.enable = false;
   desktop_sway.enable = true;
   desktop_audio.enable = true;
   base_packages.enable = true;

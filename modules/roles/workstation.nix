@@ -45,13 +45,19 @@ in
     powerline-fonts
     powerline-symbols
     pkgs.nerd-fonts.symbols-only
+    pkgs.nerd-fonts.roboto-mono
     ];
 
-    programs.gnupg.agent = {
-      enable = true;
-      pinentryPackage = with pkgs; pinentry-gnome3;
-      enableSSHSupport = true;
-    };
+    # rograms.ssh.enable = true;
+
+    # programs.ssh.startAgent = false;
+
+    # programs.gnupg.agent = {
+    #   enable = true;
+    #   pinentryPackage = pkgs.pinentry-gnome3;
+    #   # pinentryPackage = with pkgs; pinentry-gnome3;
+    #   enableSSHSupport = true;
+    # };
     # services.resolved.enable = true;
 
 

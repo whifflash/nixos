@@ -14,7 +14,7 @@ neovim
 git
 gopass
 gnupg
-pinentry-curses
+# pinentry-curses
 sops
 # gqrx TODO move to rf role
 reaction
