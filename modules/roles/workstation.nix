@@ -32,12 +32,6 @@ in
     pcmanfm
     ];
 
-    environment.sessionVariables.GTK_THEME = "Adwaita:dark";
-    # environment.sessionVariables.EDITOR = "nvim";
-    # environment.sessionVariables.VISUAL = "nvim";
-
-
-
     hardware.bluetooth.enable = true; # enables support for Bluetooth
     hardware.bluetooth.powerOnBoot = true; # powers up the default Bluetooth controller on boot
 
@@ -48,18 +42,6 @@ in
     pkgs.nerd-fonts.symbols-only
     pkgs.nerd-fonts.roboto-mono
     ];
-
-    # rograms.ssh.enable = true;
-
-    # programs.ssh.startAgent = false;
-
-    # programs.gnupg.agent = {
-    #   enable = true;
-    #   pinentryPackage = pkgs.pinentry-gnome3;
-    #   # pinentryPackage = with pkgs; pinentry-gnome3;
-    #   enableSSHSupport = true;
-    # };
-    # services.resolved.enable = true;
 
 
     systemd.services = {
