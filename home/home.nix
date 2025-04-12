@@ -73,8 +73,6 @@ in
     # plain files is through 'home.file'.
     home.file = {
       ".config/hypr/hyprland.conf".source = ./dotfiles/.config/hypr/hyprland.conf;
-      # ".config/waybar/style.css".source = ./dotfiles/.config/waybar/style.css;
-      # ".config/waybar/config".source = ./dotfiles/.config/waybar/config; 
       ".config/wofi/style.css".source = ./dotfiles/.config/wofi/style.css; 
       ".config/wofi/config".source = ./dotfiles/.config/wofi/config; 
       ".config/wofi/gopass.switcher.sh".source = ./dotfiles/.config/wofi/gopass.switcher.sh; 
@@ -82,6 +80,12 @@ in
       ".config/gopass/stores.local".source = ./dotfiles/.config/gopass/stores.local;  
       # ".config/gtk-3.0/gtk.css".source = ./dotfiles/.config/gtk-4.0/gtk.css; 
       # ".config/gtk-3.0/gtk.css".source = ./dotfiles/.config/gtk-3.0/gtk.css;
+      # ".config/waybar/style.css".source = ./dotfiles/.config/waybar/style.css;
+      # ".config/waybar/colors.css".source = ./dotfiles/.config/waybar/colors.css;
+      # ".config/waybar/config".source = ./dotfiles/.config/waybar/config; 
+      # ".config/waybar/modules.json".source = ./dotfiles/.config/waybar/modules.json;
+      # ".config/waybar/ornamental.json".source = ./dotfiles/.config/waybar/ornamental.json;
+      # ".config/waybar/ornamental.css".source = ./dotfiles/.config/waybar/ornamental.css;
       ".config/waybar/launch_waybar.sh".source = ./dotfiles/.config/waybar/launch_waybar.sh;
       ".config/sway/config".source = ./dotfiles/.config/sway/config;
       ".config/sway/tmux/tmux_reattach.sh".source = ./dotfiles/.config/sway/tmux/tmux_reattach.sh;  

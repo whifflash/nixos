@@ -1,0 +1,59 @@
+/* COLORS */
+
+/* Gruvbox Dark */
+
+/*@define-color bg #353C4A;*/
+@define-color bg #282828;
+
+
+@define-color green #98971a;
+@define-color yellow #d79921;
+@define-color orange #d65d0e;
+
+
+
+@define-color light #D8DEE9;
+@define-color warning #ebcb8b;
+@define-color workspacesfocused #4C566A;
+@define-color tray @workspacesfocused;
+@define-color sound #EBCB8B;
+@define-color network #5D7096;
+@define-color memory #546484;
+@define-color layout #5e81ac;
+@define-color battery #88c0d0;
+@define-color date #434C5E;
+@define-color time #434C5E;
+
+@define-color nord_dark_font #272727;
+
+
+@define-color critical #BF616A;
+@define-color tray @bg;
+@define-color mode @bg;
+
+@define-color bluetint #448488;
+@define-color bluelight #83a597;
+@define-color magenta-dark #b16185;
+@define-color magentadark #b16185;
+
+
+@define-color accent @bluetint;
+
+
+@define-color bluetint #448488;
+
+
+
+@define-color font_gruv_normal #ebdbb2;
+@define-color font_gruv_faded #a89985;
+@define-color font_gruv_darker #D8DEE9;
+@define-color font_dark_alternative #655b53;
+
+
+
+/*Colors For Slide Style*/
+@define-color bg0 @bg;
+@define-color bg1 @green;
+@define-color bg2 @yellow;
+@define-color bg3 @bg;
+@define-color bgc @orange;
