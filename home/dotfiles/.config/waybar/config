@@ -17,7 +17,6 @@
         "clock#date", 
         "custom/L2R-arrow#one", 
         "custom/L2R-arrow#two", 
-        "idle_inhibitor#grouptwo", 
         "custom/L2R-arrow#three", 
         "sway/window"
         ],
@@ -32,7 +31,7 @@
         "custom/R2L-arrow#two",  
         "temperature", "cpu",
         "custom/R2L-arrow#one", 
-        "pulseaudio", "tray", "clock#time"
+        "pulseaudio", "clock#time"
         ],
     
 },
