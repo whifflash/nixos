@@ -83,29 +83,3 @@
         "tooltip": false
     },
 }
-
-
-"idle_inhibitor#groupone": {
-        "format": "{icon}",
-        "format-icons": {
-            "activated": "",
-            "deactivated": ""
-        },
-        "tooltip": "true"
-},
-"idle_inhibitor#grouptwo": {
-        "format": "{icon}",
-        "format-icons": {
-            "activated": "",
-            "deactivated": ""
-        },
-        "tooltip": "true"
-},
-"idle_inhibitor#groupthree": {
-        "format": "{icon}",
-        "format-icons": {
-            "activated": "",
-            "deactivated": ""
-        },
-        "tooltip": "true"
-},
