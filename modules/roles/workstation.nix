@@ -30,6 +30,7 @@ in
     wireguard-tools
     networkmanagerapplet
     pcmanfm
+    gsimplecal
     ];
 
     hardware.bluetooth.enable = true; # enables support for Bluetooth
