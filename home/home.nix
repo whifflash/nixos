@@ -87,7 +87,8 @@ in
       ".config/waybar/ornamental.json".source = ./dotfiles/.config/waybar/ornamental.json;
       ".config/waybar/ornamental.css".source = ./dotfiles/.config/waybar/ornamental.css;
       ".config/waybar/launch_waybar.sh".source = ./dotfiles/.config/waybar/launch_waybar.sh;
-      # ".config/sway/config".source = ./dotfiles/.config/sway/config;
+      ".config/sway/config".source = ./dotfiles/.config/sway/config;
+      ".config/swaylock/config".source = ./dotfiles/.config/swaylock/config;
       ".config/sway/tmux/tmux_reattach.sh".source = ./dotfiles/.config/sway/tmux/tmux_reattach.sh;  
 
 

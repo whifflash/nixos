@@ -80,7 +80,7 @@ input "type:touchpad" {
     bindsym $mod+d exec $menu
 
     # Lock screen
-    bindsym $mod+Shift+x exec swaylock
+    bindsym $mod+shift+x exec swaylock
 
     # Drag floating windows by holding down $mod and left mouse button.
     # Resize them with right mouse button + $mod.
