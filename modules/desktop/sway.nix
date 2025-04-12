@@ -31,6 +31,7 @@ in
     mako # notification system developed by swaywm maintainer
     waybar
     wofi
+    swaylock-effects
     ];
   };
 }

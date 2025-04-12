@@ -69,8 +69,7 @@ in
     #     );
     # };
 
-    # Home Manager is pretty good at managing dotfiles. The primary way to manage
-    # plain files is through 'home.file'.
+
     home.file = {
       ".config/hypr/hyprland.conf".source = ./dotfiles/.config/hypr/hyprland.conf;
       ".config/wofi/style.css".source = ./dotfiles/.config/wofi/style.css; 
@@ -78,7 +77,7 @@ in
       ".config/wofi/gopass.switcher.sh".source = ./dotfiles/.config/wofi/gopass.switcher.sh; 
       ".config/wofi/gopass.launcher.sh".source = ./dotfiles/.config/wofi/gopass.launcher.sh;
       ".config/gopass/stores.local".source = ./dotfiles/.config/gopass/stores.local;  
-      # ".config/gtk-3.0/gtk.css".source = ./dotfiles/.config/gtk-4.0/gtk.css; 
+      # ".config/gtk-4.0/gtk.css".source = ./dotfiles/.config/gtk-4.0/gtk.css; 
       # ".config/gtk-3.0/gtk.css".source = ./dotfiles/.config/gtk-3.0/gtk.css;
       ".config/waybar/style.css".source = ./dotfiles/.config/waybar/style.css;
       ".config/waybar/colors.css".source = ./dotfiles/.config/waybar/colors.css;
@@ -272,11 +271,26 @@ in
 
 
 
-    qt = {
-      enable = true;
-      platformTheme.name = "gtk";
-      style.name = "adwaita-dark";
-    };
+      qt = {
+        enable = true;
+        platformTheme.name = "qtct";
+        style.name = "kvantum";
+      };
+
+      xdg.configFile = {
+        "Kvantum/kvantum.kvconfig".text = ''
+          [General]
+          theme=WhiteSur
+        '';
+
+        "Kvantum/WhiteSurDark".source = "${pkgs.whitesur-kde}/share/Kvantum/WhiteSur";
+      };
+
+    # qt = {
+    #   enable = true;
+    #   platformTheme.name = "gtk";
+    #   style.name = "adwaita-dark";
+    # };
 
     programs.ssh.enable = true;
 
@@ -292,26 +306,33 @@ in
 
     gtk = {
       enable = true;
-      gtk3.extraConfig.gtk-decoration-layout = "menu:";
+      # gtk3.extraConfig.gtk-decoration-layout = "menu:";
+      # gtk3.bookmarks = [
+      #   "file://home/mhr/nixos"
+      # ];
       #   theme = {
         #   name = "Arc-Dark";
         #   package = pkgs.arc-theme;
         # };
-        theme = {
-          name = "adw-gtk3-dark";
-          package = pkgs.adw-gtk3;
-        };
+        # theme = {
+        #   package = pkgs.adw-gtk3;
+        #   name = "adw-gtk3-dark";
+        # };
         # theme = {
         #   name = "Materia-Dark";
         #   package = pkgs.materia-theme;
         # };
-        # theme = {
-        #   name = "whitesur-gtk-theme";
-        #   package = pkgs.whitesur-gtk-theme;
-        # };
+        theme = {
+          name = "WhiteSur-Dark";
+          package = pkgs.whitesur-gtk-theme;
+        };
         cursorTheme = {
           package = pkgs.bibata-cursors;
           name = "Bibata-Modern-Ice";
+        };
+        iconTheme = {
+          package = pkgs.whitesur-icon-theme;
+          name = "WhiteSur-Dark"; # "WhiteSur-Dark" "WhiteSur-Light"
         };
         # iconTheme = {
         #   package = gruvboxPlus;
