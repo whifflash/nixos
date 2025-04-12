@@ -72,7 +72,8 @@
         "format": "{:%a %e/%m}",
         // "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
         //"today-format": "<b>{}</b>",
-        "on-click": "gnome-calendar"
+        "on-click": "gsimplecal",
+        "tooltip": false
     },    
     "temperature": {
         //"thermal-zone": 1,
@@ -143,52 +144,4 @@
         "on-click": "$HOME/.config/waybar/custom_modules/cpugovernor.sh switch"
         // Requires cpupower to switch governors
     },
-    "custom/arrow1": {
-        "format": "",
-        "tooltip": false
-    },
-    "custom/arrow2": {
-        "format": "",
-        "tooltip": false
-    },
-
-    "custom/arrow3": {
-        "format": "",
-        "tooltip": false
-    },
-
-    "custom/arrow4": {
-        "format": "",
-        "tooltip": false
-    },
-
-    "custom/arrow5": {
-        "format": "",
-        "tooltip": false
-    },
-
-    "custom/arrow6": {
-        "format": "",
-        "tooltip": false
-    },
-
-    "custom/arrow7": {
-        "format": "",
-        "tooltip": false
-    },
-
-    "custom/arrow8": {
-        "format": "",
-        "tooltip": false
-    },
-
-    "custom/arrow9": {
-        "format": "",
-        "tooltip": false
-    },
-
-    "custom/arrow10": {
-        "format": "",
-        "tooltip": false
-    } 
 }

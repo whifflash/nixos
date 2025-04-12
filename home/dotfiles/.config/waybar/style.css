@@ -33,6 +33,7 @@
     border-radius: 0px;
     min-height: 0;
     /*margin: 0.15em 0.25em 0.15em 0.25em;*/
+    tooltip: false;
 }
 
 /* The whole bar */
@@ -212,13 +213,13 @@
 }
 #workspaces button.focused {
     font-weight: bolder; /* Somewhy the bar-wide setting is ignored*/
-    color: white;
 }
 #workspaces button.urgent {
     color: @light;
     opacity: 1;
 }
 #workspaces button.current_output.focused {
+    font-weight: bolder;
     color: @font_gruv_normal;
 
 }
