@@ -37,6 +37,7 @@ output * bg /run/current-system/sw/share/backgrounds/sway/Sway_Wallpaper_Blue_19
 
 
 exec /home/mhr/.config/waybar/launch_waybar.sh
+exec_always nm-applet
 
 ### Idle configuration
 #
