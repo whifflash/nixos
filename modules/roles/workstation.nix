@@ -29,6 +29,7 @@ in
     blueberry
     wireguard-tools
     networkmanagerapplet
+    pcmanfm
     ];
 
     environment.sessionVariables.GTK_THEME = "Adwaita:dark";
