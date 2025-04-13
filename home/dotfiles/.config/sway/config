@@ -222,10 +222,10 @@ bindsym $mod+r mode "resize"
 # Utilities:
 #
     # Special keys to adjust volume via PulseAudio
-    bindsym --locked XF86AudioMute exec "pactl set-sink-mute \@DEFAULT_SINK@ toggle;  notify-send -t 3000 'volume muted'"
-    bindsym --locked XF86AudioLowerVolume exec "pactl set-sink-volume \@DEFAULT_SINK@ -5%; notify-send -t 3000 'volume down'"
-    bindsym --locked XF86AudioRaiseVolume exec "pactl set-sink-volume \@DEFAULT_SINK@ +5%; notify-send -t 3000 'volume up'"
-    bindsym --locked XF86AudioMicMute exec "pactl set-source-mute \@DEFAULT_SOURCE@ toggle; notify-send -t 3000 'mic muted'"
+    bindsym --locked XF86AudioMute exec "pactl set-sink-mute \@DEFAULT_SINK@ toggle;  notification-audio 'volume muted'"
+    bindsym --locked XF86AudioLowerVolume exec "pactl set-sink-volume \@DEFAULT_SINK@ -5%; notification-audio 'volume down'"
+    bindsym --locked XF86AudioRaiseVolume exec "pactl set-sink-volume \@DEFAULT_SINK@ +5%; notification-audio 'volume up'"
+    bindsym --locked XF86AudioMicMute exec "pactl set-source-mute \@DEFAULT_SOURCE@ toggle; notification-audio 'mic muted'"
     # Special keys to adjust brightness via brightnessctl
     bindsym --locked XF86MonBrightnessDown exec brightnessctl set 5%-
     bindsym --locked XF86MonBrightnessUp exec brightnessctl set 5%+

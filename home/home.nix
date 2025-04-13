@@ -31,6 +31,16 @@ in
   # (pkgs.writeShellScriptBin "my-hello" ''
   #   echo "Hello, ${config.home.username}!"
   # '')
+  (pkgs.writeShellScriptBin "notification-audio" ''
+fd='/tmp/notid'
+if [ ! -f /tmp/notid ]; then
+  notify-send -t 5000 -p $1 > $fd
+else
+  oldid=$(head -n 1 $fd)
+  echo $oldid
+  notify-send -r $oldid -t 5000 -p $1 > $fd
+fi
+  '')
   ];
 
     home.file = {
