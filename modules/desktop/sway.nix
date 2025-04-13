@@ -32,6 +32,7 @@ in
     waybar
     wofi
     swaylock-effects
+    libnotify
     ];
   };
 }
