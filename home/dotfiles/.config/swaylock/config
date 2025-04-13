@@ -1,24 +1,52 @@
 image=~/nixos/media/wallpapers/village.jpg
-font=RobotoMono Nerd Font
-font-size=12
+
 effect-blur=3x5
 scaling=fill
 ignore-empty-password
-disable-caps-lock-text
 
 indicator
 indicator-radius=120
 indicator-thickness=20
+indicator-caps-lock
 clock
 timestr=%I:%M %p
-datestr=%A, %d %B
-ring-color=4C566A
-key-hl-color=A3BE8C
-line-color=2E3440
-separator-color=3B4252
-inside-color=3B4252
-bs-hl-color=A3BE8C
+datestr=%B, %d
+
+text-color=D8DEE9
+font=RobotoMono Nerd Font
+font-size=12
+
 layout-bg-color=3B4252
 layout-border-color=4C566A
 layout-text-color=D8DEE9
-text-color=D8DEE9
+
+ring-color=1D2021DD
+line-color=1D202199
+inside-color=28282811
+
+separator-color=1D202199
+
+ring-ver-color=98971ADD
+line-ver-color=98971A99
+inside-ver-color=28282811
+text-ver-color=D8DEE9
+
+ring-clear-color=98971ADD
+line-clear-color=98971A99
+inside-clear-color=28282811
+text-clear-color=D8DEE9
+
+ring-wrong-color=CC241DDD
+line-wrong-color=CC241D33
+inside-wrong-color=28282811
+text-wrong-color=D8DEE9
+
+ring-caps-lock-color=1D2021DD
+line-caps-lock-color=1D202199
+inside-caps-lock-color=28282811
+text-caps-lock-color=D8DEE9
+
+key-hl-color=D8DEE9
+bs-hl-color=D79921
+caps-lock-key-hl-color=CC241D
+caps-lock-bs-hl-color=D79921
