@@ -9,22 +9,11 @@ let
               ];
 in
 {
-  # Home Manager needs a bit of information about you and the paths it should
-  # manage.
   home.username = "mhr";
   home.homeDirectory = "/home/mhr";
 
-  # This value determines the Home Manager release that your configuration is
-  # compatible with. This helps avoid breakage when a new Home Manager release
-  # introduces backwards incompatible changes.
-  #
-  # You should not change this value, even if you update Home Manager. If you do
-  # want to update the value, then make sure to first check the Home Manager
-  # release notes.
   home.stateVersion = "24.05"; # Please read the comment before changing.
 
-  # The home.packages option allows you to install Nix packages into your
-  # environment.
   home.packages = [
   # # Adds the 'hello' command to your environment. It prints a friendly
   # # "Hello, world!" when run.
@@ -33,10 +22,7 @@ in
   pkgs.whitesur-cursors
   pkgs.whitesur-icon-theme
   pkgs.age
-  # # It is sometimes useful to fine-tune packages, for example, by applying
-  # # overrides. You can do that directly here, just don't forget the
-  # # parentheses. Maybe you want to install Nerd Fonts with a limited number of
-  # # fonts?
+
   # (pkgs.nerdfonts.override { fonts = [ "FantasqueSansMono" ]; })
 
   # # You can also create simple shell scripts directly inside your
@@ -46,29 +32,6 @@ in
   #   echo "Hello, ${config.home.username}!"
   # '')
   ];
-
-  # wayland.windowManager.hyprland.enable = true; # enable Hyprland
-  # wayland.windowManager.hyprland.settings = {
-    #   "$mod" = "SUPER";
-    #   bind =
-    #     [
-    #       "$mod, F, exec, firefox"
-    #       ", Print, exec, grimblast copy area"
-    #     ]
-    #     ++ (
-    #       # workspaces
-    #       # binds $mod + [shift +] {1..9} to [move to] workspace {1..9}
-    #       builtins.concatLists (builtins.genList (i:
-    #           let ws = i + 1;
-    #           in [
-    #             "$mod, code:1${toString i}, workspace, ${toString ws}"
-    #             "$mod SHIFT, code:1${toString i}, movetoworkspace, ${toString ws}"
-    #           ]
-    #         )
-    #         9)
-    #     );
-    # };
-
 
     home.file = {
       ".config/hypr/hyprland.conf".source = ./dotfiles/.config/hypr/hyprland.conf;
@@ -89,8 +52,6 @@ in
       ".config/sway/config".source = ./dotfiles/.config/sway/config;
       ".config/swaylock/config".source = ./dotfiles/.config/swaylock/config;
       ".config/sway/tmux/tmux_reattach.sh".source = ./dotfiles/.config/sway/tmux/tmux_reattach.sh;  
-
-
 
     };
 
