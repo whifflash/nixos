@@ -42,6 +42,7 @@ in
     powerline-symbols
     pkgs.nerd-fonts.symbols-only
     pkgs.nerd-fonts.roboto-mono
+    vlc
     ];
 
 
