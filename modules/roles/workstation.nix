@@ -31,6 +31,8 @@ in
     networkmanagerapplet
     pcmanfm
     gsimplecal
+    vlc
+    libvlc
     ];
 
     hardware.bluetooth.enable = true; # enables support for Bluetooth
@@ -42,7 +44,6 @@ in
     powerline-symbols
     pkgs.nerd-fonts.symbols-only
     pkgs.nerd-fonts.roboto-mono
-    vlc
     ];
 
 
