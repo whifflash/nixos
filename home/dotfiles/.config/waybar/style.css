@@ -76,6 +76,11 @@
 #mode,
 #memory,
 #temperature,
+#backlight {
+    background: @bg0;
+    color: @font_gruv_normal;
+
+}
 #battery {
     animation-timing-function: linear;
     animation-iteration-count: infinite;

@@ -28,7 +28,7 @@
     },
     "sway/window": {
         "format": "{}",
-        "max-length": 50, 
+        "max-length": 50,
         "tooltip": false
     },
     "bluetooth": {
@@ -144,4 +144,12 @@
         "on-click": "$HOME/.config/waybar/custom_modules/cpugovernor.sh switch"
         // Requires cpupower to switch governors
     },
+    "backlight": {
+    "device": "intel_backlight",
+    "format": "{percent}% {icon}",
+    "format-icons": ["", ""],
+    "on-click": "light -S 100",
+    "on-click-right": "light -S 10",
+    "tooltip": false
+},
 }
