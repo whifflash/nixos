@@ -6,6 +6,7 @@
       # url = "github:nix-community/home-manager/release-24.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nur.url = "github:nix-community/NUR";
     stylix = {
       url = "github:danth/stylix/release-24.11";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -30,7 +31,7 @@
     };
   };
 
-  outputs = { nixpkgs, ... } @ inputs:  {
+  outputs = { self, nixpkgs, home-manager, nur, ... } @ inputs:  {
     nixosConfigurations.nixbox = nixpkgs.lib.nixosSystem {
       specialArgs = { 
         inherit inputs;
