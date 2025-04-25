@@ -24,7 +24,7 @@ in
     joplin-desktop
     tmux
     alacritty
-    firefox
+    # firefox
     chromium
     blueberry
     wireguard-tools

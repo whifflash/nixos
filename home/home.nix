@@ -9,43 +9,21 @@ let
               ];
 in
 {
+
+    imports = [
+    ./packages.nix
+    ./apps/firefox
+    ];
   home.username = "mhr";
   home.homeDirectory = "/home/mhr";
 
   home.stateVersion = "24.05"; # Please read the comment before changing.
 
-  home.packages = [
-  # # Adds the 'hello' command to your environment. It prints a friendly
-  # # "Hello, world!" when run.
-  # # pkgs.hello
-  pkgs.whitesur-gtk-theme
-  pkgs.whitesur-cursors
-  pkgs.whitesur-icon-theme
-  pkgs.age
 
-  # (pkgs.nerdfonts.override { fonts = [ "FantasqueSansMono" ]; })
-
-  # # You can also create simple shell scripts directly inside your
-  # # configuration. For example, this adds a command 'my-hello' to your
-  # # environment:
-  # (pkgs.writeShellScriptBin "my-hello" ''
-  #   echo "Hello, ${config.home.username}!"
-  # '')
-  (pkgs.writeShellScriptBin "notification-audio" ''
-fd='/tmp/notid'
-if [ ! -f /tmp/notid ]; then
-  notify-send -t 5000 -p $1 > $fd
-else
-  oldid=$(head -n 1 $fd)
-  echo $oldid
-  notify-send -r $oldid -t 5000 -p $1 > $fd
-fi
-  '')
-  ];
 
     home.file = {
       ".config/hypr/hyprland.conf".source = ./dotfiles/.config/hypr/hyprland.conf;
-      ".config/wofi/style.css".source = ./dotfiles/.config/wofi/style.css; 
+      # ".config/wofi/style.css".source = ./dotfiles/.config/wofi/style.css; 
       ".config/wofi/config".source = ./dotfiles/.config/wofi/config; 
       ".config/wofi/gopass.switcher.sh".source = ./dotfiles/.config/wofi/gopass.switcher.sh; 
       ".config/wofi/gopass.launcher.sh".source = ./dotfiles/.config/wofi/gopass.launcher.sh;
@@ -70,6 +48,7 @@ fi
         VISUAL="nvim";
         GTK_THEME = "Adwaita:dark";
     };
+
 
 
     # Include the following for git
@@ -273,6 +252,14 @@ fi
     };
 
     services.ssh-agent.enable = false;
+
+    services.flameshot = {
+    enable = true;
+    settings.General = {
+      showStartupLaunchMessage = false;
+      saveLastRegion = true;
+    };
+  };
 
 
     gtk = {
