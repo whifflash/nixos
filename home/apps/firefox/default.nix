@@ -53,12 +53,6 @@ in
                     updateInterval = 24 * 60 * 60 * 1000; # every day
                     definedAliases = [ "@nw" ];
                   };
-                  # "Searx" = {
-                  #   urls = [{ template = "https://searx.aicampground.com/?q={searchTerms}"; }];
-                  #   icon = "https://nixos.wiki/favicon.png";
-                  #   updateInterval = 24 * 60 * 60 * 1000; # every day
-                  #   definedAliases = [ "@searx" ];
-                  # };
                   bing.metaData.hidden = true;
                   google.metaData.alias = "@g"; # builtin engines only support specifying one additional alias
                 };
