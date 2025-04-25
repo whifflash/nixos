@@ -11,11 +11,11 @@
 
       [includeIf "gitdir:~/repos/work/"]
       	path = ~/.gitconfig-work
-      [includeIf "hasconfig:remote.*.url:git@*.Domain.NET:*/*"]
+      [includeIf "hasconfig:remote.*.url:git@*.'' config.sops.secrets."work.internal_domain".path '':*/*"]
       	path = ~/.gitconfig-work
       [includeIf "hasconfig:remote.*.url:ssh://git@*.'' config.sops.secrets."work.internal_domain".path ''/*/*"]
       	path = ~/.gitconfig-work
-      [includeIf "hasconfig:remote.*.url:https://*.ernw.net/*/*"]
+      [includeIf "hasconfig:remote.*.url:https://*.'' config.sops.secrets."work.internal_domain".path ''/*/*"]
       	path = ~/.gitconfig-work
 
       [includeIf "gitdir:~/repos/public/"]

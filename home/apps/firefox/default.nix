@@ -70,10 +70,10 @@ in
                   name = "youtube playlist from all videos";
                   url = "javascript:void((function(){var channelID = ytInitialData.metadata.channelMetadataRenderer.externalId;var playlistURL = \"https://www.youtube.com/playlist?list=UU\" + channelID.substr(2);window.location.href = playlistURL;})());";
                 }
-                {
-                  name = "gitea homeserver";
-                  url = ''https://'' config.sops.secrets."bsw.servers.gitea.domain".path;
-                }
+                # {
+                #   name = "gitea homeserver";
+                #   url = ''https://'' config.sops.secrets."bsw.servers.gitea.domain".path;
+                # }
                 {
                   name = "wikipedia";
                   tags = [ "wiki" ];
