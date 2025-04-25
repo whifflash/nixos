@@ -13,6 +13,7 @@ in
     imports = [
     ./packages.nix
     ./apps/firefox
+    ./git.nix
     ];
   home.username = "mhr";
   home.homeDirectory = "/home/mhr";
@@ -49,28 +50,6 @@ in
         GTK_THEME = "Adwaita:dark";
     };
 
-
-
-    # Include the following for git
-
-    # There is also a possibility to configure identity based on filesystem tree path.
-
-    # e.g. having in ~/.gitconfig the following fragment
-
-    # [includeIf "gitdir:~/dev/private/"]
-    #     path = ~/.gitconfig.private
-
-    # and in ~/.gitconfig.private
-
-    # [user]
-    #     name = Real Name 
-    #     email = username@whatever.com
-
-    # will override default identity properties in global config when a project is placed under a subtree of ~/dev/private/.
-
-    programs.git = {
-      enable = true;
-    };
     programs.neovim = {
       enable = true;
       defaultEditor = true;
@@ -82,8 +61,6 @@ in
       # nvim-treesitter.withAllGrammars
       # plenary-nvim
       gruvbox-material
-      # mini-nvim
-      # (fromGitHub "HEAD" "elihunter173/dirbuf.nvim")
       ];
     };
 
@@ -126,17 +103,6 @@ in
           proxyJump = "vps";
           dynamicForwards = [{port = 1080;}];
         };
-
-
-
-
-        # work = {
-        #   host = (lib.concatStringsSep " " workHosts);
-        #   user = workUser;
-        #   # proxyJump = "bastion-proxy";
-        #   certificateFile = "~/.ssh/id_ecdsa-cert.pub";
-        #   identitiesOnly = true;
-        # };
 
       };
     };
