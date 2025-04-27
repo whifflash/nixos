@@ -48,7 +48,7 @@ in
         defaultBranch = main
 
       [core]
-        editor = subl
+        editor = nvim
       # pager = delta
 
       #[interactive]
