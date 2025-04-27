@@ -48,10 +48,6 @@
     ];
   };
 
-  # hardware.hackrf = {
-  #   enable = true;
-  # };
-
 
   desktop_gdm.enable = false;
   desktop_sddm.enable = true;

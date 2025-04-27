@@ -11,6 +11,10 @@ in
 
   config = lib.mkIf cfg.enable {
 
+  # hardware.hackrf = {
+  #   enable = true;
+  # };
+
 
 
     environment.systemPackages = with pkgs; [
