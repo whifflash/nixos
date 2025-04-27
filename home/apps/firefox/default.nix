@@ -8,16 +8,9 @@ let
 # cfg = config.campground.apps.firefox;
 in
 {
-  # options.campground.apps.firefox = with types; {
-    #   enable = mkBoolOpt false "Whether or not to enable Firefox.";
-    #   cac = mkBoolOpt false "Enable CAC Support";
-    # };
-
-    # config = mkIf cfg.enable {
-      # environment.systemPackages = with pkgs; [
-      #   nssTools
-      #   firefox
-      # ];
+      # nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+      #        "video-downloadhelper"
+      #      ];
 
       programs.firefox = {
         enable = true;
@@ -95,10 +88,17 @@ in
                 }
                 ];
               };
-              # extensions = with inputs.mic92.nur.repos.rycee.firefox-addons; [
-              #   ublock-origin
-              #   video-downloadhelper
-              #   gopass-bridge
+              # extensions = with inputs.nur.repos.rycee.firefox-addons; [
+              extensions.packages = with inputs.firefox-addons.packages.${pkgs.system}; [
+                ublock-origin
+                # video-downloadhelper
+                gopass-bridge
+            # tree-style-tab
+              ];
+              # extensions = with pkgs; [
+              #   nur.repos.rycee.firefox-addons.ublock-origin
+              #   nur.repos.rycee.firefox-addons.video-downloadhelper
+              #   nur.repos.rycee.firefox-addons.gopass-bridge
               #   # bitwarden
               #   # darkreader
               #   # vimium

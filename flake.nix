@@ -12,17 +12,24 @@
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
 
+    firefox-addons = {
+      url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # impermanence.url = "github:nix-community/impermanence";
     # microvm = {
     #   url = "github:astro/microvm.nix";
     #   inputs.nixpkgs.follows = "nixpkgs";
     # };
 
-    nur.url = "github:nix-community/NUR";
+    # nur.url = "github:nix-community/NUR";
 
   };
 
   outputs = { self, nixpkgs, home-manager, sops-nix, nur, ... }@inputs:  {
+
+
     nixosConfigurations.nixbox = nixpkgs.lib.nixosSystem {
       specialArgs = { 
         inherit inputs;
@@ -62,6 +69,7 @@
 
             home-manager.extraSpecialArgs = {
               inherit self;
+              inherit inputs;
               # work = builtins.readFile inputs.sops-nix.nixosModules.sops.secrets."work"o;
             };
           } 
