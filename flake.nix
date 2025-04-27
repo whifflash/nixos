@@ -1,37 +1,28 @@
 {
   inputs = {
-    #nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    home-manager = {
-      # url = "github:nix-community/home-manager/release-24.11";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    nur.url = "github:nix-community/NUR";
-    stylix = {
-      url = "github:danth/stylix/release-24.11";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    home-manager.url = "github:nix-community/home-manager";
+    home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    stylix.url = "github:danth/stylix/release-24.11";
+    stylix.inputs.nixpkgs.follows = "nixpkgs";
+    disko.url = "github:nix-community/disko";
+    disko.inputs.nixpkgs.follows = "nixpkgs";
+    nix-darwin.url = "github:LnL7/nix-darwin/nix-darwin-24.11";
+    nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
+    sops-nix.url = "github:Mic92/sops-nix";
+    sops-nix.inputs.nixpkgs.follows = "nixpkgs";
+
     # impermanence.url = "github:nix-community/impermanence";
     # microvm = {
     #   url = "github:astro/microvm.nix";
     #   inputs.nixpkgs.follows = "nixpkgs";
     # };
-    disko = {
-      url = "github:nix-community/disko";
-      inputs.nixpkgs.follows = "nixpkgs";
 
-    };
-    nix-darwin = {
-      url = "github:LnL7/nix-darwin/nix-darwin-24.11";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    sops-nix = {
-      url = "github:Mic92/sops-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    nur.url = "github:nix-community/NUR";
+
   };
 
-  outputs = { self, nixpkgs, home-manager, nur, ... } @ inputs:  {
+  outputs = { self, nixpkgs, home-manager, sops-nix, nur, ... }@inputs:  {
     nixosConfigurations.nixbox = nixpkgs.lib.nixosSystem {
       specialArgs = { 
         inherit inputs;
@@ -43,8 +34,10 @@
       modules = [ 
       ./hosts/decafbad-vm/configuration.nix
       ./modules/modules.nix  
-      inputs.home-manager.nixosModules.default     
-      inputs.stylix.nixosModules.stylix   
+      # home-manager.nixosModules.default     
+      inputs.stylix.nixosModules.stylix
+      home-manager.nixosModules.home-manager
+      sops-nix.nixosModules.sops
       ];
     };
     nixosConfigurations.mia = nixpkgs.lib.nixosSystem {
@@ -58,14 +51,19 @@
       modules = [ 
       ./hosts/mia/configuration.nix
       ./modules/modules.nix
+      inputs.sops-nix.nixosModules.sops
+      # inputs.sops-nix.homeManagerModules.sops
       inputs.home-manager.nixosModules.default
       inputs.home-manager.nixosModules.home-manager
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            # home-manager.backupFileExtension = "hm-backup";
             home-manager.users.mhr = import ./home/home.nix;
-            # Optionally, use home-manager.extraSpecialArgs to pass arguments to home.nix
+
+            home-manager.extraSpecialArgs = {
+              inherit self;
+              # work = builtins.readFile inputs.sops-nix.nixosModules.sops.secrets."work"o;
+            };
           } 
       ];
     };

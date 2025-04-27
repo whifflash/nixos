@@ -9,6 +9,9 @@ in
   pkgs.whitesur-icon-theme
   pkgs.age
 
+  # gnupg
+
+
   # (pkgs.nerdfonts.override { fonts = [ "FantasqueSansMono" ]; })
   (pkgs.writeShellScriptBin "notification-audio" ''
 fd='/tmp/notid'

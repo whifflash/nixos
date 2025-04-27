@@ -9,26 +9,23 @@
   [ # Include the results of the hardware scan.
   ./hardware-configuration.nix
   ./../../modules/modules.nix  
-  inputs.home-manager.nixosModules.default
   inputs.stylix.nixosModules.stylix
-  inputs.sops-nix.nixosModules.sops
+  inputs.home-manager.nixosModules.default
+  # inputs.sops-nix.nixosModules.sops
+  # inputs.sops-nix.homeManagerModules.sops
   ];
-  sops.defaultSopsFile = ../../secrets/secrets.yaml;
-  sops.defaultSopsFormat = "yaml";
 
-  sops.age.keyFile = "/home/mhr/.config/sops/age/keys.txt";
+  sops = {
+    defaultSopsFile = ../../secrets/secrets.yaml;
+    defaultSopsFormat = "yaml";
+    age.keyFile = "/home/mhr/.config/sops/age/keys.txt";
 
-  sops.secrets."wireguard/${specialArgs.hostname}/keys/private" = {
-    owner = "systemd-network";
   };
-  sops.secrets."wireguard/vps/keys/public" = {
-    owner = config.users.users."systemd-network".name;
-  };  
-  sops.secrets."network-manager.env" = {
-    owner = config.users.users."systemd-network".name;
+  sops.secrets = {
+    "wireguard/${specialArgs.hostname}/keys/private" = { owner = "systemd-network"; };
+    "wireguard/vps/keys/public" = { owner = config.users.users."systemd-network".name; };  
+    "network-manager.env" = { owner = config.users.users."systemd-network".name; };
   };
-
-
 
   # ${specialArgs.hostname}
 
@@ -51,9 +48,9 @@
     ];
   };
 
-  hardware.hackrf = {
-    enable = true;
-  };
+  # hardware.hackrf = {
+  #   enable = true;
+  # };
 
 
   desktop_gdm.enable = false;

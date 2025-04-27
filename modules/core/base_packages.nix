@@ -12,8 +12,8 @@ config = lib.mkIf cfg.enable {
 environment.systemPackages = with pkgs; [
 neovim
 git
-gopass
 gnupg
+gopass
 # pinentry-curses
 sops
 # gqrx TODO move to rf role

@@ -1,12 +1,7 @@
-{ config, pkgs, ... }:
+{ config, pkgs, work, ... }:
 
 let 
   gruvboxPlus = import ./themes/icons/gruvbox-plus.nix { inherit pkgs; };
-  # lib = pkgs.stdenv.lib;
-  workUser = "TODO";
-  workHosts = [ "todo.net"
-               "192.168.1.*"
-              ];
 in
 {
 
@@ -14,6 +9,7 @@ in
     ./packages.nix
     ./apps/firefox
     ./git.nix
+    ./ssh.nix
     ];
   home.username = "mhr";
   home.homeDirectory = "/home/mhr";
@@ -44,6 +40,9 @@ in
 
     };
 
+
+
+
     home.sessionVariables = {
         EDITOR = "nvim";
         VISUAL="nvim";
@@ -62,49 +61,6 @@ in
       # plenary-nvim
       gruvbox-material
       ];
-    };
-
-    programs.ssh = {
-      controlPersist = "12h";
-      controlMaster = "auto";
-
-      matchBlocks = {
-        "github.com" = {
-          user = "git";
-          hostname = "github.com";
-          identityFile = "/home/mhr/.ssh/githubwhifflash";
-          identitiesOnly = true;
-          port = 22;
-        };
-
-        "wgbsw.vps.webdock.cloud" = {
-          user = "mhr";
-          hostname = "vps";
-          identityFile = "/home/mhr/.ssh/webdockvps";
-          identitiesOnly = true;
-          port = 22;
-        };
-        "git.c4rb0n.cloud" = {
-          user = "git";
-          hostname = "git.c4rb0n.cloud";
-          identityFile = "/home/mhr/.ssh/gitea";
-          identitiesOnly = true;
-          port = 2222;
-        };        
-        "ikarus" = {
-          user = "mhr";
-          hostname = "10.20.31.41";
-          identityFile = "/home/mhr/.ssh/gitea";
-          port = 22;
-        };       
-        "poseidon" = {
-          user = "mhr";
-          hostname = "127.0.0.1";
-          proxyJump = "vps";
-          dynamicForwards = [{port = 1080;}];
-        };
-
-      };
     };
 
     programs.tmux = {
@@ -208,7 +164,6 @@ in
     #   style.name = "adwaita-dark";
     # };
 
-    programs.ssh.enable = true;
 
 
     services.gpg-agent = {
@@ -217,7 +172,6 @@ in
       pinentryPackage = pkgs.pinentry-gnome3;
     };
 
-    services.ssh-agent.enable = false;
 
     services.flameshot = {
     enable = true;
@@ -263,44 +217,6 @@ in
         #   name = "Gruvbox-plus"; # "WhiteSur-Dark" "WhiteSur-Light"
         # };
       };
-
-
-      # programs.git.includes
-      #   List of configuration files to include.
-
-      #   Type: list of (submodule)
-
-      #   Default: [ ]
-
-      #   Example:
-
-      #       [
-      #         { path = "~/path/to/config.inc"; }
-      #         {
-       #           path = "~/path/to/conditional.inc";
-       #           condition = "gitdir:~/src/dir";
-       #         }
-       #       ]
-
-       #   Declared by:
-       #       <home-manager/modules/programs/git.nix>
-
-       # Home Manager can also manage your environment variables through
-       # 'home.sessionVariables'. These will be explicitly sourced when using a
-       # shell provided by Home Manager. If you don't want to manage your shell
-       # through Home Manager then you have to manually source 'hm-session-vars.sh'
-       # located at either
-       #
-       #  ~/.nix-profile/etc/profile.d/hm-session-vars.sh
-       #
-       # or
-       #
-       #  ~/.local/state/nix/profiles/profile/etc/profile.d/hm-session-vars.sh
-       #
-       # or
-       #
-       #  /etc/profiles/per-user/mhr/etc/profile.d/hm-session-vars.sh
-       #
 
 
       # Let Home Manager install and manage itself.
