@@ -1,10 +1,10 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    home-manager.url = "github:nix-community/home-manager";
+    home-manager.url = "github:nix-community/home-manager/master";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
-    stylix.url = "github:danth/stylix/release-24.11";
-    stylix.inputs.nixpkgs.follows = "nixpkgs";
+    # stylix.url = "github:danth/stylix/release-24.11";
+    # stylix.inputs.nixpkgs.follows = "nixpkgs";
     disko.url = "github:nix-community/disko";
     disko.inputs.nixpkgs.follows = "nixpkgs";
     nix-darwin.url = "github:LnL7/nix-darwin/nix-darwin-24.11";
@@ -41,8 +41,7 @@
       modules = [ 
       ./hosts/decafbad-vm/configuration.nix
       ./modules/modules.nix  
-      # home-manager.nixosModules.default     
-      inputs.stylix.nixosModules.stylix
+
       home-manager.nixosModules.home-manager
       sops-nix.nixosModules.sops
       ];
@@ -62,17 +61,6 @@
       # inputs.sops-nix.homeManagerModules.sops
       inputs.home-manager.nixosModules.default
       inputs.home-manager.nixosModules.home-manager
-          {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.mhr = import ./home/home.nix;
-
-            home-manager.extraSpecialArgs = {
-              inherit self;
-              inherit inputs;
-              # work = builtins.readFile inputs.sops-nix.nixosModules.sops.secrets."work"o;
-            };
-          } 
       ];
     };
     nixosConfigurations.nixboxmia = nixpkgs.lib.nixosSystem {
