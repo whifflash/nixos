@@ -17,6 +17,7 @@
     ./roles/workstation.nix
     ./roles/hardware-development.nix
     ./roles/tailscale-node.nix
+    ./roles/laptop.nix
     ./setups/3gpplab.nix   
   ];
 

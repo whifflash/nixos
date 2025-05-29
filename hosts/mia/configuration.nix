@@ -52,8 +52,7 @@
   # Enable networking
   networking.networkmanager.enable = true;
 
-  # Put in laptop role
-  programs.light.enable = true;
+
 
   hardware.graphics = {
     enable = true;
@@ -78,6 +77,8 @@
   role_workstation.enable = true;
   role_hardware-development.enable = true;
   role_tailscale-node.enable = true;
+  role_laptop.enable = true;
+
 
 
   # Enable the X11 windowing system.

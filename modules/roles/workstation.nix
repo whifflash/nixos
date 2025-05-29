@@ -33,6 +33,7 @@ in
     gsimplecal
     vlc
     libvlc
+    zip
     ];
 
     hardware.bluetooth.enable = true; # enables support for Bluetooth
