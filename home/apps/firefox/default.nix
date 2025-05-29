@@ -93,6 +93,7 @@ in
                 ublock-origin
                 # video-downloadhelper
                 gopass-bridge
+                darkreader
             # tree-style-tab
               ];
               # extensions = with pkgs; [

@@ -10,7 +10,7 @@ in
 {
   programs.git = {
     enable = true;
-    userName = "whifflash";
+    userName = builtins.readFile config.sops.secrets.git.userName.path;
     userEmail = "34140499+whifflash@users.noreply.github.com";
   };
 
