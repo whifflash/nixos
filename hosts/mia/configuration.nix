@@ -29,17 +29,17 @@
     "git/userEmail" = {};
   };
 
-  home-manager = {
-            useGlobalPkgs = true;
-            useUserPackages = true;
-            users.mhr = import ../../home/home.nix;
+  # home-manager = {
+  #           useGlobalPkgs = true;
+  #           useUserPackages = true;
+  #           users.mhr = import ../../home/home.nix;
 
-            extraSpecialArgs = {
-              inherit inputs;
-              inherit config;
-              # work = builtins.readFile inputs.sops-nix.nixosModules.sops.secrets."work"o;
-            };
-          }; 
+  #           extraSpecialArgs = {
+  #             inherit inputs;
+  #             inherit config;
+  #             # work = builtins.readFile inputs.sops-nix.nixosModules.sops.secrets."work"o;
+  #           };
+  #         }; 
 
   # ${specialArgs.hostname}
 
@@ -75,7 +75,7 @@
 
   virtualization_guest.enable = false;
   role_workstation.enable = true;
-  role_hardware-development.enable = true;
+  role_hardware-development.enable = false;
   role_tailscale-node.enable = true;
   role_laptop.enable = true;
 

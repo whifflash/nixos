@@ -1,14 +1,16 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # nixpkgs = { url = "github:nixos/nixpkgs/nixos-25.05"; };
+    # unstable = { url = "github:nixos/nixpkgs/nixos-unstable"; };
     home-manager.url = "github:nix-community/home-manager/master";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     # stylix.url = "github:danth/stylix/release-24.11";
     # stylix.inputs.nixpkgs.follows = "nixpkgs";
-    disko.url = "github:nix-community/disko";
-    disko.inputs.nixpkgs.follows = "nixpkgs";
-    nix-darwin.url = "github:LnL7/nix-darwin/nix-darwin-24.11";
-    nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
+    # disko.url = "github:nix-community/disko";
+    # disko.inputs.nixpkgs.follows = "nixpkgs";
+    # nix-darwin.url = "github:LnL7/nix-darwin/nix-darwin-24.11";
+    # nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
 

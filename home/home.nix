@@ -1,20 +1,20 @@
 { config, pkgs, work, ... }:
 
 let 
-  gruvboxPlus = import ./themes/icons/gruvbox-plus.nix { inherit pkgs; };
+  # gruvboxPlus = import ./themes/icons/gruvbox-plus.nix { inherit pkgs; };
 in
 {
 
-    imports = [
-    ./packages.nix
-    ./apps/firefox
-    ./git.nix
-    ./ssh.nix
-    ];
+    # imports = [
+    # ./packages.nix
+    # ./apps/firefox
+    # ./git.nix
+    # ./ssh.nix
+    # ];
   home.username = "mhr";
   home.homeDirectory = "/home/mhr";
 
-  home.stateVersion = "24.05"; # Please read the comment before changing.
+  home.stateVersion = "24.11"; # Please read the comment before changing.
 
 
 
