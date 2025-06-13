@@ -1,16 +1,16 @@
-{ config, pkgs, work, ... }:
+{ inputs, config, pkgs, work, ... }:
 
 let 
   # gruvboxPlus = import ./themes/icons/gruvbox-plus.nix { inherit pkgs; };
 in
 {
 
-    # imports = [
-    # ./packages.nix
-    # ./apps/firefox
+    imports = [
+    ./packages.nix
+    ./apps/firefox
     # ./git.nix
-    # ./ssh.nix
-    # ];
+    ./ssh.nix
+    ];
   home.username = "mhr";
   home.homeDirectory = "/home/mhr";
 
@@ -19,14 +19,18 @@ in
 
 
     home.file = {
-      ".config/hypr/hyprland.conf".source = ./dotfiles/.config/hypr/hyprland.conf;
+      # ".config/hypr/hyprland.conf".source = ./dotfiles/.config/hypr/hyprland.conf;
       # ".config/wofi/style.css".source = ./dotfiles/.config/wofi/style.css; 
+
       ".config/wofi/config".source = ./dotfiles/.config/wofi/config; 
       ".config/wofi/gopass.switcher.sh".source = ./dotfiles/.config/wofi/gopass.switcher.sh; 
       ".config/wofi/gopass.launcher.sh".source = ./dotfiles/.config/wofi/gopass.launcher.sh;
-      ".config/gopass/stores.local".source = ./dotfiles/.config/gopass/stores.local;  
+      ".config/gopass/stores.local".source = ./dotfiles/.config/gopass/stores.local; 
+
+
       # ".config/gtk-4.0/gtk.css".source = ./dotfiles/.config/gtk-4.0/gtk.css; 
       # ".config/gtk-3.0/gtk.css".source = ./dotfiles/.config/gtk-3.0/gtk.css;
+
       ".config/waybar/style.css".source = ./dotfiles/.config/waybar/style.css;
       ".config/waybar/colors.css".source = ./dotfiles/.config/waybar/colors.css;
       ".config/waybar/config".source = ./dotfiles/.config/waybar/config; 
@@ -59,7 +63,7 @@ in
       # nvim-lspconfig
       # nvim-treesitter.withAllGrammars
       # plenary-nvim
-      gruvbox-material
+      # gruvbox-material
       ];
     };
 

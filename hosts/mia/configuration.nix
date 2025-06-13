@@ -10,7 +10,7 @@
   ./hardware-configuration.nix
   ./../../modules/modules.nix  
   # inputs.stylix.nixosModules.stylix
-  inputs.home-manager.nixosModules.default
+  # inputs.home-manager.nixosModules.default
   # inputs.sops-nix.nixosModules.sops
   # inputs.sops-nix.homeManagerModules.sops
   ];
@@ -25,23 +25,9 @@
     "wireguard/${specialArgs.hostname}/keys/private" = { owner = "systemd-network"; };
     "wireguard/vps/keys/public" = { owner = config.users.users."systemd-network".name; };  
     "network-manager.env" = { owner = config.users.users."systemd-network".name; };
-    "git/userName" = {};
-    "git/userEmail" = {};
+    # "git/userName" = {};
+    # "git/userEmail" = {};
   };
-
-  # home-manager = {
-  #           useGlobalPkgs = true;
-  #           useUserPackages = true;
-  #           users.mhr = import ../../home/home.nix;
-
-  #           extraSpecialArgs = {
-  #             inherit inputs;
-  #             inherit config;
-  #             # work = builtins.readFile inputs.sops-nix.nixosModules.sops.secrets."work"o;
-  #           };
-  #         }; 
-
-  # ${specialArgs.hostname}
 
   # Bootloader.
   boot.loader.systemd-boot.enable = true;

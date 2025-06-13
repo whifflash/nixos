@@ -1,4 +1,4 @@
-{ options, config, lib, pkgs, inputs, ... }:
+{ inputs, options, config, lib, pkgs, ... }:
 
 # taken from: https://gitlab.com/usmcamp0811/dotfiles/-/blob/fb584a888680ff909319efdcbf33d863d0c00eaa/modules/home/apps/firefox/default.nix
 
@@ -6,6 +6,7 @@ with lib;
 # with lib.campground;
 let
 # cfg = config.campground.apps.firefox;
+firefox-addons = inputs.firefox-addons.packages.${pkgs.system};
 in
 {
       # nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
@@ -89,13 +90,22 @@ in
                 ];
               };
               # extensions = with inputs.nur.repos.rycee.firefox-addons; [
-              extensions.packages = with inputs.firefox-addons.packages.${pkgs.system}; [
-                ublock-origin
-                # video-downloadhelper
-                gopass-bridge
-                darkreader
-            # tree-style-tab
-              ];
+            #  extensions = with inputs.firefox-addons.packages.${pkgs.system};
+            #  [
+            #     ublock-origin
+            #     # video-downloadhelper
+            #     gopass-bridge
+            #     darkreader
+            # # tree-style-tab
+            #   ];
+            extensions.packages = with firefox-addons; [
+            ublock-origin
+            gopass-bridge
+            darkreader
+            refined-github
+            violentmonkey
+            privacy-badger
+          ];
               # extensions = with pkgs; [
               #   nur.repos.rycee.firefox-addons.ublock-origin
               #   nur.repos.rycee.firefox-addons.video-downloadhelper

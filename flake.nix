@@ -18,6 +18,8 @@
       url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # firefox-addons.url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
+    # firefox-addons.inputs.nixpkgs.follows = "nixpkgs";
 
     # impermanence.url = "github:nix-community/impermanence";
     # microvm = {
@@ -43,8 +45,6 @@
       modules = [ 
       ./hosts/decafbad-vm/configuration.nix
       ./modules/modules.nix  
-
-      home-manager.nixosModules.home-manager
       sops-nix.nixosModules.sops
       ];
     };
@@ -60,9 +60,20 @@
       ./hosts/mia/configuration.nix
       ./modules/modules.nix
       inputs.sops-nix.nixosModules.sops
-      # inputs.sops-nix.homeManagerModules.sops
-      inputs.home-manager.nixosModules.default
       inputs.home-manager.nixosModules.home-manager
+      {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+
+            home-manager.users.mhr = import ./home/home.nix;
+
+            home-manager.extraSpecialArgs = {
+            inherit inputs;
+            };
+      }
+      # inputs.sops-nix.homeManagerModules.sops
+      # inputs.home-manager.nixosModules.default
+      # inputs.home-manager.nixosModules.home-manager
       ];
     };
     nixosConfigurations.nixboxmia = nixpkgs.lib.nixosSystem {
