@@ -8,7 +8,7 @@ in
     imports = [
     ./packages.nix
     ./apps/firefox
-    # ./git.nix
+    ./git.nix
     ./ssh.nix
     ];
   home.username = "mhr";
