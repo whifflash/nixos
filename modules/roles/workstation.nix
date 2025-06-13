@@ -24,6 +24,7 @@ in
     joplin-desktop
     tmux
     alacritty
+    gopass-jsonapi
     # firefox
     chromium
     blueberry

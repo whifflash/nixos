@@ -8,6 +8,7 @@ in
   pkgs.whitesur-cursors
   pkgs.whitesur-icon-theme
   pkgs.age
+  
 
   # gnupg
 
