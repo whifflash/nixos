@@ -71,9 +71,6 @@
             inherit inputs;
             };
       }
-      # inputs.sops-nix.homeManagerModules.sops
-      # inputs.home-manager.nixosModules.default
-      # inputs.home-manager.nixosModules.home-manager
       ];
     };
     nixosConfigurations.nixboxmia = nixpkgs.lib.nixosSystem {
@@ -100,8 +97,19 @@
       system = "x86_64-linux";
       modules = [ 
       ./hosts/luna/configuration.nix
-      ./modules/modules.nix  
-      inputs.home-manager.nixosModules.default          
+      ./modules/modules.nix
+      inputs.sops-nix.nixosModules.sops
+      inputs.home-manager.nixosModules.home-manager
+      {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+
+            home-manager.users.mhr = import ./home/home.nix;
+
+            home-manager.extraSpecialArgs = {
+            inherit inputs;
+            };
+      }
       ];
     };
   };
