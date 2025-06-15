@@ -71,7 +71,7 @@ in
     enable = true;
     terminal = "tmux-256color";
     historyLimit = 100000;
-    prefix = "C-Space";
+    prefix = "C-A";
     mouse = true;
     shell = "${pkgs.zsh}/bin/zsh";
     keyMode = "vi";
