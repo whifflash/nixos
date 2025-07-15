@@ -30,7 +30,8 @@ in
     blueberry
     wireguard-tools
     networkmanagerapplet
-    pcmanfm
+    # pcmanfm
+    nemo
     gsimplecal
     vlc
     libvlc
