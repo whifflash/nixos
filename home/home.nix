@@ -77,160 +77,124 @@ in
     keyMode = "vi";
     escapeTime = 10;
 
-    plugins = with pkgs.tmuxPlugins; [
+    plugins = with pkgs.tmuxPlugins; [];
     # tmuxPlugins.tokyo-night-tmux
     # tmux-thumbs
     # cpu
     # vim-tmux-navigator
     # better-mouse-mode
     # sensible
-    # yank
-    # {
-      #   plugin = power-theme;
-      #   extraConfig = ''
-      #      set -g @tmux_power_theme 'gold'
-      #   '';
-      # }
-      # {
-        #   plugin = resurrect;
-        #   extraConfig = ''
-        #     # set -g @resurrect-strategy-nvim 'session'
-        #     set -g @resurrect-capture-pane-contents 'on'
-        #   '';
-        # }
-        # {
-          #   plugin = continuum;
-          #   extraConfig = ''
-          #     set -g @continuum-restore 'on'
-          #     # set -g @continuum-save-interval '60' # minutes
-          #   '';
-          # }
-          ];
 
 
-          extraConfig = ''
-          # ${pkgs.zsh}
-          set -g default-terminal "tmux-256color"
-          set -ag terminal-overrides ",xterm-256color:RGB"
 
-          set-window-option -g mode-keys vi
+    extraConfig = ''
+    # ${pkgs.zsh}
+    set -g default-terminal "tmux-256color"
+    set -ag terminal-overrides ",xterm-256color:RGB"
 
-          # Unbinding
-          unbind C-b
-          unbind %
-          unbind '"'
-          unbind r
-          unbind -T copy-mode-vi MouseDragEnd1Pane # don't exit copy mode when dragging with mouse
+    set-window-option -g mode-keys vi
 
-          # Bind Keys
-          bind-key C-Space send-prefix
-          bind | split-window -h 
-          bind - split-window -v
-          bind r source-file ~/.config/tmux/tmux.conf
+    # Unbinding
+    unbind C-b
+    unbind %
+    unbind '"'
+    unbind r
+    unbind -T copy-mode-vi MouseDragEnd1Pane # don't exit copy mode when dragging with mouse
 
-          # Resize Pane
-          # bind j resize-pane -D 5
-          # bind k resize-pane -U 5
-          # bind l resize-pane -R 5
-          # bind h resize-pane -L 5
-          # bind -r m resize-pane -Z
+    # Bind Keys
+    bind-key C-Space send-prefix
+    bind | split-window -h 
+    bind - split-window -v
+    bind r source-file ~/.config/tmux/tmux.conf
 
-          # bind-key -T copy-mode-vi 'v' send -X begin-selection # start selecting text with "v"
-          # bind-key -T copy-mode-vi 'y' send -X copy-selection # copy text with "y"
+    # Resize Pane
+    # bind j resize-pane -D 5
+    # bind k resize-pane -U 5
+    # bind l resize-pane -R 5
+    # bind h resize-pane -L 5
+    # bind -r m resize-pane -Z
 
-          # # For Yazi
-          # set -g allow-passthrough all
-          # set -ga update-environment TERM
-          # set -ga update-environment TERM_PROGRAM
-          '';
-        };
+    # bind-key -T copy-mode-vi 'v' send -X begin-selection # start selecting text with "v"
+    # bind-key -T copy-mode-vi 'y' send -X copy-selection # copy text with "y"
+
+    # # For Yazi
+    # set -g allow-passthrough all
+    # set -ga update-environment TERM
+    # set -ga update-environment TERM_PROGRAM
+    '';
+  };
 
 
 
 
-        services.gpg-agent = {
-          enable = true;
-          enableSshSupport = true;
-          pinentry.package = pkgs.pinentry-gnome3;
-        };
+  services.gpg-agent = {
+    enable = true;
+    enableSshSupport = true;
+    pinentry.package = pkgs.pinentry-gnome3;
+  };
 
 
-        services.flameshot = {
-          enable = true;
-          settings.General = {
-            showStartupLaunchMessage = false;
-            saveLastRegion = true;
+  services.flameshot = {
+    enable = true;
+    settings.General = {
+      showStartupLaunchMessage = false;
+      saveLastRegion = true;
+    };
+  };
+
+
+  dconf.settings = {
+    "org/gnome/desktop/background" = {
+      picture-uri-dark = "file://${pkgs.nixos-artwork.wallpapers.nineish-dark-gray.src}";
+    };
+    "org/gnome/desktop/interface" = {
+      color-scheme = "prefer-dark";
+    };
+  };
+
+
+  # Wayland, X, etc. support for session vars
+  # systemd.user.sessionVariables = config.home-manager.users.mhr.home.sessionVariables;
+
+
+  qt = {
+    enable = true;
+    platformTheme.name = "qtct";
+    style.name = "kvantum";
+  };
+
+  xdg.configFile = {
+    "Kvantum/kvantum.kvconfig".text = ''
+    [General]
+    theme=WhiteSur
+    '';
+
+    "Kvantum/WhiteSurDark".source = "${pkgs.whitesur-kde}/share/Kvantum/WhiteSur";
+  };
+
+
+  gtk = {
+    enable = true;
+
+          theme = {
+            name = "WhiteSur-Dark";
+            package = pkgs.whitesur-gtk-theme;
           };
-        };
-
-
-        dconf.settings = {
-          "org/gnome/desktop/background" = {
-            picture-uri-dark = "file://${pkgs.nixos-artwork.wallpapers.nineish-dark-gray.src}";
+          cursorTheme = {
+            package = pkgs.bibata-cursors;
+            name = "Bibata-Modern-Ice";
           };
-          "org/gnome/desktop/interface" = {
-            color-scheme = "prefer-dark";
+          iconTheme = {
+            package = pkgs.whitesur-icon-theme;
+            name = "WhiteSur-Dark"; # "WhiteSur-Dark" "WhiteSur-Light"
           };
-        };
-
-
-        # Wayland, X, etc. support for session vars
-        # systemd.user.sessionVariables = config.home-manager.users.mhr.home.sessionVariables;
-
-
-        qt = {
-          enable = true;
-          platformTheme.name = "qtct";
-          style.name = "kvantum";
-        };
-
-        xdg.configFile = {
-          "Kvantum/kvantum.kvconfig".text = ''
-          [General]
-          theme=WhiteSur
-          '';
-
-          "Kvantum/WhiteSurDark".source = "${pkgs.whitesur-kde}/share/Kvantum/WhiteSur";
-        };
-
-
-        gtk = {
-          enable = true;
-          # gtk3.extraConfig.gtk-decoration-layout = "menu:";
-          # gtk3.bookmarks = [
-          #   "file://home/mhr/nixos"
-          # ];
-          #   theme = {
-            #   name = "Arc-Dark";
-            #   package = pkgs.arc-theme;
+          # iconTheme = {
+            #   package = gruvboxPlus;
+            #   name = "Gruvbox-plus"; # "WhiteSur-Dark" "WhiteSur-Light"
             # };
-            # theme = {
-              #   package = pkgs.adw-gtk3;
-              #   name = "adw-gtk3-dark";
-              # };
-              # theme = {
-                #   name = "Materia-Dark";
-                #   package = pkgs.materia-theme;
-                # };
-                theme = {
-                  name = "WhiteSur-Dark";
-                  package = pkgs.whitesur-gtk-theme;
-                };
-                cursorTheme = {
-                  package = pkgs.bibata-cursors;
-                  name = "Bibata-Modern-Ice";
-                };
-                iconTheme = {
-                  package = pkgs.whitesur-icon-theme;
-                  name = "WhiteSur-Dark"; # "WhiteSur-Dark" "WhiteSur-Light"
-                };
-                # iconTheme = {
-                  #   package = gruvboxPlus;
-                  #   name = "Gruvbox-plus"; # "WhiteSur-Dark" "WhiteSur-Light"
-                  # };
-                };
+          };
 
 
-                # Let Home Manager install and manage itself.
-                programs.home-manager.enable = true;
-              }
+          # Let Home Manager install and manage itself.
+          programs.home-manager.enable = true;
+        }
