@@ -247,9 +247,11 @@ titlebar_border_thickness 2
     # Special keys to adjust brightness via brightnessctl
     bindsym --locked XF86MonBrightnessDown exec brightnessctl set 5%-
     bindsym --locked XF86MonBrightnessUp exec brightnessctl set 5%+
-    # Special key to take a screenshot with grim
-    # TODO make this declarative
-    # bindsym Print exec "slurp | grim -g - /home/mhr/Pictures/Screenshots/$(date +'screenshot_%Y-%m-%d-%H%M%S.png')"
+    # Screenshots
+    bindsym $mod+Shift+Print exec "slurp | grim -g - /home/mhr/Screenshots/$(date +'screenshot_%Y-%m-%d-%H%M%S.png'); notification-short 'Screenshot Taken'"
+    bindsym $mod+Print exec "grim /home/mhr/Screenshots/$(date +'screenshot_%Y-%m-%d-%H%M%S.png'); notification-short 'Screenshot Taken'"
+    # bindsym $mod+Print exec "notification-short 'Screenshot Taken'"
+
 
 #
 # Status Bar:

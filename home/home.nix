@@ -176,25 +176,25 @@ in
   gtk = {
     enable = true;
 
-          theme = {
-            name = "WhiteSur-Dark";
-            package = pkgs.whitesur-gtk-theme;
-          };
-          cursorTheme = {
-            package = pkgs.bibata-cursors;
-            name = "Bibata-Modern-Ice";
-          };
-          iconTheme = {
-            package = pkgs.whitesur-icon-theme;
-            name = "WhiteSur-Dark"; # "WhiteSur-Dark" "WhiteSur-Light"
-          };
-          # iconTheme = {
-            #   package = gruvboxPlus;
-            #   name = "Gruvbox-plus"; # "WhiteSur-Dark" "WhiteSur-Light"
-            # };
-          };
+    theme = {
+      name = "WhiteSur-Dark";
+      package = pkgs.whitesur-gtk-theme;
+    };
+    cursorTheme = {
+      package = pkgs.bibata-cursors;
+      name = "Bibata-Modern-Ice";
+    };
+    iconTheme = {
+      package = pkgs.whitesur-icon-theme;
+      name = "WhiteSur-Dark"; # "WhiteSur-Dark" "WhiteSur-Light"
+    };
+    # iconTheme = {
+      #   package = gruvboxPlus;
+      #   name = "Gruvbox-plus"; # "WhiteSur-Dark" "WhiteSur-Light"
+      # };
+    };
 
 
-          # Let Home Manager install and manage itself.
-          programs.home-manager.enable = true;
-        }
+    # Let Home Manager install and manage itself.
+    programs.home-manager.enable = true;
+  }

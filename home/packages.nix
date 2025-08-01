@@ -24,6 +24,11 @@ else
   notify-send -r $oldid -t 5000 -p $1 > $fd
 fi
   '')
+
+  (pkgs.writeShellScriptBin "notification-short" ''
+  notify-send -t 5000 -p $1
+
+  '')
   ];
 
 }
