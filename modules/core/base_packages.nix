@@ -16,8 +16,8 @@ gnupg
 gopass
 # pinentry-curses
 sops
-# gqrx TODO move to rf role
 reaction
+pcmanfm
 ];
 };
 
