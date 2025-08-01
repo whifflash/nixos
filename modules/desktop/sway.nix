@@ -34,7 +34,7 @@ in
     wofi
     swaylock-effects
     libnotify
-    gnome-wather
+    gnome-weather
     pavucontrol
     ];
   };

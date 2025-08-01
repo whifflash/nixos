@@ -107,7 +107,8 @@
     },
     "custom/weather": {
         "exec": "curl 'https://wttr.in/heidelberg?format=1'",
-        "interval": 3600
+        "interval": 3600,
+        "on-click": "gnome-weather",
     },
     "pulseaudio": {
         "scroll-step": 3, // %, can be a float
