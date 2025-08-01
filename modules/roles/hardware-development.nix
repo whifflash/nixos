@@ -20,6 +20,7 @@ in
     environment.systemPackages = with pkgs; [
     kicad
     betaflight-configurator
+    gqrx
     ];
 
   };
