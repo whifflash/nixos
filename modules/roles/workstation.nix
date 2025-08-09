@@ -121,7 +121,7 @@ TOKEN=${config.sops.placeholder."gitea/token"}
     };
 
     # ensure PATH has what we need at unit runtime
-    path = [ pkgs.git pkgs.jq pkgs.curl pkgs.openssh pkgs.gawk pkgs.getent ];
+    path = [ pkgs.git pkgs.jq pkgs.curl pkgs.openssh pkgs.gawk pkgs.getent pkgs.netcat ];
   };
 
     };
