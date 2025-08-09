@@ -2,14 +2,41 @@
 let 
 id = "role_workstation";
 cfg = config.${id};
+
+gitea_base = "git.c4rb0n.cloud";
+syncUser = "mhr";
+baseUrl  = "https://${gitea_base}";
+destDir  = "/home/${syncUser}/${gitea_base}";
+
+giteaSyncScript = pkgs.writeShellScript "gitea-sync-user-repos.sh"
+    (builtins.readFile ../../scripts/gitea-sync-user-repos.sh);
+
 in 
 {
+
+  imports = [ inputs.sops-nix.nixosModules.sops ];
 
   options.${id} = {
     enable = lib.mkEnableOption "enables ${id} profile";
   };
 
+
+
   config = lib.mkIf cfg.enable {
+
+
+    sops.secrets."gitea/token" = {
+  sopsFile = ../../secrets/gitea-token.yaml;
+  format   = "yaml";
+  key      = "token";
+  owner    = syncUser;
+  group    = "users";
+  mode     = "0440";
+};
+
+sops.templates."gitea.env".content = ''
+TOKEN=${config.sops.placeholder."gitea/token"}
+'';
 
     # Needed for sublime
     nixpkgs.config.permittedInsecurePackages = [
@@ -22,7 +49,7 @@ in
     thunderbird
     joplin
     joplin-desktop
-    jq
+    # jq
     tmux
     alacritty
     gopass-jsonapi
@@ -69,7 +96,45 @@ in
         fi
         '';
       };
+      gitea-sync = {
+    description = "Sync Gitea repos (SSH) visible to PAT";
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
+
+    environment = {
+    BASE_URL = baseUrl;
+    DEST_DIR = destDir;
+    GIT_SSH_COMMAND = "ssh -o StrictHostKeyChecking=accept-new";
+  };
+
+    serviceConfig = {
+      Type = "oneshot";
+      User = syncUser;
+      Group = "users";
+
+      
+      # the envfile with TOKEN=... rendered from the YAML secret
+      EnvironmentFile = config.sops.templates."gitea.env".path;
+
+      ExecStart = "${giteaSyncScript}";
+      WorkingDirectory = "/home/${syncUser}";
     };
+
+    # ensure PATH has what we need at unit runtime
+    path = [ pkgs.git pkgs.jq pkgs.curl pkgs.openssh ];
+  };
+
+    };
+
+
+    systemd.timers.gitea-sync = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "hourly";      # tune to taste
+      RandomizedDelaySec = "10m";
+      Persistent = true;
+    };
+  };
 
 
 
