@@ -22,6 +22,7 @@ in
     thunderbird
     joplin
     joplin-desktop
+    jq
     tmux
     alacritty
     gopass-jsonapi

@@ -21,7 +21,7 @@
               identitiesOnly = true;
               port = 22;
           };
-          "git.c4rb0n.cloud" = {
+          "git.c4rb0n.cloud 10.20.31.41" = {
               user = "git";
               hostname = "git.c4rb0n.cloud";
               identityFile = "/home/mhr/.ssh/gitea";
