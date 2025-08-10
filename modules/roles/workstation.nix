@@ -44,25 +44,26 @@ TOKEN=${config.sops.placeholder."gitea/token"}
     ];
 
     environment.systemPackages = with pkgs; [
-    sublime4
-    neovim
-    thunderbird
+    alacritty
+    blueberry
+    chromium
+    # firefox    
+    gopass-jsonapi
+    gsimplecal
     joplin
     joplin-desktop
     # jq
-    tmux
-    alacritty
-    gopass-jsonapi
-    # firefox
-    chromium
-    blueberry
-    wireguard-tools
+    libvlc
+    nemo
+    neovim
     networkmanagerapplet
     # pcmanfm
-    nemo
-    gsimplecal
+    sublime4
+    thunderbird
+    tmux
+    udiskie
     vlc
-    libvlc
+    wireguard-tools    
     zip
     ];
 
@@ -76,6 +77,8 @@ TOKEN=${config.sops.placeholder."gitea/token"}
     pkgs.nerd-fonts.symbols-only
     pkgs.nerd-fonts.roboto-mono
     ];
+
+    services.udisks2.enable = true;
 
 
     systemd.services = {
