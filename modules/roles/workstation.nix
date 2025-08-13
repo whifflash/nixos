@@ -104,14 +104,20 @@ TOKEN=${config.sops.placeholder."gitea/token"}
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
 
-    environment = {
+  preStart = ''
+    install -m 700 -d %S/gitea-sync
+    ssh-keyscan -T 5 "${gitea_base}" >> %S/gitea-sync/known_hosts 2>/dev/null || true
+  '';
+  environment = {
     BASE_URL = baseUrl;
     DEST_DIR = destDir;
-    GIT_SSH_COMMAND = "ssh -o StrictHostKeyChecking=accept-new";
+    GIT_SSH_COMMAND = "ssh -o UserKnownHostsFile=%S/gitea-sync/known_hosts -o StrictHostKeyChecking=yes";
   };
 
     serviceConfig = {
       Type = "oneshot";
+      StateDirectory = "gitea-sync";
+      StateDirectoryMode = "0700";
       User = syncUser;
       Group = "users";
 

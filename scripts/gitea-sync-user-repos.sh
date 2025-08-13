@@ -76,11 +76,10 @@ preflight() {
 
 # ---- API helper ----
 api() {
-  local path="$1"
-  local page="${2:-1}"
-  local limit="${3:-50}"
+  local path="$1" page="${2:-1}" limit="${3:-50}"
   local url="${BASE_URL%/}${path}?page=${page}&limit=${limit}"
-  curl -fsSL -H "Authorization: token ${TOKEN}" "$url"
+  curl -fsSL --retry 3 --retry-all-errors --connect-timeout 10 --max-time 35 \
+    -H "Authorization: token ${TOKEN}" "$url"
 }
 
 # ---- Clone / Pull helper ----
