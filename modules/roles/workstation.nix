@@ -10,6 +10,7 @@ destDir  = "/home/${syncUser}/${gitea_base}";
 
 giteaSyncScript = pkgs.writeShellScript "gitea-sync-user-repos.sh"
     (builtins.readFile ../../scripts/gitea-sync-user-repos.sh);
+envFile = config.sops.templates."gitea.env".path;
 
 in 
 {
@@ -109,28 +110,42 @@ TOKEN=${config.sops.placeholder."gitea/token"}
     ssh-keyscan -T 5 "${gitea_base}" >> %S/gitea-sync/known_hosts 2>/dev/null || true
   '';
   environment = {
-    BASE_URL = baseUrl;
-    DEST_DIR = destDir;
-    GIT_SSH_COMMAND = "ssh -o UserKnownHostsFile=%S/gitea-sync/known_hosts -o StrictHostKeyChecking=yes";
-  };
+      BASE_URL = baseUrl;
+      DEST_DIR = destDir;
+      LOG_LEVEL = "INFO";  # set to DEBUG for verbose
+    };
 
     serviceConfig = {
       Type = "oneshot";
-      StateDirectory = "gitea-sync";
-      StateDirectoryMode = "0700";
       User = syncUser;
       Group = "users";
+      SyslogIdentifier = "gitea-sync";
 
-      
-      # the envfile with TOKEN=... rendered from the YAML secret
-      EnvironmentFile = config.sops.templates."gitea.env".path;
+      # persistent state dir for known_hosts, counters, etc.
+      StateDirectory = "gitea-sync";
+      StateDirectoryMode = "0700";
 
+      EnvironmentFile = envFile;
       ExecStart = "${giteaSyncScript}";
-      WorkingDirectory = "/home/${syncUser}";
+      WorkingDirectory = destDir;
+
+      Restart = "on-failure";
+      RestartSec = 30;
+
+      # sandboxing
+      PrivateTmp = true;
+      NoNewPrivileges = true;
+      LockPersonality = true;
+      RestrictRealtime = true;
+      RestrictSUIDSGID = true;
+      CapabilityBoundingSet = "";
+      ProtectSystem = "strict";
+      ProtectHome = "read-only";
+      ReadWritePaths = [ destDir "/var/lib/gitea-sync" ];
     };
 
     # ensure PATH has what we need at unit runtime
-    path = [ pkgs.git pkgs.jq pkgs.curl pkgs.openssh pkgs.gawk pkgs.getent pkgs.netcat ];
+    path = [ pkgs.git pkgs.jq pkgs.curl pkgs.openssh pkgs.coreutils pkgs.systemd ];
   };
 
     };
@@ -139,7 +154,8 @@ TOKEN=${config.sops.placeholder."gitea/token"}
     systemd.timers.gitea-sync = {
     wantedBy = [ "timers.target" ];
     timerConfig = {
-      OnCalendar = "hourly";      # tune to taste
+      OnBootSec = "5m";
+      OnUnitActiveSec = "1h";
       RandomizedDelaySec = "10m";
       Persistent = true;
     };

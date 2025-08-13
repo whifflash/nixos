@@ -1,148 +1,166 @@
 #!/usr/bin/env bash
+# gitea-sync-user-repos.sh
+# Sync (clone/update) all non-archived repos visible to the authenticated user.
+# Expects: BASE_URL, DEST_DIR, TOKEN (via EnvironmentFile or env)
+# Uses:    STATE_DIRECTORY (provided by systemd when StateDirectory= is set)
+
 set -euo pipefail
+IFS=$'\n\t'
+umask 077
 
-# Env vars (required unless noted):
-#   BASE_URL   e.g. https://gitea.example.com   (used for API, hostname fallback)
-#   DEST_DIR   e.g. /home/you/gitea-sync/repos
-#   TOKEN      Personal Access Token with read:repository (and optionally read:organization)
-#   SSH_HOST   (optional) SSH alias/host to resolve via ssh-config; if unset, derived from BASE_URL
-#   GIT_SSH_COMMAND (optional) e.g. ssh -o StrictHostKeyChecking=accept-new
-
-: "${BASE_URL:?Set BASE_URL}"
-: "${DEST_DIR:?Set DEST_DIR}"
-: "${TOKEN:?Set TOKEN}"
-
-# ---- Dependency checks ----
-for dep in jq git curl ssh getent awk; do
-  command -v "$dep" >/dev/null 2>&1 || { echo "$dep is required" >&2; exit 1; }
-done
-# Optional TCP probe helpers (we'll use one if present)
-have_timeout=0; command -v timeout >/dev/null 2>&1 && have_timeout=1
-have_nc=0;      command -v nc >/dev/null 2>&1 && have_nc=1
-
-# ---- Counters ----
-cloned_count=0
-updated_count=0
-skipped_count=0
-
-# ---- Logging helper ----
-log() {
-  printf '[%(%F %T)T] %s\n' -1 "$*"
+# ------------------------------ logging ---------------------------------------
+# LOG_LEVEL can be: DEBUG, INFO, WARN, ERROR (default INFO)
+lvl_num(){ case "${1:-INFO}" in DEBUG) echo 0;; INFO) echo 1;; WARN) echo 2;; ERROR) echo 3;; *) echo 1;; esac; }
+should_log(){ [ "$(lvl_num "${1}")" -ge "$(lvl_num "${LOG_LEVEL:-INFO}")" ]; }
+log(){
+  local level="${1:-INFO}"; shift || true
+  should_log "$level" || return 0
+  local ts; ts="$(date -Is)"
+  local msg="${*:-}"
+  local prio; case "$level" in DEBUG) prio=debug;; INFO) prio=info;; WARN) prio=warning;; ERROR) prio=err;; esac
+  if command -v systemd-cat >/dev/null 2>&1 && [ -n "${INVOCATION_ID:-}" ]; then
+    printf '%s %s %s\n' "$ts" "$level" "$msg" | systemd-cat -t gitea-sync -p "$prio"
+  fi
+  printf '[%s] %-5s %s\n' "$ts" "$level" "$msg" >&2
 }
+die(){ log ERROR "$*"; exit 1; }
+trap 'rc=$?; log ERROR "Unhandled error at ${BASH_SOURCE[0]}:${LINENO} (rc=$rc)"; exit $rc' ERR
+# ------------------------------------------------------------------------------
 
-# ---- Preflight (no token/API until this passes) ----
-ssh_alias_or_host="${SSH_HOST:-$(echo "$BASE_URL" | awk -F/ '{print $3}' | cut -d: -f1)}"
-resolved_host=""
-resolved_port=""
+# ------------------------------ preflights ------------------------------------
+: "${BASE_URL:?BASE_URL required (e.g. https://gitea.example.com)}"
+: "${DEST_DIR:?DEST_DIR required (e.g. /var/backup/gitea)}"
+: "${TOKEN:?TOKEN required (Gitea personal access token)}"
 
-resolve_ssh_target() {
-  # Use ssh to resolve final HostName/Port from ~/.ssh/config
-  local alias="$1" cfg
-  cfg="$(ssh -G "$alias" 2>/dev/null)" || return 1
-  resolved_host="$(printf '%s\n' "$cfg" | awk 'tolower($1)=="hostname"{print $2; exit}')"
-  resolved_port="$(printf '%s\n' "$cfg" | awk 'tolower($1)=="port"{print $2; exit}')"
-  [ -n "$resolved_host" ] && [ -n "$resolved_port" ]
-}
+require_cmd(){ command -v "$1" >/dev/null 2>&1 || die "Missing required command: $1"; }
+require_cmd curl
+require_cmd jq
+require_cmd git
+require_cmd ssh-keyscan
+require_cmd sed
+require_cmd install
 
-tcp_probe() {
-  # Prefer netcat, if available
-  if [ "$have_nc" -eq 1 ]; then
-    nc -z -w5 "$resolved_host" "$resolved_port" >/dev/null 2>&1
-    return $?
-  fi
+# Normalize base URL (strip trailing slash for consistency)
+BASE_URL="${BASE_URL%/}"
 
-  # Fallback: use current Bash's /dev/tcp feature (no extra 'bash' needed)
-  if [ "$have_timeout" -eq 1 ]; then
-    timeout 5 bash -c 'exec 3<>/dev/tcp/"$0"/"$1"' "$resolved_host" "$resolved_port" 2>/dev/null
-  else
-    ( exec 3<>"/dev/tcp/$resolved_host/$resolved_port" ) 2>/dev/null
-  fi
-}
+# Basic URL sanity check
+if ! printf '%s' "$BASE_URL" | grep -Eq '^https?://[^/]+($|/)'; then
+  die "BASE_URL seems invalid: $BASE_URL"
+fi
 
-preflight() {
-  if ! resolve_ssh_target "$ssh_alias_or_host"; then
-    log "Unable to resolve SSH target for '$ssh_alias_or_host'; skipping sync."
-    exit 0
-  fi
-  if ! getent hosts "$resolved_host" >/dev/null; then
-    log "Host '$resolved_host' not resolvable; skipping sync."
-    exit 0
-  fi
-  if ! tcp_probe; then
-    log "TCP $resolved_host:$resolved_port unreachable; skipping sync."
-    exit 0
-  fi
-}
+# Derive host for ssh-keyscan from BASE_URL
+GITEA_HOST="$(printf '%s\n' "$BASE_URL" | sed -E 's~^https?://([^/]+).*~\1~')"
 
-# ---- API helper ----
-api() {
+# Prepare directories
+STATE_DIR="${STATE_DIRECTORY:-/var/lib/gitea-sync}"
+KNOWN_HOSTS="${STATE_DIR}/known_hosts"
+
+install -m 700 -d "$STATE_DIR" || die "Failed to create state dir: $STATE_DIR"
+install -m 755 -d "$DEST_DIR"  || die "Failed to create dest dir: $DEST_DIR"
+[ -w "$DEST_DIR" ] || die "Dest dir not writable: $DEST_DIR"
+
+# Pin host key (idempotent; warning on failure but continue)
+if ! ssh-keyscan -T 5 "$GITEA_HOST" >> "$KNOWN_HOSTS" 2>/dev/null; then
+  log WARN "ssh-keyscan failed for ${GITEA_HOST}; continuing (StrictHostKeyChecking will still enforce trust if key exists)"
+fi
+export GIT_SSH_COMMAND=${GIT_SSH_COMMAND:-"ssh -o UserKnownHostsFile=$KNOWN_HOSTS -o StrictHostKeyChecking=yes"}
+
+# Quick connectivity probe (non-fatal but helpful)
+if ! curl -fsS --connect-timeout 5 --max-time 10 "${BASE_URL}/api/v1/version" >/dev/null 2>&1; then
+  log WARN "Gitea API probe failed; continuing anyway"
+fi
+# ------------------------------------------------------------------------------
+
+log INFO "Starting Gitea sync (base=${BASE_URL}, dest=${DEST_DIR})"
+
+# ------------------------------ helpers ---------------------------------------
+api(){
   local path="$1" page="${2:-1}" limit="${3:-50}"
-  local url="${BASE_URL%/}${path}?page=${page}&limit=${limit}"
-  curl -fsSL --retry 3 --retry-all-errors --connect-timeout 10 --max-time 35 \
+  local url="${BASE_URL}${path}?page=${page}&limit=${limit}"
+  curl -fsSL --retry 3 --retry-all-errors --connect-timeout 10 --max-time 60 \
     -H "Authorization: token ${TOKEN}" "$url"
 }
 
-# ---- Clone / Pull helper ----
-ensure_repo() {
-  local org="$1"
-  local name="$2"
-  local ssh_url="$3"
-  local org_dir="${DEST_DIR%/}/${org}"
-  local repo_dir="${org_dir}/${name}"
+# Track results for summary
+declare -a CLONED UPDATED SKIPPED_NO_SSH FETCH_FAILED PULL_FAILED CLONE_FAILED
 
-  mkdir -p "$org_dir"
+clone_or_update(){
+  local owner="$1" name="$2" ssh_url="$3"
+  local repo_dir="${DEST_DIR}/${owner}/${name}"
+  install -m 755 -d "$(dirname "$repo_dir")"
 
-  if [ -d "${repo_dir}/.git" ]; then
-    log "[update] ${org}/${name}"
-    git -C "$repo_dir" fetch --all --prune
-    current_branch="$(git -C "$repo_dir" rev-parse --abbrev-ref HEAD || echo main)"
-    if git -C "$repo_dir" pull --ff-only origin "$current_branch"; then
-      updated_count=$((updated_count + 1))
+  if [ -d "$repo_dir/.git" ]; then
+    log INFO "Updating ${owner}/${name}"
+    if ! git -C "$repo_dir" fetch --all --prune; then
+      log WARN "fetch failed for ${owner}/${name}"
+      FETCH_FAILED+=("${owner}/${name}")
+      return 0
+    fi
+    local branch
+    branch="$(git -C "$repo_dir" symbolic-ref --quiet --short HEAD || echo main)"
+    if ! git -C "$repo_dir" pull --ff-only origin "$branch"; then
+      log WARN "pull (ff-only) failed for ${owner}/${name} on ${branch}"
+      PULL_FAILED+=("${owner}/${name}")
     else
-      log "  ! fast-forward failed on ${org}/${name} (branch: ${current_branch}). Resolve manually."
+      UPDATED+=("${owner}/${name}")
     fi
   else
-    log "[clone ] ${org}/${name}"
-    git clone "$ssh_url" "$repo_dir"
-    cloned_count=$((cloned_count + 1))
+    log INFO "Cloning ${owner}/${name}"
+    if ! git clone --depth=1 "$ssh_url" "$repo_dir"; then
+      log ERROR "clone failed for ${owner}/${name}"
+      CLONE_FAILED+=("${owner}/${name}")
+      return 0
+    fi
+    CLONED+=("${owner}/${name}")
   fi
 }
+# ------------------------------------------------------------------------------
 
-main() {
-  preflight
+page=1
+while :; do
+  log DEBUG "Fetching page ${page}"
+  chunk="$(api "/api/v1/user/repos" "$page" 50)"
 
-  mkdir -p "$DEST_DIR"
+  # Stop when the API returns an empty array
+  if [ "$(printf '%s' "$chunk" | jq 'length')" -eq 0 ]; then
+    log INFO "No more repos (page ${page}). Done."
+    break
+  fi
 
-  local page=1
-  while :; do
-    chunk="$(api "/api/v1/user/repos" "$page" 50)"
-
-    if [ "$(printf "%s" "$chunk" | jq "length")" -eq 0 ]; then
-      break
+  # Use process substitution to keep variables in this shell (not a subshell)
+  while IFS=$'\t' read -r owner name ssh_url; do
+    if [ -z "$ssh_url" ]; then
+      log WARN "Skipping ${owner}/${name} (no ssh_url)"
+      SKIPPED_NO_SSH+=("${owner}/${name}")
+      continue
     fi
+    clone_or_update "$owner" "$name" "$ssh_url"
+  done < <(
+    printf '%s\n' "$chunk" \
+    | jq -r '.[] | select(.archived|not) | "\((.owner.login // .owner.username))\t\(.name)\t\((.ssh_url // ""))"'
+  )
 
-    printf "%s\n" "$chunk" \
-      | jq -r '.[] | if .archived == true then
-                    "ARCHIVED " + (.owner.login // .owner.username) + " " + .name
-                  else
-                    (.owner.login // .owner.username) + " " + .name + " " + (.ssh_url // "")
-                  end' \
-      | while read -r field1 field2 field3; do
-          if [ "$field1" = "ARCHIVED" ]; then
-            log "[skip  ] $field2/$field3 (archived)"
-            skipped_count=$((skipped_count + 1))
-            continue
-          fi
-          owner="$field1"
-          name="$field2"
-          ssh_url="$field3"
-          ensure_repo "$owner" "$name" "$ssh_url"
-        done
+  page=$((page+1))
+done
 
-    page=$((page + 1))
-  done
+# ------------------------------ summary ---------------------------------------
+sum(){ printf '%s\n' "$#"; }  # count helper
 
-  log "Gitea Sync Summary: Cloned=${cloned_count} Updated=${updated_count} Skipped=${skipped_count} (archived)"
+log INFO "Summary: cloned=$(sum "${CLONED[@]:-}") updated=$(sum "${UPDATED[@]:-}") skipped_no_ssh=$(sum "${SKIPPED_NO_SSH[@]:-}") fetch_failed=$(sum "${FETCH_FAILED[@]:-}") pull_failed=$(sum "${PULL_FAILED[@]:-}") clone_failed=$(sum "${CLONE_FAILED[@]:-}")"
+
+print_section(){
+  local title="$1"; shift
+  local -a items=( "$@" )
+  [ "${#items[@]}" -eq 0 ] && return 0
+  printf '\n=== %s (%d) ===\n' "$title" "${#items[@]}"
+  printf '%s\n' "${items[@]}" | sort
 }
 
-main
+print_section "CLONED"         "${CLONED[@]:-}"
+print_section "UPDATED"        "${UPDATED[@]:-}"
+print_section "SKIPPED (no ssh_url)" "${SKIPPED_NO_SSH[@]:-}"
+print_section "FETCH FAILED"   "${FETCH_FAILED[@]:-}"
+print_section "PULL FAILED"    "${PULL_FAILED[@]:-}"
+print_section "CLONE FAILED"   "${CLONE_FAILED[@]:-}"
+
+log INFO "Gitea sync complete."
