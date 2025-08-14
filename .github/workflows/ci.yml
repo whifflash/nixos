@@ -1,0 +1,54 @@
+name: CI — build & lint flake
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Show Nix version
+        run: nix --version
+
+      # Formatting (provided by treefmt-nix config below)
+      - name: Check formatting (treefmt)
+        run: nix run .#treefmt -- --ci
+        # treefmt’s --ci mode fails on unformatted files. :contentReference[oaicite:1]{index=1}
+
+      - name: Statix lints
+        run: nix run nixpkgs#statix -- check .
+        # statix: use `statix check` to lint Nix code. :contentReference[oaicite:2]{index=2}
+
+      - name: Deadnix (dead code)
+        run: nix run nixpkgs#deadnix -- .
+        # deadnix scans .nix files for unused bindings. :contentReference[oaicite:3]{index=3}
+
+      - name: Flake checks
+        run: nix flake check --all-systems
+
+      - name: Build all NixOS hosts
+        shell: bash
+        run: |
+          set -euo pipefail
+          hosts=$(nix eval --json .#nixosConfigurations | jq -r 'keys[]' || true)
+          if [[ -n "${hosts}" ]]; then
+            for h in ${hosts}; do
+              echo "Building host: ${h}"
+              nix build ".#nixosConfigurations.${h}.config.system.build.toplevel"
+            done
+          else
+            echo "No nixosConfigurations found; skipping host builds."
+          fi
+
