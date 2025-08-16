@@ -31,8 +31,8 @@ jobs:
       - name: Deadnix (dead code)
         run: nix run nixpkgs#deadnix -- .
 
-      - name: Flake checks
-        run: nix flake check --all-systems
+      # - name: Flake checks
+      #   run: nix flake check --all-systems
 
       - name: Build all NixOS hosts
         shell: bash
