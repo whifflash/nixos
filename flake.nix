@@ -89,10 +89,40 @@
             config.treefmt.build.wrapper # provides `treefmt`
           ];
           # Install pre-commit hooks automatically when you `nix develop`
-          shellHook = config.pre-commit.installationScript;
+          shellHook = ''
+                set -eu
+
+                # Only if we're in a git repo
+                if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+                  # Respect repo-local core.hooksPath if set; otherwise use .git/hooks
+                  HOOKS_PATH="$(git config --local core.hooksPath || true)"
+                  if [ -z "$HOOKS_PATH" ]; then
+                    HOOKS_PATH="$(git rev-parse --git-dir)/hooks"
+                  fi
+
+                  mkdir -p "$HOOKS_PATH"
+                  HOOK="$HOOKS_PATH/pre-commit"
+                  MARK="# managed-by-nix-delegator"
+
+                  # Create/refresh a delegator only if:
+                  #  - no hook exists, or
+                  #  - the existing hook is our managed one
+                  if [ ! -f "$HOOK" ] || grep -q "$MARK" "$HOOK"; then
+                    cat >"$HOOK" <<'EOF'
+            #!/usr/bin/env bash
+            # managed-by-nix-delegator
+            set -euo pipefail
+            # Run repo's pre-commit via the devShell to avoid hardcoded /nix/store paths
+            exec nix develop -c pre-commit run --hook-stage pre-commit
+            EOF
+                    chmod +x "$HOOK"
+                    echo "[git-hooks] installed delegator at $HOOK"
+                  fi
+                fi
+          '';
         };
 
-        # `nix fmt` will run this formatter; also available as `nix run .#treefmt`
+        # `nix fmt` will run this formatter;
         formatter = config.treefmt.build.wrapper;
 
         # treefmt settings (format Nix/Shell/JSON/YAML/Markdown)
