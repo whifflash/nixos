@@ -13,7 +13,6 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-
     envronment = {
       sessionVariables.NIXOS_OZONE_WL = "1";
       sessionVariables.WLR_NO_HARDWARE_CURSORS = "1";
@@ -33,7 +32,6 @@ in {
       ];
     };
 
-
     # Enable the gnome-keyring secrets vault.
     # Will be exposed through DBus to programs willing to store secrets.
     services.gnome.gnome-keyring.enable = true;
@@ -43,6 +41,5 @@ in {
       enable = true;
       wrapperFeatures.gtk = true;
     };
-
   };
 }

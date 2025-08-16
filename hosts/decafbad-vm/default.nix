@@ -26,20 +26,17 @@
       owner = config.users.users."systemd-network".name;
     };
     secrets."network-manager.env" = {
-    owner = config.users.users."systemd-network".name;
-  };
-
-
+      owner = config.users.users."systemd-network".name;
+    };
   }; # end of sops = {};
 
   # Bootloader options
 
   boot = {
-      loader.grub.enable = true;
-      loader.grub.device = "/dev/sda";
-      loader.grub.useOSProber = true;
+    loader.grub.enable = true;
+    loader.grub.device = "/dev/sda";
+    loader.grub.useOSProber = true;
   };
-
 
   networking.hostName = "nixbox";
 

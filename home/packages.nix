@@ -2,9 +2,9 @@
   config,
   pkgs,
   ...
-}: 
+}:
 # let
-# in 
+# in
 {
   home.packages = [
     pkgs.whitesur-gtk-theme

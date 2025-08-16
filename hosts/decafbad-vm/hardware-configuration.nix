@@ -11,15 +11,11 @@
   imports = [];
 
   boot = {
-
     initrd.availableKernelModules = ["ata_piix" "ohci_pci" "ehci_pci" "ahci" "sd_mod" "sr_mod"];
     initrd.kernelModules = [];
     kernelModules = [];
     extraModulePackages = [];
-
   };
-
-
 
   fileSystems."/" = {
     device = "/dev/disk/by-uuid/dfb4b3b8-a1f6-428d-9da6-2718500b785d";
