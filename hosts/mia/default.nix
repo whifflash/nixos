@@ -1,18 +1,13 @@
-# Edit this configuration file to define what should be installed on
-# your system.  Help is available in the configuration.nix(5) man page
-# and in the NixOS manual (accessible by running ‘nixos-help’).
+# hosts/mia/default.nix
+# NixOS host configuration for "mia", adapted for flake-based imports.
 
-{ inputs, config, pkgs, ... }:
+{ inputs, config, pkgs, lib, specialArgs, ... }:
 
 {
   imports =
   [ # Include the results of the hardware scan.
   ./hardware-configuration.nix
   ./../../modules/modules.nix  
-  # inputs.stylix.nixosModules.stylix
-  # inputs.home-manager.nixosModules.default
-  # inputs.sops-nix.nixosModules.sops
-  # inputs.sops-nix.homeManagerModules.sops
   ];
 
   sops = {
@@ -22,6 +17,7 @@
 
   };
   sops.secrets = {
+    "wireguard/mia/keys/private" = { owner = "systemd-network"; };
     "wireguard/vps/keys/public" = { owner = config.users.users."systemd-network".name; };  
     "network-manager.env" = { owner = config.users.users."systemd-network".name; };
     # "git/userName" = {};
@@ -32,7 +28,7 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  networking.hostName = "luna"; # Define your hostname.
+  networking.hostName = "mia"; # Define your hostname.
 
   # Enable networking
   networking.networkmanager.enable = true;
@@ -62,17 +58,12 @@
   role_workstation.enable = true;
   role_hardware-development.enable = false;
   role_tailscale-node.enable = true;
-  role_laptop.enable = false;
+  role_laptop.enable = true;
 
 
 
   # Enable the X11 windowing system.
   services.xserver.enable = true;
-
-
-
-  
-
-  system.stateVersion = "24.11"; # Did you read the comment?
+  system.stateVersion = "24.11";
 
 }

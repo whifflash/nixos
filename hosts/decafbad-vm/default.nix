@@ -1,8 +1,7 @@
-# Edit this configuration file to define what should be installed on
-# your system.  Help is available in the configuration.nix(5) man page
-# and in the NixOS manual (accessible by running ‘nixos-help’).
+# hosts/mia/decafbad-vm.nix
+# NixOS host configuration for "mia", adapted for flake-based imports.
 
-{ inputs, config, pkgs, specialArgs, ... }:
+{ inputs, config, pkgs, lib, ... }:
 
 {
   imports =

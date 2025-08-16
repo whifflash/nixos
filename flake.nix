@@ -115,9 +115,11 @@
             lib = nixpkgs.lib;
             hostsDir = ./hosts;
             dir = builtins.readDir hostsDir;
-            hostNames = builtins.filter
-                (n: dir.${n}.type == "directory")
-                (builtins.attrNames dir);
+            hostNames =
+                builtins.attrNames
+                (lib.filterAttrs (_: v: v == "directory") dir);
+
+
 
             systemFor = name:
               let path = hostsDir + "/${name}/system";

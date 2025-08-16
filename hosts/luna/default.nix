@@ -1,8 +1,7 @@
-# Edit this configuration file to define what should be installed on
-# your system.  Help is available in the configuration.nix(5) man page
-# and in the NixOS manual (accessible by running ‘nixos-help’).
+# hosts/luna/default.nix
+# NixOS host configuration for "mia", adapted for flake-based imports.
 
-{ inputs, config, pkgs, specialArgs,... }:
+{ inputs, config, pkgs, lib, ... }:
 
 {
   imports =
@@ -22,7 +21,6 @@
 
   };
   sops.secrets = {
-    "wireguard/${specialArgs.hostname}/keys/private" = { owner = "systemd-network"; };
     "wireguard/vps/keys/public" = { owner = config.users.users."systemd-network".name; };  
     "network-manager.env" = { owner = config.users.users."systemd-network".name; };
     # "git/userName" = {};
@@ -33,7 +31,7 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  networking.hostName = "mia"; # Define your hostname.
+  networking.hostName = "luna"; # Define your hostname.
 
   # Enable networking
   networking.networkmanager.enable = true;
@@ -63,11 +61,17 @@
   role_workstation.enable = true;
   role_hardware-development.enable = false;
   role_tailscale-node.enable = true;
-  role_laptop.enable = true;
+  role_laptop.enable = false;
 
 
 
   # Enable the X11 windowing system.
   services.xserver.enable = true;
-      system.stateVersion = "24.11";
-    }
+
+
+
+  
+
+  system.stateVersion = "24.11"; # Did you read the comment?
+
+}
