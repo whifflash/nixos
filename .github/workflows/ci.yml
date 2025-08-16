@@ -55,7 +55,7 @@ jobs:
             (nix store gc || nix-collect-garbage -d) || true
           done
 
-      # The blow approach fails due to limited disk space
+      # The approach below fails due to limited disk space
 
       # - name: Build all NixOS hosts
       #   shell: bash
