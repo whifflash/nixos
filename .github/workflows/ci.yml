@@ -38,7 +38,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          hosts=$(nix eval --json .#nixosConfigurations | jq -r 'keys[]' || true)
+          hosts=$(nix eval --json .#nixosConfigurations --apply 'builtins.attrNames' | jq -r '.[]' || true)
           if [[ -n "${hosts}" ]]; then
             for h in ${hosts}; do
               echo "Building host: ${h}"
