@@ -12,34 +12,40 @@
     (modulesPath + "/installer/scan/not-detected.nix")
   ];
 
-  boot.initrd.availableKernelModules = ["xhci_pci" "nvme" "usb_storage" "sd_mod" "rtsx_pci_sdmmc"];
-  boot.initrd.kernelModules = [];
-  boot.kernelModules = ["kvm-intel"];
-  boot.extraModulePackages = [];
+  boot = {
+    initrd.availableKernelModules = ["xhci_pci" "nvme" "usb_storage" "sd_mod" "rtsx_pci_sdmmc"];
+    initrd.kernelModules = [];
+    kernelModules = ["kvm-intel"];
+    extraModulePackages = [];
+    initrd.luks.devices."luks-dae7f0a8-16be-45b3-991c-b0197b090816".device = "/dev/disk/by-uuid/dae7f0a8-16be-45b3-991c-b0197b090816";
 
-  fileSystems."/" = {
-    device = "/dev/disk/by-uuid/d952af2f-e60e-4725-a8f6-3d318cb54f78";
-    fsType = "btrfs";
-    options = ["subvol=@"];
   };
 
-  fileSystems."/boot" = {
-    device = "/dev/disk/by-uuid/A1E3-93C2";
-    fsType = "vfat";
-    options = ["fmask=0077" "dmask=0077"];
-  };
+  fileSystems = {
 
-  fileSystems."/home" = {
-    device = "/dev/disk/by-uuid/4c35b374-be59-46d3-a5dd-742bd78f8f0c";
-    fsType = "btrfs";
-  };
+        "/" = {
+        device = "/dev/disk/by-uuid/d952af2f-e60e-4725-a8f6-3d318cb54f78";
+        fsType = "btrfs";
+        options = ["subvol=@"];
+      };
 
-  boot.initrd.luks.devices."luks-dae7f0a8-16be-45b3-991c-b0197b090816".device = "/dev/disk/by-uuid/dae7f0a8-16be-45b3-991c-b0197b090816";
+      "/boot" = {
+        device = "/dev/disk/by-uuid/A1E3-93C2";
+        fsType = "vfat";
+        options = ["fmask=0077" "dmask=0077"];
+      };
 
-  fileSystems."/nix" = {
-    device = "/dev/disk/by-uuid/a4fd1f6e-d6c7-40cb-b131-65a288610f2b";
-    fsType = "btrfs";
-  };
+      "/home" = {
+        device = "/dev/disk/by-uuid/4c35b374-be59-46d3-a5dd-742bd78f8f0c";
+        fsType = "btrfs";
+      };
+
+      "/nix" = {
+        device = "/dev/disk/by-uuid/a4fd1f6e-d6c7-40cb-b131-65a288610f2b";
+        fsType = "btrfs";
+      };
+
+  }; # end of fileSystems - {};
 
   swapDevices = [
     {device = "/dev/disk/by-uuid/1fa3ae65-5c3c-41aa-ad2d-966e30d06b37";}

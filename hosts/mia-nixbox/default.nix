@@ -15,22 +15,34 @@
   ];
 
   # Bootloader.
-  boot.loader.grub.enable = true;
-  boot.loader.grub.device = "/dev/sda";
-  boot.loader.grub.useOSProber = true;
 
-  hardware.graphics.enable = true;
-  # Enable the X11 windowing system.
-  services.xserver.enable = true;
+  boot = {
 
-  # Configure keymap in X11
-  services.xserver.xkb = {
-    layout = "us";
-    variant = "";
+      loader.grub.enable = true;
+  loader.grub.device = "/dev/sda";
+  loader.grub.useOSProber = true;
+
   };
 
-  # Enable CUPS to print documents.
-  services.printing.enable = true;
+
+  hardware.graphics.enable = true;
+
+  services = {
+
+      # Enable the X11 windowing system.
+      xserver.enable = true;
+
+      # Configure keymap in X11
+      xserver.xkb = {
+        layout = "us";
+        variant = "";
+      };
+
+      # Enable CUPS to print documents.
+      printing.enable = true;
+
+  };
+
 
   networking.hostName = "mianixbox"; # Define your hostname.
 

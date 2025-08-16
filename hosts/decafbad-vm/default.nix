@@ -16,22 +16,30 @@
     inputs.sops-nix.nixosModules.sops
   ];
 
-  sops.defaultSopsFile = ../../secrets/secrets.yaml;
-  sops.defaultSopsFormat = "yaml";
+  sops = {
+    defaultSopsFile = ../../secrets/secrets.yaml;
+    defaultSopsFormat = "yaml";
 
-  sops.age.keyFile = "/home/mhr/.config/sops/age/keys.txt";
+    age.keyFile = "/home/mhr/.config/sops/age/keys.txt";
 
-  sops.secrets."wireguard/vps/keys/public" = {
+    secrets."wireguard/vps/keys/public" = {
+      owner = config.users.users."systemd-network".name;
+    };
+    secrets."network-manager.env" = {
     owner = config.users.users."systemd-network".name;
   };
-  sops.secrets."network-manager.env" = {
-    owner = config.users.users."systemd-network".name;
-  };
+
+
+  }; # end of sops = {};
 
   # Bootloader options
-  boot.loader.grub.enable = true;
-  boot.loader.grub.device = "/dev/sda";
-  boot.loader.grub.useOSProber = true;
+
+  boot = {
+      loader.grub.enable = true;
+      loader.grub.device = "/dev/sda";
+      loader.grub.useOSProber = true;
+  };
+
 
   networking.hostName = "nixbox";
 

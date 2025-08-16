@@ -4,65 +4,74 @@
   pkgs,
   work,
   ...
-}: let
-  # gruvboxPlus = import ./themes/icons/gruvbox-plus.nix { inherit pkgs; };
-in {
+}: 
+# let
+#   gruvboxPlus = import ./themes/icons/gruvbox-plus.nix { inherit pkgs; };
+# in 
+{
   imports = [
     ./packages.nix
     ./apps/firefox
     ./git.nix
     ./ssh.nix
   ];
-  home.username = "mhr";
-  home.homeDirectory = "/home/mhr";
 
-  home.stateVersion = "24.11"; # Please read the comment before changing.
+  home = {
+    username = "mhr";
+    homeDirectory = "/home/mhr";
 
-  home.file = {
-    # ".config/hypr/hyprland.conf".source = ./dotfiles/.config/hypr/hyprland.conf;
-    # ".config/wofi/style.css".source = ./dotfiles/.config/wofi/style.css;
+    stateVersion = "24.11"; # Please read the comment before changing.
 
-    ".config/wofi/config".source = ./dotfiles/.config/wofi/config;
-    ".config/wofi/gopass.switcher.sh".source = ./dotfiles/.config/wofi/gopass.switcher.sh;
-    ".config/wofi/gopass.launcher.sh".source = ./dotfiles/.config/wofi/gopass.launcher.sh;
-    ".config/gopass/stores.local".source = ./dotfiles/.config/gopass/stores.local;
+    file = {
+      # ".config/hypr/hyprland.conf".source = ./dotfiles/.config/hypr/hyprland.conf;
+      # ".config/wofi/style.css".source = ./dotfiles/.config/wofi/style.css;
 
-    # ".config/gtk-4.0/gtk.css".source = ./dotfiles/.config/gtk-4.0/gtk.css;
-    # ".config/gtk-3.0/gtk.css".source = ./dotfiles/.config/gtk-3.0/gtk.css;
+      ".config/wofi/config".source = ./dotfiles/.config/wofi/config;
+      ".config/wofi/gopass.switcher.sh".source = ./dotfiles/.config/wofi/gopass.switcher.sh;
+      ".config/wofi/gopass.launcher.sh".source = ./dotfiles/.config/wofi/gopass.launcher.sh;
+      ".config/gopass/stores.local".source = ./dotfiles/.config/gopass/stores.local;
 
-    ".config/waybar/style.css".source = ./dotfiles/.config/waybar/style.css;
-    ".config/waybar/colors.css".source = ./dotfiles/.config/waybar/colors.css;
-    ".config/waybar/config".source = ./dotfiles/.config/waybar/config;
-    ".config/waybar/modules.json".source = ./dotfiles/.config/waybar/modules.json;
-    ".config/waybar/ornamental.json".source = ./dotfiles/.config/waybar/ornamental.json;
-    ".config/waybar/ornamental.css".source = ./dotfiles/.config/waybar/ornamental.css;
-    ".config/waybar/launch_waybar.sh".source = ./dotfiles/.config/waybar/launch_waybar.sh;
-    ".config/sway/config".source = ./dotfiles/.config/sway/config;
-    ".config/swaylock/config".source = ./dotfiles/.config/swaylock/config;
-    ".config/sway/tmux/tmux_reattach.sh".source = ./dotfiles/.config/sway/tmux/tmux_reattach.sh;
+      # ".config/gtk-4.0/gtk.css".source = ./dotfiles/.config/gtk-4.0/gtk.css;
+      # ".config/gtk-3.0/gtk.css".source = ./dotfiles/.config/gtk-3.0/gtk.css;
+
+      ".config/waybar/style.css".source = ./dotfiles/.config/waybar/style.css;
+      ".config/waybar/colors.css".source = ./dotfiles/.config/waybar/colors.css;
+      ".config/waybar/config".source = ./dotfiles/.config/waybar/config;
+      ".config/waybar/modules.json".source = ./dotfiles/.config/waybar/modules.json;
+      ".config/waybar/ornamental.json".source = ./dotfiles/.config/waybar/ornamental.json;
+      ".config/waybar/ornamental.css".source = ./dotfiles/.config/waybar/ornamental.css;
+      ".config/waybar/launch_waybar.sh".source = ./dotfiles/.config/waybar/launch_waybar.sh;
+      ".config/sway/config".source = ./dotfiles/.config/sway/config;
+      ".config/swaylock/config".source = ./dotfiles/.config/swaylock/config;
+      ".config/sway/tmux/tmux_reattach.sh".source = ./dotfiles/.config/sway/tmux/tmux_reattach.sh;
+    };
+
+    sessionVariables = {
+      EDITOR = "nvim";
+      VISUAL = "nvim";
+      GTK_THEME = "Adwaita:dark";
+    };
+  }; # end of home = {};
+
+  programs = {
+
+    home-manager.enable = true; # leet home manager manage itself
+
+    neovim = {
+      enable = true;
+      defaultEditor = true;
+      viAlias = true;
+      vimAlias = true;
+      vimdiffAlias = true;
+      plugins = with pkgs.vimPlugins; [
+        # nvim-lspconfig
+        # nvim-treesitter.withAllGrammars
+        # plenary-nvim
+        # gruvbox-material
+      ];
   };
 
-  home.sessionVariables = {
-    EDITOR = "nvim";
-    VISUAL = "nvim";
-    GTK_THEME = "Adwaita:dark";
-  };
-
-  programs.neovim = {
-    enable = true;
-    defaultEditor = true;
-    viAlias = true;
-    vimAlias = true;
-    vimdiffAlias = true;
-    plugins = with pkgs.vimPlugins; [
-      # nvim-lspconfig
-      # nvim-treesitter.withAllGrammars
-      # plenary-nvim
-      # gruvbox-material
-    ];
-  };
-
-  programs.tmux = {
+  tmux = {
     enable = true;
     terminal = "tmux-256color";
     historyLimit = 100000;
@@ -115,21 +124,30 @@ in {
       # set -ga update-environment TERM
       # set -ga update-environment TERM_PROGRAM
     '';
-  };
+    }; # end of tmux = {};
 
-  services.gpg-agent = {
+  }; # end of programs = {};
+
+
+  services = {
+
+    gpg-agent = {
     enable = true;
     enableSshSupport = true;
     pinentry.package = pkgs.pinentry-gnome3;
   };
 
-  services.flameshot = {
+  flameshot = {
     enable = true;
     settings.General = {
       showStartupLaunchMessage = false;
       saveLastRegion = true;
     };
   };
+
+    }; # end of services = {};
+
+
 
   dconf.settings = {
     "org/gnome/desktop/background" = {
@@ -179,6 +197,4 @@ in {
     # };
   };
 
-  # Let Home Manager install and manage itself.
-  programs.home-manager.enable = true;
 }

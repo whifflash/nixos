@@ -2,8 +2,10 @@
   config,
   pkgs,
   ...
-}: let
-in {
+}: 
+# let
+# in 
+{
   home.packages = [
     pkgs.whitesur-gtk-theme
     pkgs.whitesur-cursors
