@@ -14,10 +14,12 @@ in {
   config = lib.mkIf cfg.enable {
     # VM specific stuff
     virtualization = {
+      guest = {
+        guest.enable = true;
+        guest.clipboard = true;
+        guest.vboxsf = true;
+      };
       virtualbox.host.enableExtensionPack = true;
-      virtualbox.guest.enable = true;
-      virtualbox.guest.clipboard = true;
-      virtualbox.guest.vboxsf = true;
     };
 
     users.users.mhr.extraGroups = ["vboxusers" "vboxsf"];

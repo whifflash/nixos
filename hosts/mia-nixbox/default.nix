@@ -16,10 +16,10 @@
 
   # Bootloader.
 
-  boot = {
-    loader.grub.enable = true;
-    loader.grub.device = "/dev/sda";
-    loader.grub.useOSProber = true;
+  boot.loader.grub = {
+    enable = true;
+    device = "/dev/sda";
+    useOSProber = true;
   };
 
   hardware.graphics.enable = true;

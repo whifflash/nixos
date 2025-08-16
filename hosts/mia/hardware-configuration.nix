@@ -13,11 +13,13 @@
   ];
 
   boot = {
-    initrd.availableKernelModules = ["xhci_pci" "nvme" "usb_storage" "sd_mod" "rtsx_pci_sdmmc"];
-    initrd.kernelModules = [];
+    initrd = {
+      availableKernelModules = ["xhci_pci" "nvme" "usb_storage" "sd_mod" "rtsx_pci_sdmmc"];
+      kernelModules = [];
+      luks.devices."luks-dae7f0a8-16be-45b3-991c-b0197b090816".device = "/dev/disk/by-uuid/dae7f0a8-16be-45b3-991c-b0197b090816";
+    };
     kernelModules = ["kvm-intel"];
     extraModulePackages = [];
-    initrd.luks.devices."luks-dae7f0a8-16be-45b3-991c-b0197b090816".device = "/dev/disk/by-uuid/dae7f0a8-16be-45b3-991c-b0197b090816";
   };
 
   fileSystems = {

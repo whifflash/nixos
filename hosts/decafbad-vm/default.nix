@@ -32,10 +32,10 @@
 
   # Bootloader options
 
-  boot = {
-    loader.grub.enable = true;
-    loader.grub.device = "/dev/sda";
-    loader.grub.useOSProber = true;
+  boot.loader.grub = {
+    enable = true;
+    device = "/dev/sda";
+    useOSProber = true;
   };
 
   networking.hostName = "nixbox";
