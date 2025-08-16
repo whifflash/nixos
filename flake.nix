@@ -100,6 +100,7 @@
         # treefmt settings (format Nix/Shell/JSON/YAML/Markdown)
         treefmt = {
           projectRootFile = "flake.nix";
+          # flakeCheck = false;
           programs = {
             alejandra.enable = true; # Nix
             shfmt.enable = true; # Shell
@@ -109,8 +110,9 @@
 
         # Lightweight “all-in-one” check you can call in CI:
         #   nix build .#checks.<system>.ci
-        checks.ci = pkgs.runCommand "ci-checks" {} ''
+        checks.ci = pkgs.runCommand "ci-checks" {src = ./.;} ''
           set -e
+          cd "$src"
           ${config.treefmt.build.wrapper}/bin/treefmt --ci
           ${pkgs.statix}/bin/statix check .
           ${pkgs.deadnix}/bin/deadnix .
