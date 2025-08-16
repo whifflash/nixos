@@ -13,7 +13,7 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    envronment = {
+    environment = {
       sessionVariables.NIXOS_OZONE_WL = "1";
       sessionVariables.WLR_NO_HARDWARE_CURSORS = "1";
 

@@ -120,7 +120,9 @@
       flake = {
         # Auto-discover hosts from ./hosts
         nixosConfigurations = let
-          lib = nixpkgs.lib;
+
+          inherit (nixpkgs) lib;
+          # lib = nixpkgs.lib;
           hostsDir = ./hosts;
           # dir = builtins.readDir hostsDir;
           dir =
