@@ -12,6 +12,16 @@
     # inputs.home-manager.nixosModules.default
   ];
 
+  sops = {
+    defaultSopsFile = ../../secrets/secrets.yaml;
+    defaultSopsFormat = "yaml";
+    age.keyFile = "/home/mhr/.config/sops/age/keys.txt";
+    secrets = {
+      "wireguard/vps/keys/public" = {owner = config.users.users."systemd-network".name;};
+      "network-manager.env" = {owner = config.users.users."systemd-network".name;};
+    };
+  };
+
   # Bootloader.
 
   boot.loader.grub = {
