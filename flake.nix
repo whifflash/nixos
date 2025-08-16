@@ -85,6 +85,7 @@
             pkgs.nodePackages.prettier
             pkgs.statix
             pkgs.deadnix
+            pkgs.pre-commit
             config.treefmt.build.wrapper # provides `treefmt`
           ];
           # Install pre-commit hooks automatically when you `nix develop`
