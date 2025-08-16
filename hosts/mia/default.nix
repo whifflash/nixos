@@ -18,13 +18,12 @@
     defaultSopsFile = ../../secrets/secrets.yaml;
     defaultSopsFormat = "yaml";
     age.keyFile = "/home/mhr/.config/sops/age/keys.txt";
-  };
-  sops.secrets = {
-    "wireguard/mia/keys/private" = {owner = "systemd-network";};
-    "wireguard/vps/keys/public" = {owner = config.users.users."systemd-network".name;};
-    "network-manager.env" = {owner = config.users.users."systemd-network".name;};
-    # "git/userName" = {};
-    # "git/userEmail" = {};
+    secrets = {
+      "wireguard/vps/keys/public" = {owner = config.users.users."systemd-network".name;};
+      "network-manager.env" = {owner = config.users.users."systemd-network".name;};
+      # "git/userName" = {};
+      # "git/userEmail" = {};
+    };
   };
 
   # Bootloader.
