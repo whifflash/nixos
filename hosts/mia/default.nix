@@ -29,10 +29,9 @@
 
   # Bootloader.
   boot.loader = {
-      systemd-boot.enable = true;
-      efi.canTouchEfiVariables = true;
+    systemd-boot.enable = true;
+    efi.canTouchEfiVariables = true;
   };
-
 
   networking.hostName = "mia"; # Define your hostname.
 
