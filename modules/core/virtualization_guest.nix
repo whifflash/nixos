@@ -15,9 +15,9 @@ in {
     # VM specific stuff
     virtualization = {
       guest = {
-        guest.enable = true;
-        guest.clipboard = true;
-        guest.vboxsf = true;
+        enable = true;
+        clipboard = true;
+        vboxsf = true;
       };
       virtualbox.host.enableExtensionPack = true;
     };
