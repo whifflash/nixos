@@ -1,7 +1,7 @@
 # hosts/mia-nixbox/default.nix
 # NixOS host configuration for "mia", adapted for flake-based imports.
 {
-  inputs,
+  # inputs,
   pkgs,
   ...
 }: {
@@ -9,7 +9,7 @@
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
     ./../../modules/modules.nix
-    inputs.home-manager.nixosModules.default
+    # inputs.home-manager.nixosModules.default
   ];
 
   # Bootloader.

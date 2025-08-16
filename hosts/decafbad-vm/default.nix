@@ -1,7 +1,7 @@
 # hosts/mia/decafbad-vm.nix
 # NixOS host configuration for "mia", adapted for flake-based imports.
 {
-  inputs,
+  # inputs,
   config,
   pkgs,
   ...
@@ -10,9 +10,9 @@
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
     ./../../modules/modules.nix
-    inputs.home-manager.nixosModules.default
-    inputs.home-manager.nixosModules.default
-    inputs.sops-nix.nixosModules.sops
+    # inputs.home-manager.nixosModules.default
+    # inputs.home-manager.nixosModules.default
+    # inputs.sops-nix.nixosModules.sops
   ];
 
   sops = {
