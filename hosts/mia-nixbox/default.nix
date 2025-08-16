@@ -48,7 +48,6 @@
   desktop_budgie.enable = true;
   desktop_sway.enable = false;
   desktop_audio.enable = true;
-  desktop_programs.enable = true;
   base_packages.enable = true;
   base_options.enable = true;
   user_options.enable = true;
