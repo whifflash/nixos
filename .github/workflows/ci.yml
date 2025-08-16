@@ -23,7 +23,7 @@ jobs:
         run: nix --version
 
       - name: Check formatting (treefmt)
-        run: nix run .#treefmt -- --ci
+        run: nix develop -c treefmt -- --ci
 
       - name: Statix lints
         run: nix run nixpkgs#statix -- check .
