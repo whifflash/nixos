@@ -82,7 +82,7 @@
             pkgs.jq
             pkgs.alejandra
             pkgs.shfmt
-            pkgs.prettier
+            pkgs.prettierd
             pkgs.statix
             pkgs.deadnix
             config.treefmt.build.wrapper # provides `treefmt`
