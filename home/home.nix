@@ -1,7 +1,4 @@
-{
-  pkgs,
-  ...
-}:
+{pkgs, ...}:
 # let
 #   gruvboxPlus = import ./themes/icons/gruvbox-plus.nix { inherit pkgs; };
 # in
