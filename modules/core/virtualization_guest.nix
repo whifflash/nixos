@@ -13,7 +13,7 @@ in {
 
   config = lib.mkIf cfg.enable {
     # VM specific stuff
-    virtualization = {
+    virtualisation = {
       guest = {
         enable = true;
         clipboard = true;
