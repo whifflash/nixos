@@ -157,15 +157,15 @@
           lib.genAttrs hostNames mkHost;
 
         # (Optional) expose a `treefmt` app explicitly for `nix run .#treefmt`
-        apps = nixpkgs.lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] (system: let
-          pkgs = import nixpkgs { inherit system; };
-          # Note: the real wrapper lives under perSystem; this is a convenience shim
-        in {
-          treefmt = {
-            type = "app";
-            program = "${(import ./. { inherit system; }).formatter}/bin/treefmt";
-          };
-        });
+        # apps = nixpkgs.lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] (system: let
+        #   pkgs = import nixpkgs { inherit system; };
+        #   # Note: the real wrapper lives under perSystem; this is a convenience shim
+        # in {
+        #   treefmt = {
+        #     type = "app";
+        #     program = "${(import ./. { inherit system; }).formatter}/bin/treefmt";
+        #   };
+        # });
       };
     };
 }
