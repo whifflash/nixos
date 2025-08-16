@@ -1,28 +1,30 @@
 # hosts/luna/default.nix
 # NixOS host configuration for "mia", adapted for flake-based imports.
-
-{ inputs, config, pkgs, lib, ... }:
-
 {
-  imports =
-  [ # Include the results of the hardware scan.
-  ./hardware-configuration.nix
-  ./../../modules/modules.nix  
-  # inputs.stylix.nixosModules.stylix
-  # inputs.home-manager.nixosModules.default
-  # inputs.sops-nix.nixosModules.sops
-  # inputs.sops-nix.homeManagerModules.sops
+  inputs,
+  config,
+  pkgs,
+  lib,
+  ...
+}: {
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+    ./../../modules/modules.nix
+    # inputs.stylix.nixosModules.stylix
+    # inputs.home-manager.nixosModules.default
+    # inputs.sops-nix.nixosModules.sops
+    # inputs.sops-nix.homeManagerModules.sops
   ];
 
   sops = {
     defaultSopsFile = ../../secrets/secrets.yaml;
     defaultSopsFormat = "yaml";
     age.keyFile = "/home/mhr/.config/sops/age/keys.txt";
-
   };
   sops.secrets = {
-    "wireguard/vps/keys/public" = { owner = config.users.users."systemd-network".name; };  
-    "network-manager.env" = { owner = config.users.users."systemd-network".name; };
+    "wireguard/vps/keys/public" = {owner = config.users.users."systemd-network".name;};
+    "network-manager.env" = {owner = config.users.users."systemd-network".name;};
     # "git/userName" = {};
     # "git/userEmail" = {};
   };
@@ -36,15 +38,12 @@
   # Enable networking
   networking.networkmanager.enable = true;
 
-
-
   hardware.graphics = {
     enable = true;
     extraPackages = with pkgs; [
-    # vpl-gpu-rt # or intel-media-sdk for QSV
+      # vpl-gpu-rt # or intel-media-sdk for QSV
     ];
   };
-
 
   desktop_gdm.enable = false;
   desktop_sddm.enable = true;
@@ -63,15 +62,8 @@
   role_tailscale-node.enable = true;
   role_laptop.enable = false;
 
-
-
   # Enable the X11 windowing system.
   services.xserver.enable = true;
 
-
-
-  
-
   system.stateVersion = "24.11"; # Did you read the comment?
-
 }

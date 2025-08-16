@@ -1,16 +1,17 @@
-{ pkgs, config, lib, ... }:
-let 
-id = "base_options";
-cfg = config.${id};
-in 
 {
-
+  pkgs,
+  config,
+  lib,
+  ...
+}: let
+  id = "base_options";
+  cfg = config.${id};
+in {
   options.${id} = {
     enable = lib.mkEnableOption "enables ${id} profile";
   };
 
   config = lib.mkIf cfg.enable {
-
     # Allow unfree packages
     nixpkgs.config.allowUnfree = true;
 

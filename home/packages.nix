@@ -1,34 +1,32 @@
-{ config, pkgs, ... }:
-let
-in
 {
-
+  config,
+  pkgs,
+  ...
+}: let
+in {
   home.packages = [
-  pkgs.whitesur-gtk-theme
-  pkgs.whitesur-cursors
-  pkgs.whitesur-icon-theme
-  pkgs.age
-  
+    pkgs.whitesur-gtk-theme
+    pkgs.whitesur-cursors
+    pkgs.whitesur-icon-theme
+    pkgs.age
 
-  # gnupg
+    # gnupg
 
+    # (pkgs.nerdfonts.override { fonts = [ "FantasqueSansMono" ]; })
+    (pkgs.writeShellScriptBin "notification-audio" ''
+      fd='/tmp/notid'
+      if [ ! -f /tmp/notid ]; then
+        notify-send -t 5000 -p $1 > $fd
+      else
+        oldid=$(head -n 1 $fd)
+        echo $oldid
+        notify-send -r $oldid -t 5000 -p $1 > $fd
+      fi
+    '')
 
-  # (pkgs.nerdfonts.override { fonts = [ "FantasqueSansMono" ]; })
-  (pkgs.writeShellScriptBin "notification-audio" ''
-fd='/tmp/notid'
-if [ ! -f /tmp/notid ]; then
-  notify-send -t 5000 -p $1 > $fd
-else
-  oldid=$(head -n 1 $fd)
-  echo $oldid
-  notify-send -r $oldid -t 5000 -p $1 > $fd
-fi
-  '')
+    (pkgs.writeShellScriptBin "notification-short" ''
+      notify-send -t 5000 -p $1
 
-  (pkgs.writeShellScriptBin "notification-short" ''
-  notify-send -t 5000 -p $1
-
-  '')
+    '')
   ];
-
 }

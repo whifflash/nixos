@@ -1,10 +1,13 @@
-{ inputs, lib, config, pkgs, ... }:
-let 
-id = "desktop_greetd";
-cfg = config.${id};
-in 
 {
-
+  inputs,
+  lib,
+  config,
+  pkgs,
+  ...
+}: let
+  id = "desktop_greetd";
+  cfg = config.${id};
+in {
   options.${id} = {
     enable = lib.mkEnableOption "enables ${id} profile";
   };
@@ -22,8 +25,7 @@ in
     };
 
     environment.systemPackages = with pkgs; [
-    greetd.tuigreet
+      greetd.tuigreet
     ];
   };
-
 }

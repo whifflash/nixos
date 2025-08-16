@@ -1,17 +1,20 @@
 # hosts/mia/decafbad-vm.nix
 # NixOS host configuration for "mia", adapted for flake-based imports.
-
-{ inputs, config, pkgs, lib, ... }:
-
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-      ./../../modules/modules.nix  
-      inputs.home-manager.nixosModules.default
-      inputs.home-manager.nixosModules.default
-      inputs.sops-nix.nixosModules.sops
-    ];
+  inputs,
+  config,
+  pkgs,
+  lib,
+  ...
+}: {
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+    ./../../modules/modules.nix
+    inputs.home-manager.nixosModules.default
+    inputs.home-manager.nixosModules.default
+    inputs.sops-nix.nixosModules.sops
+  ];
 
   sops.defaultSopsFile = ../../secrets/secrets.yaml;
   sops.defaultSopsFormat = "yaml";
@@ -20,7 +23,7 @@
 
   sops.secrets."wireguard/vps/keys/public" = {
     owner = config.users.users."systemd-network".name;
-  };  
+  };
   sops.secrets."network-manager.env" = {
     owner = config.users.users."systemd-network".name;
   };
@@ -31,7 +34,6 @@
   boot.loader.grub.useOSProber = true;
 
   networking.hostName = "nixbox";
-
 
   desktop_gnome.enable = true;
   desktop_greetd.enable = true;
@@ -44,46 +46,40 @@
   role_workstation.enable = true;
   role_hardware-development.enable = true;
 
-
-
-
   networking.networkmanager.enable = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.mhr = {
     isNormalUser = true;
     description = "mhr";
-    extraGroups = [ "networkmanager" "wheel" "vboxsf"];
+    extraGroups = ["networkmanager" "wheel" "vboxsf"];
     packages = with pkgs; [
-    #  thunderbird
+      #  thunderbird
     ];
   };
 
-# System specific Joplin-Backup script
-# Joplin won't sync to a shared folder
+  # System specific Joplin-Backup script
+  # Joplin won't sync to a shared folder
 
-systemd.timers."joplin-backup" = {
-  wantedBy = [ "timers.target" ];
+  systemd.timers."joplin-backup" = {
+    wantedBy = ["timers.target"];
     timerConfig = {
       OnBootSec = "5m";
       OnUnitActiveSec = "5m";
       Unit = "joplin-backup.service";
     };
-};
-
-systemd.services."joplin-backup" = {
-  script = ''
-    set -eu
-    ${pkgs.coreutils}/bin/cp -r /home/mhr/Joplin-Backup/* /home/mhr/share/Joplin/Backup/
-  '';
-  serviceConfig = {
-    Type = "oneshot";
-    User = "mhr";
   };
-};
+
+  systemd.services."joplin-backup" = {
+    script = ''
+      set -eu
+      ${pkgs.coreutils}/bin/cp -r /home/mhr/Joplin-Backup/* /home/mhr/share/Joplin/Backup/
+    '';
+    serviceConfig = {
+      Type = "oneshot";
+      User = "mhr";
+    };
+  };
 
   system.stateVersion = "24.11"; # Did you read the comment?
 }
-
-
-

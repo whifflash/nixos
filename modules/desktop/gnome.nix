@@ -1,10 +1,12 @@
-{ inputs, lib, config, ... }:
-let 
-id = "desktop_gnome";
-cfg = config.${id};
-in 
 {
-
+  inputs,
+  lib,
+  config,
+  ...
+}: let
+  id = "desktop_gnome";
+  cfg = config.${id};
+in {
   options.${id} = {
     enable = lib.mkEnableOption "enables ${id} profile";
   };
@@ -12,5 +14,4 @@ in
   config = lib.mkIf cfg.enable {
     services.xserver.desktopManager.gnome.enable = true;
   };
-  
 }

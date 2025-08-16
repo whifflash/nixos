@@ -1,10 +1,9 @@
 {
-
   description = "NixOS configuration (flake-parts layout)";
 
   inputs = {
     # nixpkgs.url = "github:NixOS/nixpkgs/nixos-stable";
-    nixpkgs = { url = "github:nixos/nixpkgs/nixos-25.05"; };
+    nixpkgs = {url = "github:nixos/nixpkgs/nixos-25.05";};
     # unstable = { url = "github:nixos/nixpkgs/nixos-unstable"; };
 
     # Core helper for structuring flakes
@@ -45,20 +44,23 @@
     # disko.inputs.nixpkgs.follows = "nixpkgs";
     # nix-darwin.url = "github:LnL7/nix-darwin/nix-darwin-24.11";
     # nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
-
-
-
   };
 
   outputs = inputs @ {
-    self, nixpkgs, flake-parts, home-manager, nixos-hardware, treefmt-nix, git-hooks, sops-nix, ...
-  }:  
-
-  flake-parts.lib.mkFlake { inherit inputs; }
-  {
-
-    # Add more if you build for Darwin/etc.
-      systems = [ "x86_64-linux" "aarch64-linux" ];
+    self,
+    nixpkgs,
+    flake-parts,
+    home-manager,
+    nixos-hardware,
+    treefmt-nix,
+    git-hooks,
+    sops-nix,
+    ...
+  }:
+    flake-parts.lib.mkFlake {inherit inputs;}
+    {
+      # Add more if you build for Darwin/etc.
+      systems = ["x86_64-linux" "aarch64-linux"];
 
       # Bring in ready-made modules
       imports = [
@@ -66,7 +68,13 @@
         git-hooks.flakeModule
       ];
 
-      perSystem = { pkgs, config, system, lib, ... }: {
+      perSystem = {
+        pkgs,
+        config,
+        system,
+        lib,
+        ...
+      }: {
         ##### Developer UX #####
         devShells.default = pkgs.mkShell {
           packages = [
@@ -77,7 +85,7 @@
             pkgs.prettier
             pkgs.statix
             pkgs.deadnix
-            config.treefmt.build.wrapper  # provides `treefmt`
+            config.treefmt.build.wrapper # provides `treefmt`
           ];
           # Install pre-commit hooks automatically when you `nix develop`
           shellHook = config.pre-commit.installationScript;
@@ -90,9 +98,9 @@
         treefmt = {
           projectRootFile = "flake.nix";
           programs = {
-            alejandra.enable = true;  # Nix
-            shfmt.enable = true;      # Shell
-            prettier.enable = true;   # JSON/MD/YAML/etc.
+            alejandra.enable = true; # Nix
+            shfmt.enable = true; # Shell
+            prettier.enable = true; # JSON/MD/YAML/etc.
           };
         };
 
@@ -107,43 +115,46 @@
         '';
       };
 
-            ##### System-wide (cross-system) outputs #####
+      ##### System-wide (cross-system) outputs #####
+
       flake = {
         # Auto-discover hosts from ./hosts
-        nixosConfigurations =
-          let
-            lib = nixpkgs.lib;
-            hostsDir = ./hosts;
-            dir = builtins.readDir hostsDir;
-            hostNames =
-                builtins.attrNames
-                (lib.filterAttrs (_: v: v == "directory") dir);
+        nixosConfigurations = let
+          lib = nixpkgs.lib;
+          hostsDir = ./hosts;
+          # dir = builtins.readDir hostsDir;
+          dir =
+            if builtins.pathExists hostsDir
+            then builtins.readDir hostsDir
+            else {};
+          hostNames =
+            builtins.attrNames (lib.filterAttrs (_: v: v == "directory") dir);
 
+          systemFor = name: let
+            path = hostsDir + "/${name}/system";
+          in
+            if builtins.pathExists path
+            then lib.strings.trim (builtins.readFile path)
+            else "x86_64-linux";
 
-
-            systemFor = name:
-              let path = hostsDir + "/${name}/system";
-              in if builtins.pathExists path
-                 then lib.strings.trim (builtins.readFile path)
-                 else "x86_64-linux";
-
-            mkHost = name:
-              lib.nixosSystem {
-                system = systemFor name;
-                modules = [
-                  # Either a directory with default.nix or a single file — both work
-                  (hostsDir + "/${name}")
-                  home-manager.nixosModules.home-manager
-                  {
-                    # Keep HM pkgs in sync with the system’s pkgs
-                    home-manager.useGlobalPkgs = true;
-                    home-manager.useUserPackages = true;
-                  }
-                ];
-                # Pass flake inputs to modules (useful inside your modules)
-                specialArgs = { inherit inputs; };
-              };
-          in lib.genAttrs hostNames mkHost;
+          mkHost = name:
+            lib.nixosSystem {
+              system = systemFor name;
+              modules = [
+                # Either a directory with default.nix or a single file — both work
+                (hostsDir + "/${name}")
+                home-manager.nixosModules.home-manager
+                {
+                  # Keep HM pkgs in sync with the system’s pkgs
+                  home-manager.useGlobalPkgs = true;
+                  home-manager.useUserPackages = true;
+                }
+              ];
+              # Pass flake inputs to modules (useful inside your modules)
+              specialArgs = {inherit inputs;};
+            };
+        in
+          lib.genAttrs hostNames mkHost;
 
         # (Optional) expose a `treefmt` app explicitly for `nix run .#treefmt`
         # apps = nixpkgs.lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] (system: let
@@ -156,91 +167,80 @@
         #   };
         # });
       };
-
-
-
-
-  };
+    };
 }
+# nixosConfigurations.nixbox = nixpkgs.lib.nixosSystem {
+#   specialArgs = {
+#     inherit inputs;
+#     hostname = "nixbox";
+#     wm = "sway";
+#     user = "mhr";
+#   };
+#   system = "x86_64-linux";
+#   modules = [
+#   ./hosts/decafbad-vm/configuration.nix
+#   ./modules/modules.nix
+#   sops-nix.nixosModules.sops
+#   ];
+# };
+# nixosConfigurations.mia = nixpkgs.lib.nixosSystem {
+#   specialArgs = {
+#     inherit inputs;
+#     hostname = "mia";
+#     wm = "sway";
+#     user = "mhr";
+#   };
+#   system = "x86_64-linux";
+#   modules = [
+#   ./hosts/mia/configuration.nix
+#   ./modules/modules.nix
+#   inputs.sops-nix.nixosModules.sops
+#   inputs.home-manager.nixosModules.home-manager
+#   {
+#         home-manager.useGlobalPkgs = true;
+#         home-manager.useUserPackages = true;
+#         home-manager.users.mhr = import ./home/home.nix;
+#         home-manager.extraSpecialArgs = {
+#         inherit inputs;
+#         };
+#   }
+#   ];
+# };
+# nixosConfigurations.nixboxmia = nixpkgs.lib.nixosSystem {
+#   specialArgs = {
+#     inherit inputs;
+#     hostname = "mianixbox";
+#     wm = "sway";
+#     user = "mhr";
+#   };
+#   system = "x86_64-linux";
+#   modules = [
+#   ./hosts/mia-nixbox/configuration.nix
+#   ./modules/modules.nix
+#   inputs.home-manager.nixosModules.default
+#   ];
+# };
+# nixosConfigurations.luna = nixpkgs.lib.nixosSystem {
+#   specialArgs = {
+#     inherit inputs;
+#     hostname = "luna";
+#     wm = "sway";
+#     user = "mhr";
+#   };
+#   system = "x86_64-linux";
+#   modules = [
+#   ./hosts/luna/configuration.nix
+#   ./modules/modules.nix
+#   inputs.sops-nix.nixosModules.sops
+#   inputs.home-manager.nixosModules.home-manager
+#   {
+#         home-manager.useGlobalPkgs = true;
+#         home-manager.useUserPackages = true;
+#         home-manager.users.mhr = import ./home/home.nix;
+#         home-manager.extraSpecialArgs = {
+#         inherit inputs;
+#         };
+#   }
+#   ];
+# };
 
-
-
-
-    # nixosConfigurations.nixbox = nixpkgs.lib.nixosSystem {
-    #   specialArgs = { 
-    #     inherit inputs;
-    #     hostname = "nixbox";
-    #     wm = "sway";
-    #     user = "mhr"; 
-    #   };
-    #   system = "x86_64-linux";
-    #   modules = [ 
-    #   ./hosts/decafbad-vm/configuration.nix
-    #   ./modules/modules.nix  
-    #   sops-nix.nixosModules.sops
-    #   ];
-    # };
-    # nixosConfigurations.mia = nixpkgs.lib.nixosSystem {
-    #   specialArgs = { 
-    #     inherit inputs;
-    #     hostname = "mia";
-    #     wm = "sway";
-    #     user = "mhr";
-    #   };
-    #   system = "x86_64-linux";
-    #   modules = [ 
-    #   ./hosts/mia/configuration.nix
-    #   ./modules/modules.nix
-    #   inputs.sops-nix.nixosModules.sops
-    #   inputs.home-manager.nixosModules.home-manager
-    #   {
-    #         home-manager.useGlobalPkgs = true;
-    #         home-manager.useUserPackages = true;
-
-    #         home-manager.users.mhr = import ./home/home.nix;
-
-    #         home-manager.extraSpecialArgs = {
-    #         inherit inputs;
-    #         };
-    #   }
-    #   ];
-    # };
-    # nixosConfigurations.nixboxmia = nixpkgs.lib.nixosSystem {
-    #   specialArgs = { 
-    #     inherit inputs;
-    #     hostname = "mianixbox";
-    #     wm = "sway";
-    #     user = "mhr";
-    #   };
-    #   system = "x86_64-linux";
-    #   modules = [ 
-    #   ./hosts/mia-nixbox/configuration.nix
-    #   ./modules/modules.nix  
-    #   inputs.home-manager.nixosModules.default          
-    #   ];
-    # };
-    # nixosConfigurations.luna = nixpkgs.lib.nixosSystem {
-    #   specialArgs = { 
-    #     inherit inputs;
-    #     hostname = "luna";
-    #     wm = "sway";
-    #     user = "mhr";
-    #   };
-    #   system = "x86_64-linux";
-    #   modules = [ 
-    #   ./hosts/luna/configuration.nix
-    #   ./modules/modules.nix
-    #   inputs.sops-nix.nixosModules.sops
-    #   inputs.home-manager.nixosModules.home-manager
-    #   {
-    #         home-manager.useGlobalPkgs = true;
-    #         home-manager.useUserPackages = true;
-
-    #         home-manager.users.mhr = import ./home/home.nix;
-
-    #         home-manager.extraSpecialArgs = {
-    #         inherit inputs;
-    #         };
-    #   }
-    #   ];
-    # };
