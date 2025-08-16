@@ -1,11 +1,13 @@
-{}: let
-  # work = builtins.fromJSON (builtins.readFile config.sops.secrets.work.path);
-  # workUser = "TODO";
-  # workHosts = [
-  #   "todo.net"
-  #   "192.168.1.*"
-  # ];
-in {
+_:
+# let
+# work = builtins.fromJSON (builtins.readFile config.sops.secrets.work.path);
+# workUser = "TODO";
+# workHosts = [
+#   "todo.net"
+#   "192.168.1.*"
+# ];
+# in
+{
   programs.git = {
     enable = true;
     # userName = builtins.readFile config.sops.secrets.git.userName.path;
