@@ -3,7 +3,6 @@
   lib,
   config,
   pkgs,
-  specialArgs,
   ...
 }: let
   id = "role_workstation";

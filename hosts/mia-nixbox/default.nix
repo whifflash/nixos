@@ -2,9 +2,7 @@
 # NixOS host configuration for "mia", adapted for flake-based imports.
 {
   inputs,
-  config,
   pkgs,
-  lib,
   ...
 }: {
   imports = [

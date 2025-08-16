@@ -1,8 +1,4 @@
-{
-  pkgs,
-  lib,
-  ...
-}: {
+{ }: {
   imports = [
     ./core/base_options.nix
     ./core/base_packages.nix

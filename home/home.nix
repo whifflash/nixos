@@ -1,8 +1,5 @@
 {
-  inputs,
-  config,
   pkgs,
-  work,
   ...
 }:
 # let

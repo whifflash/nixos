@@ -47,14 +47,14 @@
   };
 
   outputs = inputs @ {
-    self,
+    # self,
     nixpkgs,
     flake-parts,
     home-manager,
-    nixos-hardware,
+    # nixos-hardware,
     treefmt-nix,
     git-hooks,
-    sops-nix,
+    # sops-nix,
     ...
   }:
     flake-parts.lib.mkFlake {inherit inputs;}
@@ -71,8 +71,8 @@
       perSystem = {
         pkgs,
         config,
-        system,
-        lib,
+        # system,
+        # lib,
         ...
       }: {
         ##### Developer UX #####

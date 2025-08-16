@@ -1,8 +1,4 @@
-{
-  config,
-  pkgs,
-  ...
-}: {
+{}: {
   programs.ssh = {
     enable = true;
     controlPersist = "12h";
