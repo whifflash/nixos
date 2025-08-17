@@ -99,16 +99,16 @@
           # check.enable = true;
 
           # this is the correct nesting:
-                        settings.hooks = {
-                          # Use treefmt as the single formatter (covers Nix/Shell/Prettier, etc.)
-                          treefmt = {
-                            enable = true;
-                            package = config.treefmt.build.wrapper;
-                          };
+          settings.hooks = {
+            # Use treefmt as the single formatter (covers Nix/Shell/Prettier, etc.)
+            treefmt = {
+              enable = true;
+              package = config.treefmt.build.wrapper;
+            };
 
-                          # Keep linters:
-                          statix.enable = true;
-                          deadnix.enable = true;
+            # Keep linters:
+            statix.enable = true;
+            deadnix.enable = true;
 
             # Avoid double-formatting (treefmt already runs Prettier/Shfmt/Alejandra)
             alejandra.enable = false;

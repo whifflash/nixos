@@ -1,1 +1,20 @@
-/nix/store/q06pixw9bcb1qgszndhqzyfkfdl2l5gg-pre-commit-config.json
+repos:
+  - repo: local
+    hooks:
+      - id: treefmt
+        name: treefmt (nix fmt)
+        entry: bash -lc 'treefmt --ci'
+        language: system
+        pass_filenames: false
+
+      - id: statix
+        name: statix
+        entry: bash -lc 'statix check .'
+        language: system
+        pass_filenames: false
+
+      - id: deadnix
+        name: deadnix
+        entry: bash -lc 'deadnix .'
+        language: system
+        pass_filenames: false
