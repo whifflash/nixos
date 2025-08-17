@@ -95,27 +95,27 @@
         };
 
         pre-commit = {
-  # optional: adds a flake check so `nix flake check` runs the hooks
-  # check.enable = true;
+          # optional: adds a flake check so `nix flake check` runs the hooks
+          # check.enable = true;
 
-  # this is the correct nesting:
-  settings.hooks = {
-    # Use treefmt as the single formatter (covers Nix/Shell/Prettier, etc.)
-    treefmt = {
-      enable = true;
-      package = config.treefmt.build.wrapper;
-    };
+          # this is the correct nesting:
+          settings.hooks = {
+            # Use treefmt as the single formatter (covers Nix/Shell/Prettier, etc.)
+            treefmt = {
+              enable = true;
+              package = config.treefmt.build.wrapper;
+            };
 
-    # Keep linters:
-    statix.enable = true;
-    deadnix.enable = true;
+            # Keep linters:
+            statix.enable = true;
+            deadnix.enable = true;
 
-    # Avoid double-formatting (treefmt already runs Prettier/Shfmt/Alejandra)
-    alejandra.enable = false;
-    shfmt.enable = false;
-    prettier.enable = false;
-  };
-};
+            # Avoid double-formatting (treefmt already runs Prettier/Shfmt/Alejandra)
+            alejandra.enable = false;
+            shfmt.enable = false;
+            prettier.enable = false;
+          };
+        };
 
         # `nix fmt` will run this formatter;
         formatter = config.treefmt.build.wrapper;
