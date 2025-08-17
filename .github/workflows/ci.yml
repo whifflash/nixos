@@ -55,7 +55,7 @@ jobs:
           total_end=$(date +%s)
           echo "Dry-run total: $((total_end - total_start))s"
 
-weekly-full-build:
+  weekly-full-build:
     if: ${{ github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
