@@ -61,4 +61,21 @@
   # Enable the X11 windowing system.
   services.xserver.enable = true;
   system.stateVersion = "24.11";
+
+  # Attic cache client (reads endpoint/key/token from secrets)
+  attic_client = {
+    enable = true;
+    secretsFile = ../../secrets/attic.yaml; # encrypted YAML
+    addOfficialCache = true;
+    fallback = true;
+  };
+
+  # Optional: use the home server as remote builder
+  attic_remote = {
+    enable = true;
+    hostName = "10.20.31.41";
+    sshUser = "mhr";
+    system = "x86_64-linux";
+    maxJobs = 8;
+  };
 }

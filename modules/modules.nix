@@ -1,5 +1,6 @@
 {...}: {
   imports = [
+    ./attic/client.nix
     ./core/base_options.nix
     ./core/base_packages.nix
     ./core/virtualization_guest.nix
