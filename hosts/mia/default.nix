@@ -41,6 +41,16 @@
     ];
   };
 
+  # Ensure the user exists at the system level
+  users.users.mhr = {
+    isNormalUser = true;
+    # …other user options…
+  };
+
+  # Home Manager user binding for this host:
+  home-manager.users.mhr = import ../../home/home.nix;
+  # or imports = [ ../../home/ssh.nix ../../home/shell.nix ];
+
   desktop_gdm.enable = false;
   desktop_sddm.enable = true;
   desktop_gnome.enable = false;

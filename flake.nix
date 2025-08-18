@@ -175,11 +175,15 @@
                 home-manager.nixosModules.home-manager
                 {
                   # Keep HM pkgs in sync with the system’s pkgs
-                  home-manager.useGlobalPkgs = true;
-                  home-manager.useUserPackages = true;
+                  home-manager = {
+                    useGlobalPkgs = true;
+                    useUserPackages = true;
+                    # Pass flake inputs to HM modules so `inputs` is well-defined
+                    extraSpecialArgs = {inherit inputs;};
+                  };
                 }
               ];
-              # Pass flake inputs to modules (useful inside your modules)
+              # Pass flake inputs to modules
               specialArgs = {inherit inputs;};
             };
         in

@@ -104,7 +104,7 @@ in {
         "attic/token" = {
           sopsFile = cfg.secretsFile;
           format = "yaml";
-          key = "token";
+          key = "attic_client_token";
         };
       };
 

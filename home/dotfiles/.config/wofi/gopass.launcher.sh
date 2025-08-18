@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if [ ! -f /tmp/pass.store ]; then
-  PASSWORD_STORE_DIR=~/.password-store-personal
+  PASSWORD_STORE_DIR=~/.password-store-personali
 else
   PASSWORD_STORE_DIR=$(cat /tmp/pass.store)
 fi
