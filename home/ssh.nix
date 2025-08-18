@@ -1,4 +1,22 @@
-_: {
+{
+  lib,
+  config,
+  inputs ? {},
+  ...
+}: let
+  haveInputsSops = inputs ? sops-nix;
+in {
+  imports = lib.optionals haveInputsSops [inputs.sops-nix.homeManagerModules.sops];
+
+  # SOPS secret managed by Home Manager
+  sops = {
+    age.keyFile = "${config.home.homeDirectory}/.config/sops/age/keys.txt";
+    secrets."bsw/priv" = {
+      sopsFile = inputs.self + /../secrets/ssh.yaml; # <-- key change
+      path = "${config.home.homeDirectory}/.ssh/bsw";
+    };
+  };
+
   programs.ssh = {
     enable = true;
     controlPersist = "12h";
@@ -27,10 +45,11 @@ _: {
         identitiesOnly = true;
         port = 2222;
       };
-      "ikarus" = {
+      "icarus 10.20.31.41 attic.c4rb0n.cloud" = {
         user = "mhr";
         hostname = "10.20.31.41";
-        identityFile = "/home/mhr/.ssh/gitea";
+        identityFile = "~/.ssh/bsw";
+        identitiesOnly = true; # ensures the specified key is used
         port = 22;
       };
       "poseidon" = {

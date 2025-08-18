@@ -41,6 +41,16 @@
     ];
   };
 
+  # Ensure the user exists at the system level
+  users.users.mhr = {
+    isNormalUser = true;
+    # …other user options…
+  };
+
+  # Home Manager user binding for this host:
+  home-manager.users.mhr = import ../../home/home.nix;
+  # or imports = [ ../../home/ssh.nix ../../home/shell.nix ];
+
   desktop_gdm.enable = false;
   desktop_sddm.enable = true;
   desktop_gnome.enable = false;
@@ -61,4 +71,21 @@
   # Enable the X11 windowing system.
   services.xserver.enable = true;
   system.stateVersion = "24.11";
+
+  # Attic cache client (reads endpoint/key/token from secrets)
+  attic_client = {
+    enable = true;
+    secretsFile = ../../secrets/attic.yaml; # encrypted YAML
+    addOfficialCache = true;
+    fallback = true;
+  };
+
+  # Optional: use the home server as remote builder
+  attic_remote = {
+    enable = true;
+    hostName = "10.20.31.41";
+    sshUser = "mhr";
+    system = "x86_64-linux";
+    maxJobs = 8;
+  };
 }
