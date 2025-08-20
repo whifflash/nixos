@@ -86,11 +86,11 @@
             pkgs.statix
             pkgs.deadnix
             pkgs.pre-commit
-            config.treefmt.build.wrapper # provides `treefmt`
+            config.treefmt.build.wrapper
           ];
-          # Install pre-commit hooks automatically when you `nix develop`
           shellHook = ''
-            ${pkgs.bash}/bin/bash ./scripts/install-precommit-delegator.sh
+            # Install/refresh the hook every time you enter the shell
+            pre-commit install --install-hooks --overwrite
           '';
         };
 
