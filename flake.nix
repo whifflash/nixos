@@ -9,6 +9,8 @@
     # Core helper for structuring flakes
     flake-parts.url = "github:hercules-ci/flake-parts";
 
+    # flake-utils.url = "github:numtide/flake-utils";
+
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -47,9 +49,10 @@
   };
 
   outputs = inputs @ {
-    # self,
+    self,
     nixpkgs,
     flake-parts,
+    # flake-utils,
     home-manager,
     # nixos-hardware,
     treefmt-nix,
@@ -168,14 +171,28 @@
 
         # Lightweight “all-in-one” check you can call in CI:
         #   nix build .#checks.<system>.ci
-        checks.ci = pkgs.runCommand "ci-checks" {src = ./.;} ''
-          set -e
-          cd "$src"
-          ${config.treefmt.build.wrapper}/bin/treefmt --ci
-          ${pkgs.statix}/bin/statix check .
-          ${pkgs.deadnix}/bin/deadnix .
-          touch $out
-        '';
+        checks = {
+          format = pkgs.runCommand "fmt-check" {} ''
+            ${pkgs.alejandra}/bin/alejandra --check ${self}
+            touch $out
+          '';
+
+          lint = pkgs.runCommand "lint-check" {} ''
+            ${pkgs.statix}/bin/statix check ${self}
+            ${pkgs.deadnix}/bin/deadnix ${self}
+            touch $out
+          '';
+
+          ci = pkgs.runCommand "ci-checks" {src = ./.;} ''
+            set -e
+            cd "$src"
+            ${config.treefmt
+            .build.wrapper}/bin/treefmt --ci
+            ${pkgs.statix}/bin/statix check .
+            ${pkgs.deadnix}/bin/deadnix .
+            touch $out
+          '';
+        };
       };
 
       ##### System-wide (cross-system) outputs #####
