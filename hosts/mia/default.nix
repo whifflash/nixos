@@ -112,7 +112,7 @@
   # Optional: use the home server as remote builder
   attic_remote = {
     enable = true;
-    hostName = "10.20.31.41";
+    hostName = "attic.c4rb0n.cloud";
     sshUser = "mhr";
     system = "x86_64-linux";
     maxJobs = 8;
