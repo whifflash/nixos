@@ -77,20 +77,55 @@
       }: {
         ##### Developer UX #####
         devShells.default = pkgs.mkShell {
-          packages = [
-            pkgs.git
-            pkgs.jq
-            pkgs.alejandra
-            pkgs.shfmt
-            pkgs.nodePackages.prettier
-            pkgs.statix
-            pkgs.deadnix
-            pkgs.pre-commit
+          packages = with pkgs; [
+            git
+            jq
+            alejandra
+            shfmt
+            nodePackages.prettier
+            statix
+            deadnix
+            pre-commit
             config.treefmt.build.wrapper
+            zsh
+            oh-my-zsh
+            zsh-autosuggestions
+            zsh-syntax-highlighting
           ];
           shellHook = ''
-            # Install/refresh the hook every time you enter the shell
-            pre-commit install --install-hooks --overwrite
+                        # Install/refresh the hook every time you enter the shell
+                        pre-commit install --install-hooks --overwrite
+
+                         # --- oh-my-zsh-in-devshell setup (isolated, no dotfiles touched) ---
+                  export NIX_DEV_ZDOTDIR="$PWD/.nix-dev-zsh"
+                  mkdir -p "$NIX_DEV_ZDOTDIR"
+
+                  cat >"$NIX_DEV_ZDOTDIR/.zshrc" <<'EOF_ZSHRC'
+            # ---- nix devshell zshrc (generated) ----
+            export ZSH="${pkgs.oh-my-zsh}/share/oh-my-zsh"
+            ZSH_THEME="robbyrussell"
+            plugins=(git)   # <- enables ga, gco, gst, etc.
+
+            # Make sure the dev shell's tools are first on PATH
+            # (Nix already sets PATH, this is just a friendly reminder spot.)
+            # export PATH="$PATH"
+
+            # Don’t let omz auto-update in ephemeral shells
+            DISABLE_AUTO_UPDATE="true"
+            DISABLE_UPDATE_PROMPT="true"
+
+            source "$ZSH/oh-my-zsh.sh"
+            # ---- end generated ----
+            EOF_ZSHRC
+
+                  # Point zsh to our isolated config
+                  export ZDOTDIR="$NIX_DEV_ZDOTDIR"
+
+                  # If we're interactive and not already in zsh, hop into it
+                  if [ -t 1 ] && [ -z "$IN_NIX_DEV_ZSH" ] ; then
+                    export IN_NIX_DEV_ZSH=1
+                    exec ${pkgs.zsh}/bin/zsh -i
+                  fi
           '';
         };
 
