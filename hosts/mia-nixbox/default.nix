@@ -33,6 +33,19 @@
 
   hardware.graphics.enable = true;
 
+  users.users.mhr = {
+    isNormalUser = true;
+    description = "mhr";
+    extraGroups = ["networkmanager" "wheel" "vboxsf"];
+    packages = with pkgs; [
+      #  thunderbird
+    ];
+  };
+
+  # Home Manager user binding for this host:
+  home-manager.users.mhr = import ../../home/home.nix;
+  # or imports = [ ../../home/ssh.nix ../../home/shell.nix ];
+
   services = {
     # Enable the X11 windowing system.
     xserver.enable = true;

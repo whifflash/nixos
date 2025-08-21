@@ -62,6 +62,10 @@
     ];
   };
 
+  # Home Manager user binding for this host:
+  home-manager.users.mhr = import ../../home/home.nix;
+  # or imports = [ ../../home/ssh.nix ../../home/shell.nix ];
+
   # System specific Joplin-Backup script
   # Joplin won't sync to a shared folder
 
