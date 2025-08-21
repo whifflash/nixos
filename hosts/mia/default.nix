@@ -1,6 +1,8 @@
 # hosts/mia/default.nix
 # NixOS host configuration for "mia", adapted for flake-based imports.
 {
+  inputs,
+  lib,
   config,
   pkgs,
   ...
@@ -9,7 +11,34 @@
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
     ./../../modules/modules.nix
+    inputs.nixos-hardware.nixosModules.lenovo-thinkpad-x270
   ];
+
+  # Recommended extras (safe defaults)
+
+  services = {
+    fwupd.enable = true; # LVFS firmware updates
+    fstrim.enable = true; # SSD TRIM weekly
+    power-profiles-daemon.enable = true;
+  };
+
+  hardware = {
+    cpu.intel.updateMicrocode = lib.mkDefault true;
+    enableRedistributableFirmware = lib.mkDefault true;
+
+    trackpoint = {
+      enable = true;
+      speed = 190; # 0–255
+      sensitivity = 130; # 0–255
+    };
+  };
+
+  # alternatively tlp...
+  # services.tlp.enable = true;
+  # services.tlp.settings = {
+  #   START_CHARGE_THRESH_BAT0 = 75;
+  #   STOP_CHARGE_THRESH_BAT0  = 85;
+  # };
 
   sops = {
     defaultSopsFile = ../../secrets/secrets.yaml;
