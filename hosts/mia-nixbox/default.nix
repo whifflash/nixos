@@ -65,11 +65,20 @@
   # Enable networking
   networking.networkmanager.enable = true;
 
-  desktop_gnome.enable = false;
-  desktop_lightdm.enable = true;
+  # Greeter
+  desktop_sddm.enable = true;
+  desktop_greetd.enable = false;
+
+  #Desktop Environments
+  programs.sway.enable = false;
   desktop_budgie.enable = true;
-  desktop_sway.enable = false;
+  desktop_gdm.enable = false;
+  desktop_gnome.enable = false;
+  desktop_hyprland.enable = false;
+
+  #Audio
   desktop_audio.enable = true;
+
   base_packages.enable = true;
   base_options.enable = true;
   user_options.enable = true;

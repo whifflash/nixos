@@ -86,6 +86,7 @@
 
   #Desktop Environments
   programs.sway.enable = true;
+  desktop_budgie.enable = false;
   desktop_gdm.enable = false;
   desktop_gnome.enable = false;
   desktop_hyprland.enable = false;

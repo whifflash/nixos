@@ -39,13 +39,24 @@
 
   networking.hostName = "nixbox";
 
-  desktop_gnome.enable = true;
-  desktop_greetd.enable = true;
+  # Greeter
+  desktop_sddm.enable = true;
+  desktop_greetd.enable = false;
+
+  #Desktop Environments
+  programs.sway.enable = true;
+  desktop_budgie.enable = false;
+  desktop_gdm.enable = false;
+  desktop_gnome.enable = false;
   desktop_hyprland.enable = false;
-  desktop_sway.enable = false;
+
+  #Audio
   desktop_audio.enable = true;
+
   base_packages.enable = true;
   base_options.enable = true;
+  user_options.enable = true;
+
   virtualization_guest.enable = true;
   role_workstation.enable = true;
   role_hardware-development.enable = true;
