@@ -11,18 +11,28 @@
   tmux = "${pkgs.tmux}/bin/tmux";
 
   scratchTitle = "TMuxScratchpad";
-  scratchSpawn = ''
-    ${term} --title ${scratchTitle} -e ${tmux} new-session -A -s scratch
-  '';
-  toggleScratch = ''
-    sh -lc 'pgrep -f "${term}.*${scratchTitle}" >/dev/null \
-      || (${scratchSpawn} & sleep 0.3); swaymsg scratchpad show'
-  '';
-
-  terminalNamed = ''alacritty -t 'TMUXScratchpad' -e /home/mhr/.config/sway/tmux/tmux_reattach.sh'';
 in {
+  # helper script to spawn-if-missing, then toggle scratchpad
+  home.file.".config/sway/scripts/toggle_scratchpad.sh" = lib.mkIf sw {
+    text = ''
+      #!/usr/bin/env bash
+      set -euo pipefail
+      term='${term}'
+      tmux='${tmux}'
+      title='${scratchTitle}'
+
+      if ! pgrep -f "$term.*$title" >/dev/null; then
+        "$term" --title "$title" -e "$tmux" new-session -A -s scratch &
+        sleep 0.3
+      fi
+
+      swaymsg scratchpad show
+    '';
+    executable = true;
+  };
+
   wayland.windowManager.sway = lib.mkIf sw {
-    enable = true; # okay to repeat; it’s the same option
+    enable = true;
     package = pkgs.sway;
     systemd.enable = true;
     xwayland = true;
@@ -33,15 +43,14 @@ in {
       terminal = term;
       menu = "${pkgs.wofi}/bin/wofi --show drun";
 
-      # Touchpad + keyboard
       input = {
         "type:touchpad" = {
           tap = "enabled";
           natural_scroll = "enabled";
           middle_emulation = "enabled";
           dwt = "disabled";
-          pointer_accel = "0.4"; # adjust to taste
-          accel_profile = "adaptive"; # or "flat"
+          pointer_accel = "0.4";
+          accel_profile = "adaptive";
         };
         "type:keyboard" = {
           xkb_layout = "us";
@@ -49,79 +58,69 @@ in {
         };
       };
 
-      # Use Waybar (you already keep its files in the repo)
+      # use Waybar (your repo ships its files)
       bars = [];
       startup = [
         {
           command = "${config.home.homeDirectory}/.config/waybar/launch_waybar.sh";
           always = true;
         }
-        {
-          command = scratchSpawn;
-          always = false;
-        }
+        # optional: pre-spawn scratch session (commented; script handles spawn-if-missing)
+        # { command = ''${term} --title ${scratchTitle} -e ${tmux} new-session -A -s scratch''; always = false; }
       ];
 
-      # Float & center the scratch terminal and keep it in the scratchpad
+      # make the scratch terminal float, size, center, and live in the scratchpad
       window.commands = [
         {
-          criteria.title = scratchTitle;
+          criteria = {title = scratchTitle;};
           command = lib.concatStringsSep ", " [
             "floating enable"
             "sticky enable"
             "move to scratchpad"
-            "resize set width 1200 px height 700 px"
+            "resize set 1200 700"
             "move position center"
             "border pixel 2"
           ];
         }
-        {
-          criteria = {title = "TMUXScratchpad";};
-          # do it in-order so resize happens after it’s floating
-          command = "floating enable, resize set 400 400, move to scratchpad";
-        }
       ];
 
-      #       set $left h
-      # set $down j
-      # set $up k
-      # set $right l
-
-      # bindsym $mod+minus scratchpad show
-      # bindsym $mod+p exec /home/mhr/.config/wofi/gopass.launcher.sh
-      # bindsym $mod+Shift+p exec /home/mhr/.config/wofi/gopass.switcher.sh
-
-      keybindings = lib.mkOptionDefault ({
+      keybindings =
+        # base bindings…
+        (lib.mkOptionDefault {
           "${mod}+Return" = "exec ${term}";
           "${mod}+q" = "kill";
           "${mod}+d" = "exec ${pkgs.wofi}/bin/wofi --show drun";
-          # "${mod}+i" = "exec ${toggleScratch}";
-          "${mod}+i" = ''[title="TMUXScratchpad"] scratchpad show'';
+
+          # toggle scratchpad (spawn if missing) via script — avoids '&'/' ; ' issues
+          "${mod}+i" = "exec ${config.home.homeDirectory}/.config/sway/scripts/toggle_scratchpad.sh";
+          # spawn a named tmux scratch terminal explicitly, if you still want a separate chord
+          "${mod}+Shift+Return" = "exec ${term} -t ${scratchTitle} -e ${config.home.homeDirectory}/.config/sway/tmux/tmux_reattach.sh";
+
+          # reload/lock/exit
           "${mod}+Shift+r" = "reload";
           "${mod}+Shift+e" = ''exec sh -lc 'swaynag -t warning -m "Exit Sway?" -b "Logout" "swaymsg exit"'';
           "${mod}+Shift+x" = "exec ${pkgs.swaylock}/bin/swaylock -f";
 
-          "${mod}+Shift+Return" = "exec ${terminalNamed}";
-
-          # focus
+          # focus / move
           "${mod}+h" = "focus left";
           "${mod}+j" = "focus down";
           "${mod}+k" = "focus up";
           "${mod}+l" = "focus right";
-          # move
           "${mod}+Shift+h" = "move left";
           "${mod}+Shift+j" = "move down";
           "${mod}+Shift+k" = "move up";
           "${mod}+Shift+l" = "move right";
+
           # layout
           "${mod}+v" = "split v";
           "${mod}+b" = "splith";
           "${mod}+f" = "fullscreen toggle";
           "${mod}+space" = "floating toggle";
+
           # gopass
-          "${mod}+p" = ''exec /home/mhr/.config/wofi/gopass.launcher.sh'';
-          "${mod}+Shift+p" = ''exec /home/mhr/.config/wofi/gopass.switcher.sh'';
-        }
+          "${mod}+p" = ''exec ${config.home.homeDirectory}/.config/wofi/gopass.launcher.sh'';
+          "${mod}+Shift+p" = ''exec ${config.home.homeDirectory}/.config/wofi/gopass.switcher.sh'';
+        })
         # workspaces 1–9 (switch & move)
         // lib.listToAttrs (map (n: {
           name = "${mod}+${toString n}";
@@ -130,7 +129,7 @@ in {
         // lib.listToAttrs (map (n: {
           name = "${mod}+Shift+${toString n}";
           value = "move container to workspace number ${toString n}";
-        }) (lib.range 1 9)));
+        }) (lib.range 1 9));
     };
   };
 }

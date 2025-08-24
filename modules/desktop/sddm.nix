@@ -16,6 +16,7 @@ in {
     services.displayManager.sddm = {
       enable = true;
       theme = "${import ./themes/sddm-sugar-dark.nix {inherit pkgs;}}";
+      wayland.enable = true;
     };
 
     environment.systemPackages = with pkgs; [
