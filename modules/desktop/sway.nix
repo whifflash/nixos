@@ -4,14 +4,15 @@
   pkgs,
   ...
 }: let
-  id = "desktop_sway";
-  cfg = config.${id};
+  sw = config.programs.sway.enable or false; # read the host switch
+  # id = "desktop_sway";
+  # cfg = config.${id};
 in {
-  options.${id} = {
-    enable = lib.mkEnableOption "enables ${id} profile";
+  options."sway" = {
+    enable = lib.mkEnableOption "enables sway and corresponding helper programs";
   };
 
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf sw {
     environment = {
       sessionVariables.NIXOS_OZONE_WL = "1";
       sessionVariables.WLR_NO_HARDWARE_CURSORS = "1";
@@ -36,9 +37,9 @@ in {
     services.gnome.gnome-keyring.enable = true;
 
     # enable Sway window manager
-    programs.sway = {
-      enable = true;
-      wrapperFeatures.gtk = true;
-    };
-  };
+    # programs.sway = {
+    #   enable = true;
+    #   wrapperFeatures.gtk = true;
+    # };
+  }; # end of switch
 }

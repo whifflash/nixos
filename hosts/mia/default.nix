@@ -80,13 +80,19 @@
   home-manager.users.mhr = import ../../home/home.nix;
   # or imports = [ ../../home/ssh.nix ../../home/shell.nix ];
 
-  desktop_gdm.enable = false;
+  # Greeter
   desktop_sddm.enable = true;
-  desktop_gnome.enable = false;
   desktop_greetd.enable = false;
+
+  #Desktop Environments
+  programs.sway.enable = true;
+  desktop_gdm.enable = false;
+  desktop_gnome.enable = false;
   desktop_hyprland.enable = false;
-  desktop_sway.enable = true;
+
+  #Audio
   desktop_audio.enable = true;
+
   base_packages.enable = true;
   base_options.enable = true;
   user_options.enable = true;

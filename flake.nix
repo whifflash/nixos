@@ -225,15 +225,18 @@
                 # Either a directory with default.nix or a single file — both work
                 (hostsDir + "/${name}")
                 home-manager.nixosModules.home-manager
-                {
+                ({config, ...}: {
                   # Keep HM pkgs in sync with the system’s pkgs
                   home-manager = {
                     useGlobalPkgs = true;
                     useUserPackages = true;
                     # Pass flake inputs to HM modules so `inputs` is well-defined
-                    extraSpecialArgs = {inherit inputs;};
+                    extraSpecialArgs = {
+                      inherit inputs;
+                      osConfig = config;
+                    };
                   };
-                }
+                })
               ];
               # Pass flake inputs to modules
               specialArgs = {inherit inputs;};

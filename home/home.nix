@@ -1,14 +1,34 @@
-{pkgs, ...}:
+{
+  pkgs,
+  lib,
+  osConfig,
+  ...
+}:
 # let
 #   gruvboxPlus = import ./themes/icons/gruvbox-plus.nix { inherit pkgs; };
 # in
-{
+let
+  swaySwitch = osConfig.programs.sway.enable or false; # read the host switch
+in {
   imports = [
     ./packages.nix
     ./apps/firefox
     ./git.nix
     ./ssh.nix
+    ./themes/sway-theme.nix
+    ./apps/sway.nix
   ];
+
+  wayland.windowManager.sway = lib.mkIf swaySwitch {
+    enable = true;
+  };
+
+  hm.swayTheme = lib.mkIf swaySwitch {
+    enable = true;
+    wallpapersDir = ../media/wallpapers;
+    wallpaper = "Colors.png"; # <- put an existing filename here
+    wallpaperMode = "fill";
+  };
 
   home = {
     username = "mhr";
@@ -35,9 +55,11 @@
       ".config/waybar/ornamental.json".source = ./dotfiles/.config/waybar/ornamental.json;
       ".config/waybar/ornamental.css".source = ./dotfiles/.config/waybar/ornamental.css;
       ".config/waybar/launch_waybar.sh".source = ./dotfiles/.config/waybar/launch_waybar.sh;
-      ".config/sway/config".source = ./dotfiles/.config/sway/config;
       ".config/swaylock/config".source = ./dotfiles/.config/swaylock/config;
       ".config/sway/tmux/tmux_reattach.sh".source = ./dotfiles/.config/sway/tmux/tmux_reattach.sh;
+
+      # Moved to home manager
+      # ".config/sway/config".source = ./dotfiles/.config/sway/config;
     };
 
     sessionVariables = {
