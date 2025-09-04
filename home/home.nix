@@ -17,10 +17,18 @@ in {
     ./ssh.nix
     ./themes/sway-theme.nix
     ./apps/sway.nix
+    ./themes/palettes.nix
   ];
 
   wayland.windowManager.sway = lib.mkIf swaySwitch {
     enable = true;
+  };
+
+  hm.theme = {
+    enable = true;
+    scheme = "gruvbox-dark"; # or "gruvbox-light"
+    writeWaybarPalette = true; # generates ~/.config/waybar/palette.css
+    writeWofiPalette = true; # generates ~/.config/wofi/palette.css
   };
 
   hm.swayTheme = lib.mkIf swaySwitch {

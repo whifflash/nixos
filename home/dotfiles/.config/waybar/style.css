@@ -1,4 +1,6 @@
-@import url("/home/mhr/.config/waybar/colors.css");
+@import url("palette.css");
+@import url("colors.css");
+@import url("ornamental.css");
 
 @keyframes blink-warning {
   70% {
@@ -75,14 +77,14 @@
 #temperature,
 #backlight {
   background: @bg0;
-  color: @font_gruv_normal;
+  color: @font;
 }
 #battery {
   animation-timing-function: linear;
   animation-iteration-count: infinite;
   animation-direction: alternate;
   background: @bg2;
-  color: @font_gruv_normal;
+  color: @font;
 }
 #battery.bat2 {
   border-bottom: 2px solid #ffffff;
@@ -112,7 +114,7 @@
 #temperature.warning,
 #battery.warning {
   background: @warning;
-  color: @nord_dark_font;
+  color: @font_darker;
 }
 
 /* Each warning that should blink */
@@ -124,39 +126,39 @@
 /* And now modules themselves in their respective order */
 #clock.time {
   background: @bg;
-  color: @font_gruv_normal;
+  color: @font_faded;
 }
 #clock.date {
   background: @bg;
-  color: @font_gruv_faded;
+  color: @font;
 }
 
 #custom-scratchpad-indicator {
-  background: @bluetint;
-  color: @font_gruv_normal;
+  background: @bg2;
+  color: @font_faded;
 }
 #language {
   background: @bg;
-  color: @font_gruv_normal;
+  color: @font;
 }
 #custom-kdeconnect {
   background: @bg;
-  color: @font_gruv_normal;
+  color: @font;
 }
 #custom-pacman {
-  background: @bluetint;
-  color: @font_gruv_normal;
+  background: @bg2;
+  color: @font;
 }
 #idle_inhibitor {
   background: @bg2;
-  color: @font_gruv_normal;
+  color: @font;
 }
 #custom-playerctl {
   font-size: 0.9em;
-  color: @font_gruv_normal;
+  color: @font;
 }
 #custom-playerctl.paused {
-  color: @font_dark_alternative;
+  color: @font_faded;
   font-size: 0.9em;
 }
 /* Workspaces stuff */
@@ -178,18 +180,18 @@
 }
 #workspaces button.current_output.focused {
   font-weight: bolder;
-  color: @font_gruv_normal;
+  color: @font_faded;
 }
 /*CPU governor stuff*/
 #custom-cpugovernor {
   background-color: @bg1;
-  color: @font_gruv_normal;
+  color: @font;
 }
 #custom-cpugovernor.perf {
 }
 #cpu {
   background: @bg1;
-  color: @font_gruv_normal;
+  color: @font;
   padding-left: 0em;
   padding-right: 0.2em;
 }
@@ -198,48 +200,46 @@
 }
 #temperature {
   background-color: @bg1;
-  color: @font_gruv_normal;
+  color: @font;
   padding-right: 0em;
 }
 #temperature.critical {
   color: @critical;
 }
 #custom-gpu {
-  background: @bluetint;
-  color: @font_gruv_normal;
+  background: @bg2;
+  color: @font;
   padding-left: 0em;
 }
 #pulseaudio {
   background: @bg;
-  color: @font_gruv_normal;
+  color: @font;
 }
 #pulseaudio.muted {
-  color: #fb4833;
+  color: @font_faded;
 }
 #pulseaudio.source-muted {
   /* moved to config */
 }
 #bluetooth {
   background: @bg;
-  color: @font_gruv_normal;
+  color: @font;
 }
 #network {
   background: @bg;
-  color: @font_gruv_faded;
+  color: @font;
 }
 #tray {
   background: @bg;
-  color: @font_gruv_normal;
+  color: @font;
 }
 #mode {
   /* Shown current Sway mode (resize etc.) */
-  color: @light;
   background: @bg;
+  color: @font;
 }
 #window {
   margin-right: 40px;
   margin-left: 40px;
   font-weight: normal;
 }
-
-@import url("/home/mhr/.config/waybar/ornamental.css");

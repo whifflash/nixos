@@ -17,11 +17,11 @@
   background: @bg3;
 }
 
-#custom-R2L-arrow {
+/*#custom-R2L-arrow {
   font-size: 2em;
   color: @bg;
   background: @bluetint;
-}
+}*/
 #custom-R2L-arrow.one {
   font-size: 2em;
   color: @bg0;
