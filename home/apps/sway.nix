@@ -6,6 +6,7 @@
   ...
 }: let
   sw = osConfig.programs.sway.enable or false;
+  c = config.hm.theme.colors; # 👈 shared palette
   mod = "Mod4";
   term = "${pkgs.alacritty}/bin/alacritty";
   tmux = "${pkgs.tmux}/bin/tmux";
@@ -42,6 +43,44 @@ in {
       modifier = mod;
       terminal = term;
       menu = "${pkgs.wofi}/bin/wofi --show drun";
+
+      colors = {
+        focused = {
+          border = c.neutral_blue;
+          background = c.dark0;
+          text = c.light1;
+          indicator = c.bright_blue;
+          childBorder = c.neutral_blue;
+        };
+        focusedInactive = {
+          border = c.dark3;
+          background = c.dark1;
+          text = c.light2;
+          indicator = c.gray;
+          childBorder = c.dark3;
+        };
+        unfocused = {
+          border = c.dark2;
+          background = c.dark0;
+          text = c.light4;
+          indicator = c.gray;
+          childBorder = c.dark2;
+        };
+        urgent = {
+          border = c.neutral_red;
+          background = c.neutral_red;
+          text = c.dark0;
+          indicator = c.neutral_red;
+          childBorder = c.neutral_red;
+        };
+        placeholder = {
+          border = c.dark2;
+          background = c.dark1;
+          text = c.light1;
+          indicator = c.dark2;
+          childBorder = c.dark2;
+        };
+      };
 
       input = {
         "type:touchpad" = {
@@ -110,12 +149,13 @@ in {
           "${mod}+Shift+j" = "move down";
           "${mod}+Shift+k" = "move up";
           "${mod}+Shift+l" = "move right";
+          "${mod}+space" = "workspace back_and_forth";
 
           # layout
           "${mod}+v" = "split v";
           "${mod}+b" = "splith";
           "${mod}+f" = "fullscreen toggle";
-          "${mod}+space" = "floating toggle";
+          # "${mod}+space" = "floating toggle";
 
           # gopass
           "${mod}+p" = ''exec ${config.home.homeDirectory}/.config/wofi/gopass.launcher.sh'';
