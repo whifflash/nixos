@@ -134,7 +134,7 @@
 
         pre-commit = {
           # optional: adds a flake check so `nix flake check` runs the hooks
-          # check.enable = true;
+          check.enable = true;
 
           # this is the correct nesting:
           settings.hooks = {
