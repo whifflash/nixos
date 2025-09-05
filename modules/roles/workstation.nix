@@ -19,9 +19,9 @@
     (builtins.readFile ../../scripts/gitea-sync-user-repos.sh);
   envFile = config.sops.templates."gitea.env".path;
 
-  #Util Scripts
+  # USB-Drive Handling
 
-  usb-drive = pkgs.writeShellApplication {
+  usbDrivePkg = pkgs.writeShellApplication {
     name = "usb-drive";
     runtimeInputs = with pkgs; [
       util-linux # lsblk, blkid, wipefs, mount, umount, blkdiscard, findmnt
@@ -35,6 +35,41 @@
       findutils
     ];
     text = builtins.readFile ../../scripts/util/usb-drive.sh;
+  };
+
+  # USB UDEV
+
+  # 1) Hook script packaged (unchanged)
+  usbDriveUdevHookPkg = pkgs.writeShellApplication {
+    name = "usb-drive-udev-hook";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.util-linux
+      usbDrivePkg
+    ];
+    text = builtins.readFile ../../scripts/udev/usb-drive-udev-hook.sh;
+  };
+
+  # 2) Generate the rules TEXT with the hook's absolute path inlined
+  usbDriveRules = pkgs.writeText "99-usb-drive.rules" ''
+    # USB SATA/SCSI-style partitions (e.g., /dev/sdb1)
+    KERNEL=="sd*[0-9]", SUBSYSTEM=="block", ENV{PARTLABEL}=="crypt-*", ACTION=="add",    RUN+="${usbDriveUdevHookPkg}/bin/usb-drive-udev-hook add"
+    KERNEL=="sd*[0-9]", SUBSYSTEM=="block", ENV{PARTLABEL}=="crypt-*", ACTION=="remove", RUN+="${usbDriveUdevHookPkg}/bin/usb-drive-udev-hook remove"
+
+    # USB NVMe namespaces (e.g., /dev/nvme0n1p1)
+    KERNEL=="nvme*n*p[0-9]", SUBSYSTEM=="block", ENV{PARTLABEL}=="crypt-*", ACTION=="add",    RUN+="${usbDriveUdevHookPkg}/bin/usb-drive-udev-hook add"
+    KERNEL=="nvme*n*p[0-9]", SUBSYSTEM=="block", ENV{PARTLABEL}=="crypt-*", ACTION=="remove", RUN+="${usbDriveUdevHookPkg}/bin/usb-drive-udev-hook remove"
+  '';
+
+  # 3) Install the rules under /lib/udev/rules.d
+  usbDriveUdevPkg = pkgs.stdenvNoCC.mkDerivation {
+    pname = "usb-drive-udev";
+    version = "1.0";
+    dontUnpack = true;
+    installPhase = ''
+      mkdir -p "$out/lib/udev/rules.d"
+      cp ${usbDriveRules} "$out/lib/udev/rules.d/99-usb-drive.rules"
+    '';
   };
 in {
   imports = [inputs.sops-nix.nixosModules.sops];
@@ -62,31 +97,31 @@ in {
       "openssl-1.1.1w"
     ];
 
-    environment.systemPackages = with pkgs; [
-      alacritty
-      blueberry
-      chromium
-      # firefox
-      gopass-jsonapi
-      gsimplecal
-      joplin
-      joplin-desktop
-      # jq
-      libvlc
-      nemo
-      neovim
-      networkmanagerapplet
-      # pcmanfm
-      sublime4
-      thunderbird
-      tmux
-      udiskie
-      vlc
-      wireguard-tools
-      zip
-
-      usb-drive
-    ];
+    environment.systemPackages =
+      (with pkgs; [
+        alacritty
+        blueberry
+        chromium
+        # firefox
+        gopass-jsonapi
+        gsimplecal
+        joplin
+        joplin-desktop
+        # jq
+        libvlc
+        nemo
+        neovim
+        networkmanagerapplet
+        # pcmanfm
+        sublime4
+        thunderbird
+        tmux
+        udiskie
+        vlc
+        wireguard-tools
+        zip
+      ])
+      ++ [usbDrivePkg];
 
     hardware.bluetooth.enable = true; # enables support for Bluetooth
     hardware.bluetooth.powerOnBoot = true; # powers up the default Bluetooth controller on boot
@@ -101,19 +136,7 @@ in {
 
     services = {
       udisks2.enable = true;
-
-      # udev.extraRules = ''
-      #   # Auto-open and mount when a USB drive with a PARTLABEL starting with "crypt-" is plugged in
-      #   KERNEL=="sd*[0-9]", ENV{ID_BUS}=="usb", ENV{PARTLABEL}=="crypt-*", \
-      #     ACTION=="add", RUN+="${pkgs.util-linux}/bin/logger usb-drive: auto-mounting %E{PARTLABEL}", \
-      #     RUN+="${pkgs.coreutils}/bin/sleep 1", \
-      #     RUN+="${pkgs.usb-drive}/bin/usb-drive mount-luks $env{PARTLABEL#crypt-}"
-
-      #   # Auto-close when removed
-      #   KERNEL=="sd*[0-9]", ENV{ID_BUS}=="usb", ENV{PARTLABEL}=="crypt-*", \
-      #     ACTION=="remove", RUN+="${pkgs.util-linux}/bin/logger usb-drive: auto-umounting %E{PARTLABEL}", \
-      #     RUN+="${pkgs.usb-drive}/bin/usb-drive umount-luks $env{PARTLABEL#crypt-}"
-      # '';
+      udev.packages = [usbDriveUdevPkg];
     };
 
     systemd.services = {
