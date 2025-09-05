@@ -99,7 +99,22 @@ in {
       pkgs.nerd-fonts.roboto-mono
     ];
 
-    services.udisks2.enable = true;
+    services = {
+      udisks2.enable = true;
+
+      udev.extraRules = ''
+        # Auto-open and mount when a USB drive with a PARTLABEL starting with "crypt-" is plugged in
+        KERNEL=="sd*[0-9]", ENV{ID_BUS}=="usb", ENV{PARTLABEL}=="crypt-*", \
+          ACTION=="add", RUN+="${pkgs.util-linux}/bin/logger usb-drive: auto-mounting %E{PARTLABEL}", \
+          RUN+="${pkgs.coreutils}/bin/sleep 1", \
+          RUN+="${pkgs.usb-drive}/bin/usb-drive mount-luks $env{PARTLABEL#crypt-}"
+
+        # Auto-close when removed
+        KERNEL=="sd*[0-9]", ENV{ID_BUS}=="usb", ENV{PARTLABEL}=="crypt-*", \
+          ACTION=="remove", RUN+="${pkgs.util-linux}/bin/logger usb-drive: auto-umounting %E{PARTLABEL}", \
+          RUN+="${pkgs.usb-drive}/bin/usb-drive umount-luks $env{PARTLABEL#crypt-}"
+      '';
+    };
 
     systemd.services = {
       NetworkManager-wait-online.enable = false;
@@ -181,21 +196,6 @@ in {
     networking = {
       wireguard.enable = true;
       firewall.enable = false;
-      # firewall = {
-      #   checkReversePath = false;
-      #   logReversePathDrops = true;
-      #   # Do not block NetworkManager WireGuard via reverse path filter
-      #   # https://nixos.wiki/wiki/WireGuard
-      #   # extraCommands = ''
-      #   #   ip46tables -t mangle -I nixos-fw-rpfilter -p udp -m udp --sport 51823 -j RETURN
-      #   #   ip46tables -t mangle -I nixos-fw-rpfilter -p udp -m udp --dport 51823 -j RETURN
-      #   # '';
-      #   # extraStopCommands = ''
-      #   #   ip46tables -t mangle -D nixos-fw-rpfilter -p udp -m udp --sport 51823 -j RETURN || true
-      #   #   ip46tables -t mangle -D nixos-fw-rpfilter -p udp -m udp --dport 51823 -j RETURN || true
-      #   # '';
-      # };
-      # hostName = "mia";
       networkmanager = {
         enable = true;
         # dns = "systemd-resolved";
@@ -278,90 +278,6 @@ in {
               #   method = "manual";
               # };
             };
-            # "$WORK_WG" = {
-            #   connection = {
-            #     autoconnect = false;
-            #     id = "$WORK_WG";
-            #     interface-name = "$WORK_WG";
-            #     type = "wireguard";
-            #     secondaries = "32986ce6-f9e4-37c8-96e1-baccfcc38f1a";
-            #   };
-            #   wireguard = {
-            #     mtu = 1280;
-            #     private-key = "$WORK_WG_PRIVATE_KEY";
-            #   };
-            #   "wireguard-peer.$WORK_WG_PUBLIC_KEY" = {
-            #     allowed-ips = "0.0.0.0/0;::/0;";
-            #     endpoint = "$WORK_WG:51820";
-            #     preshared-key = "$WORK_WG_PRESHARED_KEY";
-            #     preshared-key-flags = 0;
-            #   };
-            #   ipv4 = {
-            #     address1 = "$WORK_WG_IPV4_ADDR";
-            #     dns = "$WORK_WG_IPV4_DNS";
-            #     method = "manual";
-            #   };
-            #   ipv6 = {
-            #     address1 = "$WORK_WG_IPV6_ADDR";
-            #     dns = "$WORK_WG_IPV6_DNS";
-            #     method = "manual";
-            #   };
-            # };
-            # "$WORK_VPN" = {
-            #   connection = {
-            #     id = "$WORK_VPN";
-            #     type = "vpn";
-            #     uuid = "32986ce6-f9e4-37c8-96e1-baccfcc38f1a";
-            #   };
-            #   ipv4 = {
-            #     method = "auto";
-            #     never-default = "true";
-            #   };
-            #   ipv6 = {
-            #     addr-gen-mode = "stable-privacy";
-            #     method = "auto";
-            #     never-default = "true";
-            #   };
-            #   vpn = {
-            #     auth = "SHA512";
-            #     ca = "/etc/secrets/bundle.pem";
-            #     cert = "/etc/secrets/secret.p12";
-            #     cert-pass-flags = "0";
-            #     cipher = "AES-256-GCM";
-            #     connect-timeout = "1";
-            #     connection-type = "tls";
-            #     dev = "tun";
-            #     key = "/etc/secrets/secret.p12";
-            #     remote = "$WORK_CPN:1194:udp, $WOR_VPN:443:tcp";
-            #     remote-cert-tls = "server";
-            #     service-type = "org.freedesktop.NetworkManager.openvpn";
-            #     tls-crypt = "/etc/secrets/WORK_TLS_AUTH_SECRET_2024";
-            #   };
-            #   vpn-secrets = {
-            #     cert-pass = "$WORK_VPN_CERT_PW";
-            #   };
-            # };
-            # "$WORK_GUESTWIFI_SSID" = {
-            #   connection = {
-            #     id = "$WORK_GUESTWIFI_SSID";
-            #     type = "wifi";
-            #   };
-            #   ipv4 = {
-            #     method = "auto";
-            #   };
-            #   ipv6 = {
-            #     addr-gen-mode = "stable-privacy";
-            #     method = "auto";
-            #   };
-            #   wifi = {
-            #     mode = "infrastructure";
-            #     ssid = "$WORK_GUESTWIFI_SSID";
-            #   };
-            #   wifi-security = {
-            #     key-mgmt = "sae";
-            #     psk = "$WORK_GUESTWIFI_PSK";
-            #   };
-            # };
           };
         };
       };
