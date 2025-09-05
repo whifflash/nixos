@@ -87,15 +87,5 @@
   role_workstation.enable = true;
   role_hardware-development.enable = false;
 
-  # Define a user account. Don't forget to set a password with ‘passwd’.
-  users.users.mhr = {
-    isNormalUser = true;
-    description = "mhr";
-    extraGroups = ["networkmanager" "wheel"];
-    packages = with pkgs; [
-      #  thunderbird
-    ];
-  };
-
   system.stateVersion = "24.11"; # Did you read the comment?
 }
