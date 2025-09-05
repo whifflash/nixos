@@ -8,6 +8,7 @@
   id = "role_workstation";
   cfg = config.${id};
 
+  # Gitea Sync
   gitea_base = "git.c4rb0n.cloud";
   syncUser = "mhr";
   baseUrl = "https://${gitea_base}";
@@ -17,6 +18,24 @@
     pkgs.writeShellScript "gitea-sync-user-repos.sh"
     (builtins.readFile ../../scripts/gitea-sync-user-repos.sh);
   envFile = config.sops.templates."gitea.env".path;
+
+  #Util Scripts
+
+  usb-drive = pkgs.writeShellApplication {
+    name = "usb-drive";
+    runtimeInputs = with pkgs; [
+      util-linux # lsblk, blkid, wipefs, mount, umount, blkdiscard, findmnt
+      parted
+      gptfdisk # sgdisk
+      cryptsetup
+      e2fsprogs # mkfs.ext4
+      btrfs-progs # mkfs.btrfs
+      coreutils
+      gnugrep
+      findutils
+    ];
+    text = builtins.readFile ../../scripts/util/usb-drive.sh;
+  };
 in {
   imports = [inputs.sops-nix.nixosModules.sops];
 
@@ -65,6 +84,8 @@ in {
       vlc
       wireguard-tools
       zip
+
+      usb-drive
     ];
 
     hardware.bluetooth.enable = true; # enables support for Bluetooth
