@@ -20,6 +20,10 @@
     fwupd.enable = true; # LVFS firmware updates
     fstrim.enable = true; # SSD TRIM weekly
     power-profiles-daemon.enable = true;
+    libinput = {
+      enable = true;
+      naturalScrolling = true;
+    };
   };
 
   hardware = {
