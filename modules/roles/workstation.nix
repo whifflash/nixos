@@ -102,18 +102,18 @@ in {
     services = {
       udisks2.enable = true;
 
-      udev.extraRules = ''
-        # Auto-open and mount when a USB drive with a PARTLABEL starting with "crypt-" is plugged in
-        KERNEL=="sd*[0-9]", ENV{ID_BUS}=="usb", ENV{PARTLABEL}=="crypt-*", \
-          ACTION=="add", RUN+="${pkgs.util-linux}/bin/logger usb-drive: auto-mounting %E{PARTLABEL}", \
-          RUN+="${pkgs.coreutils}/bin/sleep 1", \
-          RUN+="${pkgs.usb-drive}/bin/usb-drive mount-luks $env{PARTLABEL#crypt-}"
+      # udev.extraRules = ''
+      #   # Auto-open and mount when a USB drive with a PARTLABEL starting with "crypt-" is plugged in
+      #   KERNEL=="sd*[0-9]", ENV{ID_BUS}=="usb", ENV{PARTLABEL}=="crypt-*", \
+      #     ACTION=="add", RUN+="${pkgs.util-linux}/bin/logger usb-drive: auto-mounting %E{PARTLABEL}", \
+      #     RUN+="${pkgs.coreutils}/bin/sleep 1", \
+      #     RUN+="${pkgs.usb-drive}/bin/usb-drive mount-luks $env{PARTLABEL#crypt-}"
 
-        # Auto-close when removed
-        KERNEL=="sd*[0-9]", ENV{ID_BUS}=="usb", ENV{PARTLABEL}=="crypt-*", \
-          ACTION=="remove", RUN+="${pkgs.util-linux}/bin/logger usb-drive: auto-umounting %E{PARTLABEL}", \
-          RUN+="${pkgs.usb-drive}/bin/usb-drive umount-luks $env{PARTLABEL#crypt-}"
-      '';
+      #   # Auto-close when removed
+      #   KERNEL=="sd*[0-9]", ENV{ID_BUS}=="usb", ENV{PARTLABEL}=="crypt-*", \
+      #     ACTION=="remove", RUN+="${pkgs.util-linux}/bin/logger usb-drive: auto-umounting %E{PARTLABEL}", \
+      #     RUN+="${pkgs.usb-drive}/bin/usb-drive umount-luks $env{PARTLABEL#crypt-}"
+      # '';
     };
 
     systemd.services = {

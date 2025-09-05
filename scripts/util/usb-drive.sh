@@ -1,14 +1,5 @@
 #!/usr/bin/env sh
 # usb-drive: umbrella utility for USB wiping + LUKS (POSIX sh)
-# Subcommands:
-#   usb-drive wipe /dev/sdX [--full]
-#   usb-drive encrypt-luks /dev/sdX LABEL [ext4|btrfs] [--ssd]
-#   usb-drive mount-luks LABEL [--ssd]
-#   usb-drive umount-luks LABEL
-#   usb-drive info [/dev/sdX]
-# Notes:
-#   - Operates ONLY on removable devices (lsblk RM=1).
-#   - --ssd enables --allow-discards and discard mount opts.
 
 set -eu
 
@@ -26,7 +17,7 @@ confirm_destroy() {
   printf "!!! DANGEROUS OPERATION !!!\nThis will ERASE ALL DATA on %s\n" "$d"
   printf "Type EXACTLY: YES, destroy %s : " "$d"
   IFS= read -r ans || true
-  [ "x$ans" = "xYES, destroy $d" ] || die "Aborted."
+  [ "$ans" = "YES, destroy $d" ] || die "Aborted."
 }
 
 part_path() {
@@ -53,7 +44,9 @@ wait_for_block() {
 }
 
 cmd_wipe() {
-  [ $# -ge 1 ] && [ $# -le 2 ] || die "Usage: usb-drive wipe /dev/sdX [--full]"
+  if [ $# -lt 1 ] || [ $# -gt 2 ]; then
+    die "Usage: usb-drive wipe /dev/sdX [--full]"
+  fi
   DISK="$1"
   FULL="${2:-}"
   [ -b "$DISK" ] || die "Not a block device: $DISK"
@@ -68,13 +61,11 @@ cmd_wipe() {
   wipefs -a "$DISK" || true
 
   if ! is_rotational "$DISK"; then
-    if command -v blkdiscard >/dev/null 2>&1; then
-      if blkdiscard -v "$DISK"; then
-        sgdisk --zap-all "$DISK" >/dev/null 2>&1 || true
-        sync
-        printf "Wipe complete via discard.\n"
-        return 0
-      fi
+    if command -v blkdiscard >/dev/null 2>&1 && blkdiscard -v "$DISK"; then
+      sgdisk --zap-all "$DISK" >/dev/null 2>&1 || true
+      sync
+      printf "Wipe complete via discard.\n"
+      return 0
     fi
   fi
 
@@ -94,7 +85,9 @@ cmd_wipe() {
 }
 
 cmd_encrypt_luks() {
-  [ $# -ge 2 ] || die "Usage: usb-drive encrypt-luks /dev/sdX LABEL [ext4|btrfs] [--ssd]"
+  if [ $# -lt 2 ]; then
+    die "Usage: usb-drive encrypt-luks /dev/sdX LABEL [ext4|btrfs] [--ssd]"
+  fi
   DISK="$1"
   LABEL="$2"
   FSTYPE="${3:-ext4}"
@@ -105,7 +98,6 @@ cmd_encrypt_luks() {
   lsblk -o NAME,MODEL,TRAN,RM,ROTA,SIZE,TYPE,MOUNTPOINT "$DISK"
   confirm_destroy "$DISK"
 
-  # Fresh GPT single partition
   wipefs -a "$DISK" || true
   parted -s "$DISK" mklabel gpt
   parted -s "$DISK" mkpart primary 1MiB 100%
@@ -115,7 +107,6 @@ cmd_encrypt_luks() {
   udev_settle
   wait_for_block "$PART" || die "Partition not found: $PART"
 
-  # LUKS2
   cryptsetup luksFormat \
     --type luks2 \
     --cipher aes-xts-plain64 \
@@ -141,12 +132,13 @@ cmd_encrypt_luks() {
 
   printf "Done.\n  LUKS UUID: %s\n  FS UUID: %s\n" "${LUKS_UUID:-?}" "${FS_UUID:-?}"
   printf "Mount with: usb-drive mount-luks %s%s\n" "$LABEL" "$([ "$SSD" = "yes" ] && printf " --ssd" || printf "")"
-  # Leave it closed by default:
   cryptsetup close "crypt-$LABEL" || true
 }
 
 cmd_mount_luks() {
-  [ $# -ge 1 ] && [ $# -le 2 ] || die "Usage: usb-drive mount-luks LABEL [--ssd]"
+  if [ $# -lt 1 ] || [ $# -gt 2 ]; then
+    die "Usage: usb-drive mount-luks LABEL [--ssd]"
+  fi
   LABEL="$1"
   SSD="${2:-}"
   DEV=$(lsblk -rno PATH,PARTLABEL,RM | awk -v L="crypt-$LABEL" '$2==L && $3==1{print $1;exit}')
@@ -172,7 +164,9 @@ cmd_mount_luks() {
 }
 
 cmd_umount_luks() {
-  [ $# -eq 1 ] || die "Usage: usb-drive umount-luks LABEL"
+  if [ $# -ne 1 ]; then
+    die "Usage: usb-drive umount-luks LABEL"
+  fi
   LABEL="$1"
   MNT="/media/$LABEL"
   if mountpoint -q "$MNT"; then umount "$MNT" || die "Failed to umount $MNT"; fi
@@ -209,10 +203,10 @@ EOF
 }
 
 main() {
-  [ $# -ge 1 ] || {
+  if [ $# -lt 1 ]; then
     usage
     exit 1
-  }
+  fi
   sub="$1"
   shift
   case "$sub" in
