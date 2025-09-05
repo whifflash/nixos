@@ -9,9 +9,8 @@
   rb = config.attic_remote;
 
   haveInputsSops = inputs ? sops-nix;
-  templateName = "attic/nix.conf"; # the nix.conf fragment we render via sops-nix
+  templateName = "attic/nix.conf";
 in {
-  #### Import sops-nix if available (NO references to cfg/config here!) ####
   imports = lib.optionals haveInputsSops [inputs.sops-nix.nixosModules.sops];
 
   #### Options #################################################################
@@ -146,7 +145,6 @@ in {
       };
     })
 
-    # Soft warning if sops-nix isn't available
     (mkIf (!haveInputsSops) {
       warnings = [
         ''

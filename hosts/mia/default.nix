@@ -120,16 +120,12 @@
     enable = true;
     hostName = "attic.c4rb0n.cloud"; # or "10.20.31.41"
     sshUser = "mhr";
-    # If you set a non-standard SSH port on the builder, add:
-    # sshOpts = [ "-p" "2222" ];
 
-    # (optional overrides; your module provides sensible defaults)
     system = "x86_64-linux";
     maxJobs = 8;
     speedFactor = 2;
     supportedFeatures = ["kvm" "big-parallel" "nixos-test"];
 
-    # If you materialize a root-owned key via sops (recommended), set it here:
     sshKey = "/root/.ssh/builder_ed25519";
   };
 }

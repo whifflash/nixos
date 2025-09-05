@@ -83,4 +83,25 @@
   services.xserver.enable = true;
 
   system.stateVersion = "24.11"; # Did you read the comment?
+
+  # Attic cache client (reads endpoint/key/token from secrets)
+  attic_client = {
+    enable = true;
+    secretsFile = ../../secrets/attic.yaml; # encrypted YAML
+    addOfficialCache = true;
+    fallback = true;
+  };
+
+  attic_remote = {
+    enable = true;
+    hostName = "attic.c4rb0n.cloud"; # or "10.20.31.41"
+    sshUser = "mhr";
+
+    system = "x86_64-linux";
+    maxJobs = 8;
+    speedFactor = 2;
+    supportedFeatures = ["kvm" "big-parallel" "nixos-test"];
+
+    sshKey = "/root/.ssh/builder_ed25519";
+  };
 }
