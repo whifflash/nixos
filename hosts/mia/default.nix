@@ -22,7 +22,6 @@
     power-profiles-daemon.enable = true;
     libinput = {
       enable = true;
-      naturalScrolling = true;
     };
   };
 
@@ -35,6 +34,15 @@
       speed = 190; # 0–255
       sensitivity = 130; # 0–255
     };
+  };
+
+  systemd.services."irqbalance-x270" = {
+    description = "Manually set IRQ affinity for hot devices";
+    wantedBy = ["multi-user.target"];
+    serviceConfig.ExecStart = pkgs.writeShellScript "irq-affinity" ''
+      echo f > /proc/irq/123/smp_affinity  # i915
+      echo f > /proc/irq/125/smp_affinity  # xhci
+    '';
   };
 
   # alternatively tlp...
@@ -57,9 +65,16 @@
   };
 
   # Bootloader.
-  boot.loader = {
-    systemd-boot.enable = true;
-    efi.canTouchEfiVariables = true;
+  boot = {
+    loader = {
+      systemd-boot.enable = true;
+      efi.canTouchEfiVariables = true;
+    };
+    kernelParams = [
+      "psmouse.synaptics_intertouch=0" # try 0 first; if no joy, try =1
+      "i915.enable_dc=0"
+      "i915.enable_psr=0"
+    ];
   };
 
   networking.hostName = "mia"; # Define your hostname.
