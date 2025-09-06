@@ -33,9 +33,9 @@ in {
         port = 22;
       };
 
-      "wgbsw.vps.webdock.cloud" = {
+      "vps" = {
         user = "mhr";
-        hostname = "vps";
+        hostname = "wgbsw.vps.webdock.cloud";
         identityFile = "/home/mhr/.ssh/webdockvps";
         identitiesOnly = true;
         port = 22;
