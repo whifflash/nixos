@@ -19,10 +19,12 @@ in {
 
   programs.ssh = {
     enable = true;
-    controlPersist = "12h";
-    controlMaster = "auto";
 
     matchBlocks = {
+      "*" = {
+        controlPersist = "12h";
+        controlMaster = "auto";
+      };
       "github.com" = {
         user = "git";
         hostname = "github.com";
