@@ -72,6 +72,19 @@ in {
         bind x kill-window
 
         bind r source-file ~/.config/tmux/tmux.conf
+
+        # Pane navigation (vim-style)
+        bind h select-pane -L
+        bind j select-pane -D
+        bind k select-pane -U
+        bind l select-pane -R
+
+
+        # Pane resizing (Shift + hjkl)
+        bind -r H resize-pane -L 5
+        bind -r J resize-pane -D 5
+        bind -r K resize-pane -U 5
+        bind -r L resize-pane -R 5
       '';
     };
   };

@@ -94,7 +94,7 @@ in {
         };
         "type:keyboard" = {
           xkb_layout = "us";
-          xkb_options = "caps:escape";
+          xkb_options = "caps:ctrl_modifier";
         };
       };
 
