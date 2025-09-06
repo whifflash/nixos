@@ -27,7 +27,8 @@ in {
         sleep 0.3
       fi
 
-      swaymsg scratchpad show
+      # Show from scratchpad and fill the output WITHOUT true fullscreen
+      swaymsg '[title="'"$title"'"] scratchpad show, sticky enable, move position 0 0, resize set 100 ppt 100 ppt, border none'
     '';
     executable = true;
   };
@@ -108,7 +109,8 @@ in {
         # { command = ''${term} --title ${scratchTitle} -e ${tmux} new-session -A -s scratch''; always = false; }
       ];
 
-      # make the scratch terminal float, size, center, and live in the scratchpad
+      # send the scratch terminal to the scratchpad and make it floating/sticky by default
+      # (size & position are now handled on toggle to fill the output while keeping bars visible)
       window.commands = [
         {
           criteria = {title = scratchTitle;};
@@ -116,9 +118,7 @@ in {
             "floating enable"
             "sticky enable"
             "move to scratchpad"
-            "resize set 1200 700"
-            "move position center"
-            "border pixel 2"
+            "border none"
           ];
         }
       ];
@@ -130,7 +130,7 @@ in {
           "${mod}+q" = "kill";
           "${mod}+d" = "exec ${pkgs.wofi}/bin/wofi --show drun";
 
-          # toggle scratchpad (spawn if missing) via script — avoids '&'/' ; ' issues
+          # toggle scratchpad (spawn if missing) via script — uses your existing chord
           "${mod}+i" = "exec ${config.home.homeDirectory}/.config/sway/scripts/toggle_scratchpad.sh";
           # spawn a named tmux scratch terminal explicitly, if you still want a separate chord
           "${mod}+Shift+Return" = "exec ${term} -t ${scratchTitle} -e ${config.home.homeDirectory}/.config/sway/tmux/tmux_reattach.sh";

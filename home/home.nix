@@ -90,7 +90,7 @@ in {
   }; # end of home = {};
 
   programs = {
-    home-manager.enable = true; # leet home manager manage itself
+    home-manager.enable = true; # let home manager manage itself
 
     neovim = {
       enable = true;
