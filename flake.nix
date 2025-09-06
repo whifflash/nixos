@@ -226,6 +226,7 @@
                 (hostsDir + "/${name}")
                 home-manager.nixosModules.home-manager
                 ({config, ...}: {
+                  nixpkgs.overlays = [(import ./overlays/disable-tests.nix)];
                   # Keep HM pkgs in sync with the system’s pkgs
                   home-manager = {
                     useGlobalPkgs = true;

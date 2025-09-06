@@ -20,8 +20,16 @@
     fwupd.enable = true; # LVFS firmware updates
     fstrim.enable = true; # SSD TRIM weekly
     power-profiles-daemon.enable = true;
+    # services.tlp.enable = true;
     libinput = {
       enable = true;
+    };
+    logind = {
+      # Close lid -> suspend to RAM
+      lidSwitch = "suspend";
+      lidSwitchExternalPower = "suspend";
+      # If docked with external display/keyboard, don't sleep on lid:
+      lidSwitchDocked = "ignore"; # set "suspend" if you *do* want it to sleep when docked
     };
   };
 
@@ -36,12 +44,20 @@
     };
   };
 
-  systemd.services."irqbalance-x270" = {
-    description = "Manually set IRQ affinity for hot devices";
-    wantedBy = ["multi-user.target"];
-    serviceConfig.ExecStart = pkgs.writeShellScript "irq-affinity" ''
-      echo f > /proc/irq/123/smp_affinity  # i915
-      echo f > /proc/irq/125/smp_affinity  # xhci
+  systemd = {
+    services."irqbalance-x270" = {
+      description = "Manually set IRQ affinity for hot devices";
+      wantedBy = ["multi-user.target"];
+      serviceConfig.ExecStart = pkgs.writeShellScript "irq-affinity" ''
+        echo f > /proc/irq/123/smp_affinity  # i915
+        echo f > /proc/irq/125/smp_affinity  # xhci
+      '';
+    };
+    sleep.extraConfig = ''
+      # Ensure we use RAM sleep
+      SuspendState=mem
+      # Example: auto-hibernate if left asleep for 1h (requires working hibernate)
+      # HibernateDelaySec=1h
     '';
   };
 
@@ -74,6 +90,7 @@
       "psmouse.synaptics_intertouch=0" # try 0 first; if no joy, try =1
       "i915.enable_dc=0"
       "i915.enable_psr=0"
+      "mem_sleep_default=deep"
     ];
   };
 
