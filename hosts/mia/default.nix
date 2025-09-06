@@ -6,7 +6,28 @@
   config,
   pkgs,
   ...
-}: {
+}: let
+  unbind = pkgs.writeShellScript "xhci-unbind-pre" ''
+    set -euo pipefail
+    DEV=0000:00:14.0
+    for D in xhci_hcd xhci_pci; do
+      if [ -e "/sys/bus/pci/drivers/$D/unbind" ]; then
+        echo "$DEV" > "/sys/bus/pci/drivers/$D/unbind"
+        ${pkgs.systemd}/bin/systemd-cat -t xhci-unbind echo "unbound $D:$DEV"
+      fi
+    done
+  '';
+  rebind = pkgs.writeShellScript "xhci-unbind-post" ''
+    set -euo pipefail
+    DEV=0000:00:14.0
+    for D in xhci_hcd xhci_pci; do
+      if [ -e "/sys/bus/pci/drivers/$D/bind" ]; then
+        echo "$DEV" > "/sys/bus/pci/drivers/$D/bind"
+        ${pkgs.systemd}/bin/systemd-cat -t xhci-unbind echo "rebound $D:$DEV"
+      fi
+    done
+  '';
+in {
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
@@ -29,8 +50,12 @@
       lidSwitch = "suspend";
       lidSwitchExternalPower = "suspend";
       # If docked with external display/keyboard, don't sleep on lid:
-      lidSwitchDocked = "ignore"; # set "suspend" if you *do* want it to sleep when docked
+      lidSwitchDocked = "suspend"; # set "suspend" if you *do* want it to sleep when docked
     };
+    udev.extraRules = ''
+      SUBSYSTEM=="usb", ACTION=="add", TEST=="power/wakeup", \
+        RUN+="/bin/sh -c 'echo disabled > /sys$devpath/power/wakeup || true'"
+    '';
   };
 
   hardware = {
@@ -45,14 +70,33 @@
   };
 
   systemd = {
-    services."irqbalance-x270" = {
-      description = "Manually set IRQ affinity for hot devices";
-      wantedBy = ["multi-user.target"];
-      serviceConfig.ExecStart = pkgs.writeShellScript "irq-affinity" ''
-        echo f > /proc/irq/123/smp_affinity  # i915
-        echo f > /proc/irq/125/smp_affinity  # xhci
-      '';
+    services = {
+      xhci-unbind = {
+        description = "Unbind xHCI (0000:00:14.0) on suspend; rebind on resume";
+        wantedBy = ["sleep.target"]; # run for any sleep mode
+        before = [
+          "systemd-suspend.service"
+          "systemd-hibernate.service"
+          "systemd-hybrid-sleep.service"
+        ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true; # keeps unit 'active' so ExecStopPost triggers
+          ExecStart = "${unbind}";
+          ExecStopPost = "${rebind}";
+        };
+      };
+
+      "irqbalance-x270" = {
+        description = "Manually set IRQ affinity for hot devices";
+        wantedBy = ["multi-user.target"];
+        serviceConfig.ExecStart = pkgs.writeShellScript "irq-affinity" ''
+          echo f > /proc/irq/123/smp_affinity  # i915
+          echo f > /proc/irq/125/smp_affinity  # xhci
+        '';
+      };
     };
+
     sleep.extraConfig = ''
       # Ensure we use RAM sleep
       SuspendState=mem
@@ -60,13 +104,6 @@
       # HibernateDelaySec=1h
     '';
   };
-
-  # alternatively tlp...
-  # services.tlp.enable = true;
-  # services.tlp.settings = {
-  #   START_CHARGE_THRESH_BAT0 = 75;
-  #   STOP_CHARGE_THRESH_BAT0  = 85;
-  # };
 
   sops = {
     defaultSopsFile = ../../secrets/secrets.yaml;
@@ -87,7 +124,7 @@
       efi.canTouchEfiVariables = true;
     };
     kernelParams = [
-      "psmouse.synaptics_intertouch=0" # try 0 first; if no joy, try =1
+      "psmouse.synaptics_intertouch=1" # try 0 first; if no joy, try =1
       "i915.enable_dc=0"
       "i915.enable_psr=0"
       "mem_sleep_default=deep"
