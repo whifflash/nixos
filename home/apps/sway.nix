@@ -33,6 +33,48 @@ in {
     executable = true;
   };
 
+  home.packages = [
+    pkgs.networkmanagerapplet
+  ];
+
+  # Optional but recommended for auth prompts (Wi-Fi passwords, VPN)
+  services.gnome-keyring.enable = true;
+
+  # A polkit agent is also recommended on Sway (choose one):
+  # Polkit GNOME agent (lightweight, works on Wayland)
+  systemd.user.services."polkit-gnome-authentication-agent-1" = {
+    Unit = {
+      Description = "polkit-gnome authentication agent";
+      After = ["graphical-session.target"];
+      PartOf = ["graphical-session.target"];
+    };
+    Service = {
+      ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
+      Restart = "on-failure";
+    };
+    Install = {WantedBy = ["graphical-session.target"];};
+  };
+
+  # Run nm-applet as a user service so it shows in Waybar's tray
+  systemd.user.services."nm-applet" = {
+    Unit = {
+      Description = "NetworkManager Applet (tray)";
+      After = ["graphical-session.target"];
+      PartOf = ["graphical-session.target"];
+    };
+    Service = {
+      # --indicator exposes a StatusNotifier item that Waybar's "tray" can show
+      ExecStart = "${pkgs.networkmanagerapplet}/bin/nm-applet --indicator";
+      Restart = "on-failure";
+      RestartSec = 1;
+      Environment = [
+        # Wayland/Sway session env (usually already present thanks to HM’s Sway integration)
+        "XDG_CURRENT_DESKTOP=sway"
+      ];
+    };
+    Install = {WantedBy = ["graphical-session.target"];};
+  };
+
   wayland.windowManager.sway = lib.mkIf sw {
     enable = true;
     package = pkgs.sway;
