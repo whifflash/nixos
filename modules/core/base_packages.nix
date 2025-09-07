@@ -17,9 +17,9 @@ in {
       git
       gnupg
       gopass
-      sops
-      reaction
       pcmanfm
+      reaction
+      sops
     ];
   };
 }

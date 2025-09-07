@@ -41,6 +41,11 @@ in {
       shell = pkgs.zsh;
     };
 
-    environment.sessionVariables.ZDOTDIR = "${config.users.users.mhr.home}/.config/zsh";
+    environment = {
+      sessionVariables.ZDOTDIR = "${config.users.users.mhr.home}/.config/zsh";
+      systemPackages = with pkgs; [
+        fzf
+      ];
+    };
   };
 }
