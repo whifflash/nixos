@@ -18,6 +18,7 @@ in {
     ./ssh.nix
     ./themes/sway-theme.nix
     ./apps/sway.nix
+    ./apps/zsh.nix
     ./apps/tmux.nix
     ./themes/tokens.nix
   ];

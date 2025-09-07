@@ -17,7 +17,6 @@ in {
       git
       gnupg
       gopass
-      # pinentry-curses
       sops
       reaction
       pcmanfm
