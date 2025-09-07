@@ -1,12 +1,13 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }: let
   inherit (lib) mkEnableOption mkOption types mkIf;
   cfg = config.hm.theme;
 
-  # Theme registry — extend with more themes
+  # Theme registry — extend with more themes as you add them
   palettes = {
     "gruvbox-dark" = import ./palettes/gruvbox-dark.nix {inherit lib;};
     "solarized-dark" = import ./palettes/solarized-dark.nix {inherit lib;};
@@ -20,58 +21,22 @@
 
   tokens = selected.tokens or (throw "Theme '${cfg.scheme}' missing 'tokens' attr.");
 
-  # ── Compatibility layer ────────────────────────────────────────────────────
-  compat = {
-    dark0 = tokens.bg;
-    dark1 = tokens.bgAlt;
-    dark2 = tokens.surface;
-    dark3 = tokens.surfaceAlt;
-    dark4 = tokens.overlay;
-
-    light0 = tokens.fg;
-    light1 = tokens.fg;
-    light2 = tokens.muted;
-    light3 = tokens.muted;
-    light4 = tokens.borderMuted;
-
-    neutral_red = tokens.error;
-    neutral_green = tokens.success;
-    neutral_yellow = tokens.warning;
-    neutral_blue = tokens.primary;
-    neutral_purple = tokens.secondary;
-    neutral_aqua = tokens.hint;
-    neutral_orange = tokens.accent1;
-
-    gray = tokens.borderMuted;
-    accent = tokens.accent1;
-
-    # Bright aliases → sensible mappings
-    bright_blue = tokens.primary;
-    bright_red = tokens.error;
-    bright_yellow = tokens.warning;
-    bright_green = tokens.success;
-    bright_purple = tokens.secondary;
-    bright_aqua = tokens.hint;
-    bright_orange = tokens.accent1;
-  };
-
-  mergedColors = tokens // compat;
-
-  # ── Writers ────────────────────────────────────────────────────────────────
+  # ── Writers (GTK-friendly) ────────────────────────────────────────────────
+  # We generate @define-color names for Waybar/Wofi, derived from tokens.
   gtkPalette = ''
-    /* Generated: theme tokens → GTK @define-color for Waybar/Wofi */
+    /* Generated from theme tokens → GTK @define-color for Waybar/Wofi */
 
     @define-color bg           ${tokens.bg};
-    @define-color bg0          ${tokens.bg};
+    @define-color bg0          ${tokens.bg};        /* alias */
     @define-color bg1          ${tokens.bgAlt};
     @define-color bg2          ${tokens.surface};
     @define-color bg3          ${tokens.surfaceAlt};
     @define-color bgc          ${tokens.overlay};
 
     @define-color font         ${tokens.fg};
-    @define-color light        ${tokens.fg};
+    @define-color light        ${tokens.fg};        /* alias */
     @define-color font_faded   ${tokens.muted};
-    @define-color font_darker  ${tokens.bg};
+    @define-color font_darker  ${tokens.bg};        /* for contrast on warning backgrounds */
 
     @define-color border       ${tokens.border};
     @define-color border_muted ${tokens.borderMuted};
@@ -88,6 +53,7 @@
     @define-color accent2      ${tokens.accent2};
     @define-color accent3      ${tokens.accent3};
 
+    /* convenience alias */
     @define-color bluetint     ${tokens.primary};
   '';
 
@@ -127,6 +93,7 @@ in {
       description = "Theme name from the registry (e.g., gruvbox-dark, solarized-dark).";
     };
 
+    # Writer toggles
     writeWaybarPalette = mkOption {
       type = types.bool;
       default = true;
@@ -143,6 +110,7 @@ in {
       description = "Write ~/.config/theme/env exporting THEME_* variables.";
     };
 
+    # Only tokens are exported now (no compat layer).
     tokens = mkOption {
       type = types.attrsOf types.str;
       readOnly = true;
@@ -150,17 +118,19 @@ in {
       description = "Canonical theme tokens (bg, fg, primary, accent1..3, etc.).";
     };
 
+    # Keep 'colors' as an alias to tokens to prevent accidental breakage
+    # while you finish migrating; you can remove this option later if you want.
     colors = mkOption {
       type = types.attrsOf types.str;
       readOnly = true;
       internal = true;
-      description = "Resolved theme colors (tokens + compatibility names).";
+      description = "Alias to hm.theme.tokens for legacy references.";
     };
   };
 
   config = mkIf cfg.enable {
     hm.theme.tokens = tokens;
-    hm.theme.colors = mergedColors;
+    hm.theme.colors = tokens; # alias; no compat names anymore
 
     xdg.configFile = lib.mkMerge [
       (mkIf cfg.writeWaybarPalette {
