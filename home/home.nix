@@ -18,7 +18,7 @@ in {
     ./themes/sway-theme.nix
     ./apps/sway.nix
     ./apps/tmux.nix
-    ./themes/palettes.nix
+    ./themes/tokens.nix
   ];
 
   wayland.windowManager.sway = lib.mkIf swaySwitch {
@@ -31,6 +31,7 @@ in {
       scheme = "gruvbox-dark"; # or "gruvbox-light"
       writeWaybarPalette = true; # generates ~/.config/waybar/palette.css
       writeWofiPalette = true; # generates ~/.config/wofi/palette.css
+      writeZshEnv = true; # generates ~/.config/theme/env
     };
 
     swayTheme = lib.mkIf swaySwitch {
@@ -69,7 +70,7 @@ in {
       # ".config/gtk-3.0/gtk.css".source = ./dotfiles/.config/gtk-3.0/gtk.css;
 
       ".config/waybar/style.css".source = ./dotfiles/.config/waybar/style.css;
-      ".config/waybar/colors.css".source = ./dotfiles/.config/waybar/colors.css;
+      # ".config/waybar/colors.css".source = ./dotfiles/.config/waybar/colors.css;
       ".config/waybar/config".source = ./dotfiles/.config/waybar/config;
       ".config/waybar/modules.json".source = ./dotfiles/.config/waybar/modules.json;
       ".config/waybar/ornamental.json".source = ./dotfiles/.config/waybar/ornamental.json;

@@ -1,12 +1,11 @@
 @import url("palette.css");
-@import url("colors.css");
+/*@import url("colors.css");*/
 @import url("ornamental.css");
 
 @keyframes blink-warning {
   70% {
     color: @light;
   }
-
   to {
     color: @warning;
   }
@@ -16,7 +15,6 @@
   70% {
     color: @light;
   }
-
   to {
     color: @critical;
   }
@@ -66,8 +64,6 @@
 #custom-pacman,
 #idle_inhibitor,
 #bluetooth {
-  /*    padding-left: 0.3em;
-    padding-right: 0.3em;*/
   padding: 0.6em 0.8em;
 }
 
@@ -79,13 +75,15 @@
   background: @bg0;
   color: @font;
 }
+
 #battery {
   animation-timing-function: linear;
   animation-iteration-count: infinite;
   animation-direction: alternate;
-  background: @bg2;
+  background: @accent2;
   color: @font;
 }
+
 #battery.bat2 {
   border-bottom: 2px solid #ffffff;
 }
@@ -113,8 +111,7 @@
 #cpu.warning,
 #temperature.warning,
 #battery.warning {
-  background: @warning;
-  color: @font_darker;
+  color: @warning;
 }
 
 /* Each warning that should blink */
@@ -134,25 +131,30 @@
 }
 
 #custom-scratchpad-indicator {
-  background: @bg2;
+  background: @accent1;
   color: @font_faded;
 }
+
 #language {
   background: @bg;
   color: @font;
 }
+
 #custom-kdeconnect {
   background: @bg;
   color: @font;
 }
+
 #custom-pacman {
   background: @bg2;
   color: @font;
 }
+
 #idle_inhibitor {
   background: @bg2;
   color: @font;
 }
+
 #custom-playerctl {
   font-size: 0.9em;
   color: @font;
@@ -161,12 +163,13 @@
   color: @font_faded;
   font-size: 0.9em;
 }
+
 /* Workspaces stuff */
 #workspaces {
-  /*    background: @bgc;*/
+  /*   background: @accent1; */
 }
 #workspaces button {
-  background: @bgc;
+  background: @accent1;
   padding: 0em 1.2em;
   color: @bg3;
   min-width: 0em;
@@ -182,15 +185,17 @@
   font-weight: bolder;
   color: @font_faded;
 }
-/*CPU governor stuff*/
+
+/* CPU governor stuff */
 #custom-cpugovernor {
   background-color: @bg1;
   color: @font;
 }
 #custom-cpugovernor.perf {
 }
+
 #cpu {
-  background: @bg1;
+  background: @accent1;
   color: @font;
   padding-left: 0em;
   padding-right: 0.2em;
@@ -198,19 +203,22 @@
 #cpu.critical {
   color: @critical;
 }
+
 #temperature {
-  background-color: @bg1;
+  background-color: @accent1;
   color: @font;
   padding-right: 0em;
 }
 #temperature.critical {
   color: @critical;
 }
+
 #custom-gpu {
   background: @bg2;
   color: @font;
   padding-left: 0em;
 }
+
 #pulseaudio {
   background: @bg;
   color: @font;
@@ -221,6 +229,7 @@
 #pulseaudio.source-muted {
   /* moved to config */
 }
+
 #bluetooth {
   background: @bg;
   color: @font;
@@ -233,11 +242,13 @@
   background: @bg;
   color: @font;
 }
+
 #mode {
   /* Shown current Sway mode (resize etc.) */
   background: @bg;
   color: @font;
 }
+
 #window {
   margin-right: 40px;
   margin-left: 40px;

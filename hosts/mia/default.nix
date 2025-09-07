@@ -129,6 +129,7 @@ in {
       "i915.enable_psr=0"
       "mem_sleep_default=deep"
     ];
+    blacklistedKernelModules = ["rmi_smbus" "rmi_core" "rmi4_f01" "rmi4_f11" "rmi4_f12"];
   };
 
   networking.hostName = "mia"; # Define your hostname.

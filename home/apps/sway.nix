@@ -6,7 +6,7 @@
   ...
 }: let
   sw = osConfig.programs.sway.enable or false;
-  c = config.hm.theme.colors; # 👈 shared palette
+  c = config.hm.theme.colors; # now tokens-backed
   mod = "Mod4";
   term = "${pkgs.alacritty}/bin/alacritty";
   tmux = "${pkgs.tmux}/bin/tmux";
@@ -47,39 +47,40 @@ in {
 
       colors = {
         focused = {
-          border = c.neutral_blue;
-          background = c.dark0;
-          text = c.light1;
-          indicator = c.bright_blue;
-          childBorder = c.neutral_blue;
+          border = c.primary;
+          background = c.bg;
+          text = c.fg;
+          indicator = c.primary;
+          childBorder = c.primary;
         };
         focusedInactive = {
-          border = c.dark3;
-          background = c.dark1;
-          text = c.light2;
-          indicator = c.gray;
-          childBorder = c.dark3;
+          inherit (c) border;
+          # border = c.border;
+          background = c.bgAlt;
+          text = c.muted;
+          indicator = c.borderMuted;
+          childBorder = c.border;
         };
         unfocused = {
-          border = c.dark2;
-          background = c.dark0;
-          text = c.light4;
-          indicator = c.gray;
-          childBorder = c.dark2;
+          border = c.borderMuted;
+          background = c.bg;
+          text = c.muted;
+          indicator = c.borderMuted;
+          childBorder = c.borderMuted;
         };
         urgent = {
-          border = c.neutral_red;
-          background = c.neutral_red;
-          text = c.dark0;
-          indicator = c.neutral_red;
-          childBorder = c.neutral_red;
+          border = c.error;
+          background = c.error;
+          text = c.bg;
+          indicator = c.error;
+          childBorder = c.error;
         };
         placeholder = {
-          border = c.dark2;
-          background = c.dark1;
-          text = c.light1;
-          indicator = c.dark2;
-          childBorder = c.dark2;
+          border = c.borderMuted;
+          background = c.surface;
+          text = c.fg;
+          indicator = c.borderMuted;
+          childBorder = c.borderMuted;
         };
       };
 

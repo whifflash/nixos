@@ -3,57 +3,60 @@
 }
 #custom-L2R-arrow.one {
   font-size: 2em;
-  color: @bg0;
-  background: @bg1;
+  color: @bg;
+  background: @accent1;
 }
 #custom-L2R-arrow.two {
   font-size: 2em;
-  color: @bg1;
-  background: @bg2;
+  color: @accent1;
+  background: @accent2;
 }
 #custom-L2R-arrow.three {
   font-size: 2em;
-  color: @bg2;
-  background: @bg3;
+  color: @accent2;
+  background: @surface-alt;
 }
 
 /*#custom-R2L-arrow {
   font-size: 2em;
   color: @bg;
-  background: @bluetint;
+  background: @primary;
 }*/
 #custom-R2L-arrow.one {
   font-size: 2em;
-  color: @bg0;
-  background: @bg1;
+  color: @bg;
+  background: @accent1;
 }
 #custom-R2L-arrow.two {
   font-size: 2em;
-  color: @bg1;
-  background: @bg2;
+  color: @accent1;
+  background: @accent2;
 }
 #custom-R2L-arrow.three {
   font-size: 2em;
-  color: @bg2;
-  background: @bg3;
+  color: @accent2;
+  background: @surface-alt;
 }
+
+/*right piece in the middle*/
 #custom-L2R-ramp {
   font-size: 2em;
-  color: @bg3;
-  background: @bgc;
+  color: @bg;
+  background: @accent1;
 }
+/*left piece in the middle*/
 #custom-L2R-ramp.inv {
   font-size: 2em;
-  color: @bgc;
-  background: @bg3;
+  color: @accent1;
+  background: @bg;
 }
 #custom-R2L-ramp {
   font-size: 2em;
-  color: @bg3;
-  background: @bgc;
+  color: @surface-alt;
+  background: @overlay;
 }
 #custom-R2L-ramp.inv {
   font-size: 2em;
-  color: @bgc;
-  background: @bg3;
+  color: @overlay;
+  background: @surface-alt;
 }
