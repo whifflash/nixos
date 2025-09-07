@@ -1,9 +1,4 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
+_: let
   themeEnvPath = "$XDG_CONFIG_HOME/theme/env";
   themeEnvFallback = "$HOME/.config/theme/env";
 in {
