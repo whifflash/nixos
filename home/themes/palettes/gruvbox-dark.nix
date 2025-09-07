@@ -1,4 +1,4 @@
-{lib, ...}: let
+_: let
   colors = {
     dark0 = "#282828";
     dark1 = "#3c3836";

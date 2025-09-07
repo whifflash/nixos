@@ -1,4 +1,4 @@
-{lib, ...}: let
+_: let
   base = {
     base03 = "#002b36";
     base02 = "#073642";
