@@ -31,8 +31,9 @@ in {
     };
 
     swaylock.image = lib.mkOption {
-      type = lib.types.str;
-      description = "Background image yto se for swaylock";
+      type = lib.types.nullOr lib.types.path;
+      default = null;
+      description = "Image to use for swaylock. If null, falls back to the main wallpaper.";
     };
 
     # Optional per-output overrides
@@ -100,6 +101,16 @@ in {
       home.file = lib.mkIf cfg.linkToPictures {
         "Pictures/wallpapers".source = cfg.wallpapersDir;
       };
+
+      xdg.configFile."swaylock/background".source = let
+        fallback = cfg.wallpapersDir + "/${cfg.wallpaper}";
+      in
+        lib.mkIf (cfg.wallpaper != null && cfg.wallpapersDir != null)
+        (
+          if cfg.swaylock.image != null
+          then cfg.swaylock.image
+          else fallback
+        );
 
       # Apply background(s)
       wayland.windowManager.sway.config.output = outputs;

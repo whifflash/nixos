@@ -41,7 +41,8 @@ in {
       wallpapersDir = ../media/wallpapers;
       wallpaper = "Colors.png"; # <- put an existing filename here
       wallpaperMode = "fill";
-      swaylock.image = "${config.home.homeDirectory}/nixos/media/wallpapers/village.jpg";
+      swaylock.image = ../media/wallpapers/village.jpg;
+      # swaylock.image = "${config.home.homeDirectory}/nixos/media/wallpapers/village.jpg";
     };
 
     tmux = {
