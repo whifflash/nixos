@@ -16,6 +16,7 @@ in {
     ./git.nix
     ./ssh.nix
     ./themes/sway-theme.nix
+    ./themes/sway-colors.nix
     ./apps/sway.nix
     ./apps/zsh.nix
     ./apps/tmux.nix
@@ -29,7 +30,7 @@ in {
   hm = {
     theme = {
       enable = true;
-      scheme = "gruvbox-dark"; # or "gruvbox-light"
+      scheme = "tokyonight-storm"; # or "gruvbox-light"
       writeWaybarPalette = true; # generates ~/.config/waybar/palette.css
       writeWofiPalette = true; # generates ~/.config/wofi/palette.css
       writeZshEnv = true; # generates ~/.config/theme/env

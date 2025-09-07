@@ -87,44 +87,44 @@ in {
       terminal = term;
       menu = "${pkgs.wofi}/bin/wofi --show drun";
 
-      colors = {
-        focused = {
-          border = c.primary;
-          background = c.bg;
-          text = c.fg;
-          indicator = c.primary;
-          childBorder = c.primary;
-        };
-        focusedInactive = {
-          inherit (c) border;
-          # border = c.border;
-          background = c.bgAlt;
-          text = c.muted;
-          indicator = c.borderMuted;
-          childBorder = c.border;
-        };
-        unfocused = {
-          border = c.borderMuted;
-          background = c.bg;
-          text = c.muted;
-          indicator = c.borderMuted;
-          childBorder = c.borderMuted;
-        };
-        urgent = {
-          border = c.error;
-          background = c.error;
-          text = c.bg;
-          indicator = c.error;
-          childBorder = c.error;
-        };
-        placeholder = {
-          border = c.borderMuted;
-          background = c.surface;
-          text = c.fg;
-          indicator = c.borderMuted;
-          childBorder = c.borderMuted;
-        };
-      };
+      # colors = {
+      #   focused = {
+      #     border = c.primary;
+      #     background = c.bg;
+      #     text = c.fg;
+      #     indicator = c.primary;
+      #     childBorder = c.primary;
+      #   };
+      #   focusedInactive = {
+      #     inherit (c) border;
+      #     # border = c.border;
+      #     background = c.bgAlt;
+      #     text = c.muted;
+      #     indicator = c.borderMuted;
+      #     childBorder = c.border;
+      #   };
+      #   unfocused = {
+      #     border = c.borderMuted;
+      #     background = c.bg;
+      #     text = c.muted;
+      #     indicator = c.borderMuted;
+      #     childBorder = c.borderMuted;
+      #   };
+      #   urgent = {
+      #     border = c.error;
+      #     background = c.error;
+      #     text = c.bg;
+      #     indicator = c.error;
+      #     childBorder = c.error;
+      #   };
+      #   placeholder = {
+      #     border = c.borderMuted;
+      #     background = c.surface;
+      #     text = c.fg;
+      #     indicator = c.borderMuted;
+      #     childBorder = c.borderMuted;
+      #   };
+      # };
 
       input = {
         "type:touchpad" = {
