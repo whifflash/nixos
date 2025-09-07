@@ -6,7 +6,7 @@
   ...
 }: let
   sw = osConfig.programs.sway.enable or false;
-  c = config.hm.theme.colors; # now tokens-backed
+  c = config.hm.theme.tokens;
   mod = "Mod4";
   term = "${pkgs.alacritty}/bin/alacritty";
   tmux = "${pkgs.tmux}/bin/tmux";

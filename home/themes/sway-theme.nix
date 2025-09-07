@@ -30,6 +30,11 @@ in {
       description = "Sway background mode.";
     };
 
+    swaylock.image = lib.mkOption {
+      type = lib.types.str;
+      description = "Background image yto se for swaylock";
+    };
+
     # Optional per-output overrides
     perOutput = lib.mkOption {
       type = lib.types.attrsOf (lib.types.submodule (_: {

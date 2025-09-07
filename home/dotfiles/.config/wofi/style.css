@@ -1,3 +1,85 @@
+/* ~/.config/wofi/style.css */
+@import url("palette.css");
+
+/* Window & layout */
+window {
+  margin: 4px;
+  border: 1px solid @border;
+  background: @bg;
+  color: @font;
+}
+
+#input {
+  margin: 8px;
+  padding: 6px 10px;
+  border: 1px solid @border_muted;
+  background: @bg1;
+  color: @font;
+}
+
+#outer-box {
+  margin: 6px;
+  background: transparent;
+}
+
+#inner-box {
+  background: transparent;
+}
+
+#scroll {
+  margin: 6px;
+  background: transparent;
+}
+
+/* Entries */
+#entry {
+  padding: 6px 10px;
+  background: transparent;
+  color: @font;
+}
+
+#entry:selected {
+  background: @accent2;
+  color: @font;
+  border-left: 2px solid @primary;
+}
+
+#text {
+  margin-left: 6px;
+}
+
+#prompt,
+#caps,
+#numlock {
+  color: @muted;
+}
+
+/* Message/error */
+#message {
+  margin: 6px;
+  padding: 6px 10px;
+  border: 1px solid @border_muted;
+  background: @bg1;
+  color: @font;
+}
+
+#error {
+  border: 1px solid @critical;
+  background: @bg1;
+  color: @critical;
+}
+
+/* Accents (quick helpers) */
+.accent1 {
+  color: @accent1;
+}
+.accent2 {
+  color: @accent2;
+}
+.accent3 {
+  color: @accent3;
+}
+
 /* ::root{ */
 /*     --accent: #5291e2; */
 /*     --dark: #383C4A; */
@@ -67,8 +149,8 @@ scheme: "Nord"
 author: "arcticicestudio"
 */
 
-@define-color text #EDBBB2;
-@define-color selected #98971A; /* selected */
+/*@define-color text #EDBBB2;
+@define-color selected #98971A;
 @define-color background-selection #98971A;
 @define-color background #28282833;
 
@@ -106,7 +188,6 @@ author: "arcticicestudio"
   background-color: transparent;
   font-family: Ubuntu Mono;
   text-shadow: 2px 2px 9px rgba(255, 87, 51, 0);
-  /* font-size:14; */
 }
 
 #input {
@@ -120,7 +201,6 @@ author: "arcticicestudio"
 #inner-box {
   color: rgba(255, 0, 0, 0.5);
   border-radius: 0px;
-  /* margin-right: 180px; */
 }
 
 #outer-box {
@@ -144,3 +224,4 @@ author: "arcticicestudio"
 #img {
   background-color: transparent;
 }
+*/

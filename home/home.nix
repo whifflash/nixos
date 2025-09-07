@@ -2,6 +2,7 @@
   pkgs,
   lib,
   osConfig,
+  config,
   ...
 }:
 # let
@@ -39,6 +40,7 @@ in {
       wallpapersDir = ../media/wallpapers;
       wallpaper = "Colors.png"; # <- put an existing filename here
       wallpaperMode = "fill";
+      swaylock.image = "${config.home.homeDirectory}/nixos/media/wallpapers/village.jpg";
     };
 
     tmux = {
@@ -76,7 +78,7 @@ in {
       ".config/waybar/ornamental.json".source = ./dotfiles/.config/waybar/ornamental.json;
       ".config/waybar/ornamental.css".source = ./dotfiles/.config/waybar/ornamental.css;
       ".config/waybar/launch_waybar.sh".source = ./dotfiles/.config/waybar/launch_waybar.sh;
-      ".config/swaylock/config".source = ./dotfiles/.config/swaylock/config;
+      # ".config/swaylock/config".source = ./dotfiles/.config/swaylock/config;
       ".config/sway/tmux/tmux_reattach.sh".source = ./dotfiles/.config/sway/tmux/tmux_reattach.sh;
 
       # Moved to home manager
