@@ -62,7 +62,7 @@ in {
 
     file = {
       # ".config/hypr/hyprland.conf".source = ./dotfiles/.config/hypr/hyprland.conf;
-      # ".config/wofi/style.css".source = ./dotfiles/.config/wofi/style.css;
+      ".config/wofi/style.css".source = ./dotfiles/.config/wofi/style.css;
 
       ".config/wofi/config".source = ./dotfiles/.config/wofi/config;
       ".config/wofi/gopass.switcher.sh".source = ./dotfiles/.config/wofi/gopass.switcher.sh;

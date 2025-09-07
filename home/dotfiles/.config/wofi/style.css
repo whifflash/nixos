@@ -1,12 +1,31 @@
 /* ~/.config/wofi/style.css */
-@import url("palette.css");
+@import "/home/mhr/.config/wofi/palette.css";
 
 /* Window & layout */
 window {
   margin: 4px;
   border: 1px solid @border;
-  background: @bg;
+  animation-name: fadeIn;
+  animation-duration: 0.4s;
+  font-family: Ubuntu Mono;
+  background-color: @bg;
   color: @font;
+}
+
+#entry {
+  border-radius: 0px;
+  padding: 5px 2px 5px 2px;
+  margin: 0px 4px 0px 4px;
+  text-shadow: 2px 2px 9px @border_muted;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 #input {
