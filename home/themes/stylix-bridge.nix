@@ -11,10 +11,10 @@
   T = config.hm.theme.tokens or {};
   get = n: (T.${n} or "#555555");
 
-  stripHash = s:
-    if lib.isString s && lib.hasPrefix "#" s
-    then lib.substring 1 6 s
-    else s;
+  # stripHash = s:
+  #   if lib.isString s && lib.hasPrefix "#" s
+  #   then lib.substring 1 6 s
+  #   else s;
 
   # Build a Base16 *attribute set* (not YAML)
   base16 = {

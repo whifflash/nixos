@@ -5,10 +5,9 @@
   ...
 }: let
   cfg = config.hm.swayTheme;
-
-  existsIn = dir: file:
-    (builtins.pathExists dir)
-    && (builtins.hasAttr file (builtins.readDir dir));
+  # existsIn = dir: file:
+  #   (builtins.pathExists dir)
+  #   && (builtins.hasAttr file (builtins.readDir dir));
 in {
   options.hm.swayTheme = {
     enable = lib.mkEnableOption "Sway theming (wallpaper + mode)";
