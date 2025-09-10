@@ -132,6 +132,14 @@ in {
     # blacklistedKernelModules = ["rmi_smbus" "rmi_core" "rmi4_f01" "rmi4_f11" "rmi4_f12"];
   };
 
+  # Let Stylix theme Qt apps at the system level
+  # stylix.targets.qt.enable = true;
+
+  # Pick how Qt reads its theme; qt5ct works broadly.
+  qt.enable = true;
+  qt.platformTheme = "qt5ct";
+  # (You can use "qt6ct" if you’re mostly on Qt6.)
+
   networking.hostName = "mia"; # Define your hostname.
 
   # Enable networking

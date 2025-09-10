@@ -40,8 +40,8 @@
 
     # nur.url = "github:nix-community/NUR";
 
-    # stylix.url = "github:danth/stylix/release-24.11";
-    # stylix.inputs.nixpkgs.follows = "nixpkgs";
+    stylix.url = "github:danth/stylix/release-24.11";
+    stylix.inputs.nixpkgs.follows = "nixpkgs";
     # disko.url = "github:nix-community/disko";
     # disko.inputs.nixpkgs.follows = "nixpkgs";
     # nix-darwin.url = "github:LnL7/nix-darwin/nix-darwin-24.11";
@@ -222,22 +222,24 @@
             lib.nixosSystem {
               system = systemFor name;
               modules = [
-                # Either a directory with default.nix or a single file — both work
                 (hostsDir + "/${name}")
-                home-manager.nixosModules.home-manager
+
+                inputs.home-manager.nixosModules.home-manager
                 ({config, ...}: {
                   nixpkgs.overlays = [(import ./overlays/disable-tests.nix)];
-                  # Keep HM pkgs in sync with the system’s pkgs
                   home-manager = {
                     useGlobalPkgs = true;
                     useUserPackages = true;
-                    # Pass flake inputs to HM modules so `inputs` is well-defined
+
+                    sharedModules = [inputs.stylix.homeManagerModules.stylix];
                     extraSpecialArgs = {
                       inherit inputs;
                       osConfig = config;
                     };
                   };
                 })
+
+                # inputs.stylix.nixosModules.stylix
               ];
               # Pass flake inputs to modules
               specialArgs = {inherit inputs;};

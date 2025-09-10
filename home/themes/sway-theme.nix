@@ -1,4 +1,5 @@
 {
+  pkgs,
   config,
   lib,
   ...
@@ -36,7 +37,6 @@ in {
       description = "Image to use for swaylock. If null, falls back to the main wallpaper.";
     };
 
-    # Optional per-output overrides
     perOutput = lib.mkOption {
       type = lib.types.attrsOf (lib.types.submodule (_: {
         options = {
@@ -55,7 +55,6 @@ in {
       description = "Map of output-name -> { wallpaper, mode }.";
     };
 
-    # Convenience: expose wallpapers under ~/Pictures/wallpapers
     linkToPictures = lib.mkOption {
       type = lib.types.bool;
       default = true;
@@ -77,6 +76,21 @@ in {
         if cfg.perOutput != {}
         then perOut
         else {"*" = {bg = baseBg;};};
+
+      # tokens -> hex helpers
+      T = config.hm.theme.tokens or {};
+      get = n: (T.${n} or "#555555");
+      strip = s:
+        if lib.isString s && lib.hasPrefix "#" s
+        then lib.substring 1 6 s
+        else s;
+      withA = hex: alpha: (strip hex) + alpha;
+      C = name: withA (get name) "ff"; # rrggbbaa for swaylock
+      # image path to use
+      lockImage =
+        if cfg.swaylock.image != null
+        then cfg.swaylock.image
+        else cfg.wallpapersDir + "/${cfg.wallpaper}";
     in {
       assertions = [
         {
@@ -86,13 +100,15 @@ in {
         {
           assertion =
             (cfg.perOutput != {})
-            || existsIn cfg.wallpapersDir cfg.wallpaper;
+            || ((builtins.pathExists cfg.wallpapersDir)
+              && (builtins.hasAttr cfg.wallpaper (builtins.readDir cfg.wallpapersDir)));
           message = "sway-theme: wallpaper ‘‘${cfg.wallpaper}’’ not found in ${toString cfg.wallpapersDir}";
         }
         {
-          assertion =
-            lib.all (o: existsIn cfg.wallpapersDir o.wallpaper)
-            (lib.attrValues cfg.perOutput);
+          assertion = lib.all (o:
+            (builtins.pathExists cfg.wallpapersDir)
+            && (builtins.hasAttr o.wallpaper (builtins.readDir cfg.wallpapersDir)))
+          (lib.attrValues cfg.perOutput);
           message = "sway-theme: one or more perOutput wallpapers were not found in ${toString cfg.wallpapersDir}";
         }
       ];
@@ -102,18 +118,43 @@ in {
         "Pictures/wallpapers".source = cfg.wallpapersDir;
       };
 
-      xdg.configFile."swaylock/background".source = let
-        fallback = cfg.wallpapersDir + "/${cfg.wallpaper}";
-      in
-        lib.mkIf (cfg.wallpaper != null && cfg.wallpapersDir != null)
-        (
-          if cfg.swaylock.image != null
-          then cfg.swaylock.image
-          else fallback
-        );
+      programs.swaylock = {
+        enable = lib.mkDefault true;
+        package = pkgs.swaylock; # or pkgs.swaylock-effects
+        settings = {
+          image = toString lockImage;
+          scaling = cfg.wallpaperMode; # fill | fit | stretch | tile | center
 
-      # Apply background(s)
+          # Show indicator and style it with tokens
+          # indicator = true;
+          indicator-caps-lock = true;
+
+          # Inside (background of the ring)
+          inside-color = C "bgAlt";
+          inside-ver-color = C "warning";
+          inside-wrong-color = C "error";
+
+          # Ring
+          ring-color = C "primary";
+          ring-ver-color = C "warning";
+          ring-wrong-color = C "error";
+
+          # Line + text
+          line-color = C "border";
+          text-color = C "fg";
+          key-hl-color = C "accent1";
+          separator-color = C "borderMuted";
+
+          # Optional niceties (uncomment to taste):
+          # indicator-radius = 120;
+          # indicator-thickness = 10;
+          # font = "Sans 12";
+          # show-failed-attempts = true;
+        };
+      };
+
+      # Apply background(s) to Sway outputs
       wayland.windowManager.sway.config.output = outputs;
     }
-  );
+  ); # end of config
 }

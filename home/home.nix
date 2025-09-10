@@ -2,6 +2,7 @@
   pkgs,
   lib,
   osConfig,
+  # inputs,
   ...
 }:
 # let
@@ -15,12 +16,18 @@ in {
     ./apps/firefox
     ./git.nix
     ./ssh.nix
-    ./themes/sway-theme.nix
+
+    # Tokens for themeing
+    ./themes/tokens.nix
+
+    # Then token consumers
+    ./themes/stylix-bridge.nix
     ./themes/sway-colors.nix
+    ./themes/sway-theme.nix
+
     ./apps/sway.nix
     ./apps/zsh.nix
     ./apps/tmux.nix
-    ./themes/tokens.nix
   ];
 
   wayland.windowManager.sway = lib.mkIf swaySwitch {
@@ -30,7 +37,8 @@ in {
   hm = {
     theme = {
       enable = true;
-      scheme = "tokyonight-storm"; # or "gruvbox-light"
+      # catppucin-frappe everforest-dark gruvbox-dark gruvbox-light kanagawa nord solarized-dark tokyonight-storm
+      scheme = "everforest-dark"; # or "gruvbox-light"
       writeWaybarPalette = true; # generates ~/.config/waybar/palette.css
       writeWofiPalette = true; # generates ~/.config/wofi/palette.css
       writeZshEnv = true; # generates ~/.config/theme/env
@@ -39,10 +47,9 @@ in {
     swayTheme = lib.mkIf swaySwitch {
       enable = true;
       wallpapersDir = ../media/wallpapers;
-      wallpaper = "Colors.png"; # <- put an existing filename here
-      wallpaperMode = "fill";
+      wallpaper = "anna-scarfiello.jpg";
+      wallpaperMode = "stretch"; # stretch fill
       swaylock.image = ../media/wallpapers/village.jpg;
-      # swaylock.image = "${config.home.homeDirectory}/nixos/media/wallpapers/village.jpg";
     };
 
     tmux = {
@@ -140,11 +147,11 @@ in {
   # Wayland, X, etc. support for session vars
   # systemd.user.sessionVariables = config.home-manager.users.mhr.home.sessionVariables;
 
-  qt = {
-    enable = true;
-    platformTheme.name = "qtct";
-    style.name = "kvantum";
-  };
+  # qt = {
+  #   enable = true;
+  #   platformTheme.name = "qtct";
+  #   style.name = "kvantum";
+  # };
 
   xdg.configFile = {
     "Kvantum/kvantum.kvconfig".text = ''
@@ -158,21 +165,17 @@ in {
   gtk = {
     enable = true;
 
-    theme = {
-      name = "WhiteSur-Dark";
-      package = pkgs.whitesur-gtk-theme;
-    };
-    cursorTheme = {
-      package = pkgs.bibata-cursors;
-      name = "Bibata-Modern-Ice";
-    };
-    iconTheme = {
-      package = pkgs.whitesur-icon-theme;
-      name = "WhiteSur-Dark"; # "WhiteSur-Dark" "WhiteSur-Light"
-    };
+    # theme = {
+    #   name = "WhiteSur-Dark";
+    #   package = pkgs.whitesur-gtk-theme;
+    # };
+    # cursorTheme = {
+    #   package = pkgs.bibata-cursors;
+    #   name = "Bibata-Modern-Ice";
+    # };
     # iconTheme = {
-    #   package = gruvboxPlus;
-    #   name = "Gruvbox-plus"; # "WhiteSur-Dark" "WhiteSur-Light"
+    #   package = pkgs.whitesur-icon-theme;
+    #   name = "WhiteSur-Dark"; # "WhiteSur-Dark" "WhiteSur-Light"
     # };
   };
 }

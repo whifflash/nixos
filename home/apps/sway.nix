@@ -196,7 +196,7 @@ in {
 
           # layout
           "${mod}+v" = "split v";
-          "${mod}+b" = "splith";
+          "${mod}+b" = "split h";
           "${mod}+f" = "fullscreen toggle";
           # "${mod}+space" = "floating toggle";
 
