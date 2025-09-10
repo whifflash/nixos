@@ -1,5 +1,11 @@
 #!/usr/bin/env sh
 # usb-drive: umbrella utility for USB wiping + LUKS (POSIX sh)
+# Subcommands:
+#   usb-drive wipe /dev/sdX [--full]
+#   usb-drive encrypt-luks /dev/sdX LABEL [ext4|btrfs] [--ssd] [--force]
+#   usb-drive mount-luks LABEL [--ssd]
+#   usb-drive umount-luks LABEL
+#   usb-drive info [/dev/sdX]
 
 set -eu
 
@@ -9,50 +15,96 @@ die() {
   exit 1
 }
 
-is_removable() { [ "$(lsblk -ndo RM "$1" 2>/dev/null | tr -d ' ')" = "1" ]; }
-is_rotational() { [ "$(lsblk -ndo ROTA "$1" 2>/dev/null | tr -d ' ')" = "1" ]; } # 1=HDD, 0=SSD/flash
+is_root() { [ "$(id -u)" -eq 0 ]; }
 
-confirm_destroy() {
-  d="$1"
-  printf "!!! DANGEROUS OPERATION !!!\nThis will ERASE ALL DATA on %s\n" "$d"
-  printf "Type EXACTLY: YES, destroy %s : " "$d"
-  IFS= read -r ans || true
-  [ "$ans" = "YES, destroy $d" ] || die "Aborted."
-}
-
-part_path() {
-  disk="$1"
-  case "$disk" in
-  *[0-9]) printf "%sp1" "$disk" ;;
-  *) printf "%s1" "$disk" ;;
+needs_root_subcmd() {
+  case "$1" in
+  wipe | encrypt-luks | mount-luks | umount-luks) return 0 ;;
+  *) return 1 ;;
   esac
 }
 
+auto_escalate_or_die() {
+  sub="$1"
+  shift
+  if needs_root_subcmd "$sub" && ! is_root; then
+    if command -v sudo >/dev/null 2>&1; then
+      exec sudo -- "$0" "$sub" "$@"
+    elif command -v doas >/dev/null 2>&1; then
+      exec doas -- "$0" "$sub" "$@"
+    else
+      die "This command requires root. Please run with sudo/doas."
+    fi
+  fi
+}
+
+# --- detection helpers --------------------------------------------------------
+is_rotational() {
+  val="$(lsblk -ndo ROTA "$1" 2>/dev/null | tr -d ' ')"
+  [ "$val" = "1" ]
+}
+
+# Best-effort USB detection. Returns 0 if *likely* USB, 1 otherwise.
+is_usb() {
+  d="$1"
+  tran="$(lsblk -ndo TRAN "$d" 2>/dev/null | tr -d ' ')"
+  if [ -n "$tran" ] && [ "$tran" = "usb" ]; then
+    return 0
+  fi
+  if command -v udevadm >/dev/null 2>&1; then
+    if udevadm info -q property -n "$d" 2>/dev/null | grep -q '^ID_BUS=usb$'; then
+      return 0
+    fi
+  fi
+  sys="/sys/class/block/$(basename "$d")/device"
+  if [ -e "$sys" ]; then
+    target="$(readlink -f "$sys" 2>/dev/null || echo "$sys")"
+    if printf %s "$target" | grep -q '/usb'; then
+      return 0
+    fi
+  fi
+  return 1
+}
+
+part_path() {
+  case "$1" in *[0-9]) printf "%sp1" "$1" ;; *) printf "%s1" "$1" ;; esac
+}
+
 udev_settle() {
-  if command -v udevadm >/dev/null 2>&1; then udevadm settle || true; fi
+  if command -v udevadm >/dev/null 2>&1; then
+    udevadm settle || true
+  fi
 }
 
 wait_for_block() {
   p="$1"
   i=0
   while [ $i -lt 40 ]; do
-    [ -b "$p" ] && return 0
+    if [ -b "$p" ]; then
+      return 0
+    fi
     i=$((i + 1))
     sleep 0.1
   done
   return 1
 }
 
+# --- wipe ---------------------------------------------------------------------
 cmd_wipe() {
-  if [ $# -lt 1 ] || [ $# -gt 2 ]; then
-    die "Usage: usb-drive wipe /dev/sdX [--full]"
-  fi
+  if [ $# -lt 1 ] || [ $# -gt 2 ]; then die "Usage: usb-drive wipe /dev/sdX [--full]"; fi
   DISK="$1"
   FULL="${2:-}"
   [ -b "$DISK" ] || die "Not a block device: $DISK"
-  is_removable "$DISK" || die "$DISK is not removable (USB)."
+
+  if ! is_usb "$DISK"; then
+    error "Warning: could not confirm $DISK is a USB device (bridge quirks are common). Proceeding."
+  fi
+
   lsblk -o NAME,MODEL,TRAN,RM,ROTA,SIZE,TYPE "$DISK"
-  confirm_destroy "$DISK"
+  printf "!!! DANGEROUS OPERATION !!!\nThis will ERASE ALL DATA on %s\n" "$DISK"
+  printf "Type EXACTLY: YES, destroy %s : " "$DISK"
+  IFS= read -r ans || true
+  [ "$ans" = "YES, destroy $DISK" ] || die "Aborted."
 
   # Unmount children if any
   lsblk -nrpo NAME "$DISK" | tail -n +2 | while IFS= read -r n; do umount "$n" 2>/dev/null || true; done
@@ -60,8 +112,8 @@ cmd_wipe() {
 
   wipefs -a "$DISK" || true
 
-  if ! is_rotational "$DISK"; then
-    if command -v blkdiscard >/dev/null 2>&1 && blkdiscard -v "$DISK"; then
+  if ! is_rotational "$DISK" && command -v blkdiscard >/dev/null 2>&1; then
+    if blkdiscard -v "$DISK"; then
       sgdisk --zap-all "$DISK" >/dev/null 2>&1 || true
       sync
       printf "Wipe complete via discard.\n"
@@ -84,19 +136,35 @@ cmd_wipe() {
   printf "Wipe complete.\n"
 }
 
+# --- encrypt-luks -------------------------------------------------------------
 cmd_encrypt_luks() {
-  if [ $# -lt 2 ]; then
-    die "Usage: usb-drive encrypt-luks /dev/sdX LABEL [ext4|btrfs] [--ssd]"
-  fi
+  if [ $# -lt 2 ]; then die "Usage: usb-drive encrypt-luks /dev/sdX LABEL [ext4|btrfs] [--ssd] [--force]"; fi
   DISK="$1"
   LABEL="$2"
   FSTYPE="${3:-ext4}"
   SSD="no"
-  [ "${4:-}" = "--ssd" ] && SSD="yes"
+  FORCE="no"
+
+  # parse optional args (order-insensitive)
+  shift 2
+  for arg in "$@"; do
+    case "$arg" in
+    ext4 | btrfs) FSTYPE="$arg" ;;
+    --ssd) SSD="yes" ;;
+    --force | --no-usb-check) FORCE="yes" ;;
+    esac
+  done
+
   [ -b "$DISK" ] || die "Not a block device: $DISK"
-  is_removable "$DISK" || die "$DISK is not removable (USB)."
+  if ! is_usb "$DISK" && [ "$FORCE" != "yes" ]; then
+    error "Warning: could not confirm $DISK is USB. Proceeding anyway (use --force to silence)."
+  fi
+
   lsblk -o NAME,MODEL,TRAN,RM,ROTA,SIZE,TYPE,MOUNTPOINT "$DISK"
-  confirm_destroy "$DISK"
+  printf "!!! DANGEROUS OPERATION !!!\nThis will DESTROY ALL DATA on %s\n" "$DISK"
+  printf "Type EXACTLY: YES, destroy %s : " "$DISK"
+  IFS= read -r ans || true
+  [ "$ans" = "YES, destroy $DISK" ] || die "Aborted."
 
   wipefs -a "$DISK" || true
   parted -s "$DISK" mklabel gpt
@@ -107,14 +175,7 @@ cmd_encrypt_luks() {
   udev_settle
   wait_for_block "$PART" || die "Partition not found: $PART"
 
-  cryptsetup luksFormat \
-    --type luks2 \
-    --cipher aes-xts-plain64 \
-    --key-size 512 \
-    --hash sha256 \
-    --pbkdf argon2id \
-    "$PART"
-
+  cryptsetup luksFormat --type luks2 --cipher aes-xts-plain64 --key-size 512 --hash sha256 --pbkdf argon2id "$PART"
   if [ "$SSD" = "yes" ]; then
     cryptsetup open --allow-discards "$PART" "crypt-$LABEL"
   else
@@ -129,20 +190,37 @@ cmd_encrypt_luks() {
 
   LUKS_UUID=$(blkid -s UUID -o value "$PART" || true)
   FS_UUID=$(blkid -s UUID -o value "/dev/mapper/crypt-$LABEL" || true)
-
   printf "Done.\n  LUKS UUID: %s\n  FS UUID: %s\n" "${LUKS_UUID:-?}" "${FS_UUID:-?}"
   printf "Mount with: usb-drive mount-luks %s%s\n" "$LABEL" "$([ "$SSD" = "yes" ] && printf " --ssd" || printf "")"
   cryptsetup close "crypt-$LABEL" || true
 }
 
+# --- mount-luks ---------------------------------------------------------------
 cmd_mount_luks() {
-  if [ $# -lt 1 ] || [ $# -gt 2 ]; then
-    die "Usage: usb-drive mount-luks LABEL [--ssd]"
-  fi
+  if [ $# -lt 1 ] || [ $# -gt 2 ]; then die "Usage: usb-drive mount-luks LABEL [--ssd]"; fi
   LABEL="$1"
   SSD="${2:-}"
-  DEV=$(lsblk -rno PATH,PARTLABEL,RM | awk -v L="crypt-$LABEL" '$2==L && $3==1{print $1;exit}')
-  [ -n "$DEV" ] || die "Could not find removable partition with PARTLABEL=crypt-$LABEL"
+
+  # Prefer a device with TRAN=usb when multiple exist; otherwise pick first match.
+  best=""
+  usb=""
+  while IFS= read -r line; do
+    p=$(printf %s "$line" | awk '{print $1}')
+    l=$(printf %s "$line" | awk '{print $2}')
+    t=$(printf %s "$line" | awk '{print $3}')
+    if [ "$l" = "crypt-$LABEL" ]; then
+      if [ -z "$best" ]; then best="$p"; fi
+      if [ "$t" = "usb" ]; then
+        usb="$p"
+        break
+      fi
+    fi
+  done <<EOF
+$(lsblk -rno PATH,PARTLABEL,TRAN)
+EOF
+  DEV="${usb:-$best}"
+  [ -n "$DEV" ] || die "Could not find partition with PARTLABEL=crypt-$LABEL"
+
   LUKS_UUID=$(blkid -s UUID -o value "$DEV" || true)
   [ -n "$LUKS_UUID" ] || die "No UUID for $DEV"
   MNT="/media/$LABEL"
@@ -163,17 +241,21 @@ cmd_mount_luks() {
   printf "Mounted at %s\n" "$MNT"
 }
 
+# --- umount-luks --------------------------------------------------------------
 cmd_umount_luks() {
-  if [ $# -ne 1 ]; then
-    die "Usage: usb-drive umount-luks LABEL"
-  fi
+  if [ $# -ne 1 ]; then die "Usage: usb-drive umount-luks LABEL"; fi
   LABEL="$1"
   MNT="/media/$LABEL"
-  if mountpoint -q "$MNT"; then umount "$MNT" || die "Failed to umount $MNT"; fi
-  if [ -e "/dev/mapper/crypt-$LABEL" ]; then cryptsetup close "crypt-$LABEL" || die "Failed to close crypt-$LABEL"; fi
+  if mountpoint -q "$MNT"; then
+    umount "$MNT" || true
+  fi
+  if [ -e "/dev/mapper/crypt-$LABEL" ]; then
+    cryptsetup close "crypt-$LABEL" || true
+  fi
   printf "Closed crypt-%s\n" "$LABEL"
 }
 
+# --- info ---------------------------------------------------------------------
 cmd_info() {
   if [ $# -eq 0 ]; then
     lsblk -o NAME,MODEL,TRAN,RM,ROTA,SIZE,TYPE,MOUNTPOINT
@@ -181,24 +263,22 @@ cmd_info() {
     DISK="$1"
     [ -b "$DISK" ] || die "Not a block device: $DISK"
     lsblk -o NAME,MODEL,SERIAL,TRAN,RM,ROTA,SIZE,TYPE,MOUNTPOINT "$DISK"
+    if is_usb "$DISK"; then
+      echo "bus: USB (detected)"
+    else
+      echo "bus: not confirmed as USB"
+    fi
   fi
 }
 
 usage() {
   cat <<EOF
 Usage: usb-drive <command> [args...]
-
-Commands:
-  wipe /dev/sdX [--full]           Erase a removable disk (TRIM or zeroing)
-  encrypt-luks /dev/sdX LABEL [ext4|btrfs] [--ssd]
-                                   Create plain LUKS2 + filesystem
-  mount-luks LABEL [--ssd]         Open and mount at /media/LABEL
-  umount-luks LABEL                Unmount and close
-  info [/dev/sdX]                  Show removable device info
-
-Notes:
-  - Only operates on removable devices (lsblk RM=1).
-  - --ssd passes TRIM through LUKS and mounts with discard.
+  wipe /dev/sdX [--full]
+  encrypt-luks /dev/sdX LABEL [ext4|btrfs] [--ssd] [--force]
+  mount-luks LABEL [--ssd]
+  umount-luks LABEL
+  info [/dev/sdX]
 EOF
 }
 
@@ -209,6 +289,7 @@ main() {
   fi
   sub="$1"
   shift
+  auto_escalate_or_die "$sub" "$@"
   case "$sub" in
   wipe) cmd_wipe "$@" ;;
   encrypt-luks) cmd_encrypt_luks "$@" ;;
@@ -223,5 +304,4 @@ main() {
     ;;
   esac
 }
-
 main "$@"
