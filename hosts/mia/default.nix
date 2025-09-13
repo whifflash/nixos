@@ -132,6 +132,24 @@ in {
     # blacklistedKernelModules = ["rmi_smbus" "rmi_core" "rmi4_f01" "rmi4_f11" "rmi4_f12"];
   };
 
+  ui.theme = {
+    enable = true;
+
+    # point to your repo paths
+    palettesDir = ../../home/themes/palettes;
+    scheme = "kanagawa"; # catppucin-frappe everforest-dark gruvbox-dark gruvbox-light kanagawa nord solarized-dark tokyonight-storm
+
+    wallpapersDir = ../../media/wallpapers;
+    wallpaper = "anna-scarfiello.jpg";
+    wallpaperMode = "stretch";
+
+    swaylock.image = ../../media/wallpapers/village.jpg;
+
+    # TODO, perhapsremove this
+    stylix.enable = false;
+    qt.enable = false;
+  };
+
   # Let Stylix theme Qt apps at the system level
   # stylix.targets.qt.enable = true;
 

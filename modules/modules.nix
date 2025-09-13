@@ -20,5 +20,6 @@
     ./roles/tailscale-node.nix
     ./roles/laptop.nix
     ./setups/3gpplab.nix
+    ./ui-theme.nix
   ];
 }

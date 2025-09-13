@@ -1,133 +1,146 @@
 # home/themes/tokens.nix
 {
-  config,
   lib,
+  config,
+  osConfig,
+  pkgs,
   ...
 }: let
   cfg = config.hm.theme;
-  palettesDir = ./palettes;
-  filesRaw = builtins.readDir palettesDir;
 
-  isPalette = n:
-    filesRaw.${n}
-    == "regular"
-    && (lib.hasSuffix ".nix" n || lib.hasSuffix ".json" n);
+  # Palettes live in home/themes/palettes/*.nix
+  palettesDir = let
+    p = ./palettes;
+  in
+    if builtins.pathExists p
+    then p
+    else throw "hm.theme: palettes directory '${toString p}' does not exist";
 
-  fileNames = builtins.filter isPalette (builtins.attrNames filesRaw);
+  paletteFiles = builtins.readDir palettesDir;
+  onlyRegular = lib.filterAttrs (_: v: v == "regular") paletteFiles;
+  allNames = builtins.attrNames onlyRegular;
+  nixFiles = builtins.filter (n: lib.hasSuffix ".nix" n) allNames;
 
-  loadOne = name: let
-    path = palettesDir + ("/" + name);
-    base = lib.removeSuffix ".nix" (lib.removeSuffix ".json" name);
-
-    rawVal =
-      if lib.hasSuffix ".nix" name
-      then import path
-      else builtins.fromJSON (builtins.readFile path);
-
-    value =
-      if lib.hasSuffix ".nix" name && builtins.isFunction rawVal
-      then rawVal {}
-      else rawVal;
-
-    normalized =
-      if (value ? name) && (value ? tokens) && (value ? raw)
-      then value
-      else throw "Palette '${name}' must export { name; tokens; raw; }";
-  in {inherit base normalized;};
-
-  loaded = map loadOne fileNames;
-  palettes = lib.listToAttrs (map (p: {
-      name = p.base;
-      value = p.normalized;
+  importOne = n: import (palettesDir + "/${n}") {};
+  imported = lib.listToAttrs (map (n: {
+      name = lib.removeSuffix ".nix" n;
+      value = importOne n;
     })
-    loaded);
+    nixFiles);
 
-  has = n: lib.hasAttr n palettes;
+  validate = name: value:
+    if (value ? name) && (value ? tokens) && (value ? raw)
+    then value
+    else throw "Palette '${name}.nix' must export { name; tokens; raw; }";
 
-  picked =
-    if has cfg.scheme
-    then palettes.${cfg.scheme}
-    else
-      throw "hm.theme.scheme='${cfg.scheme}' not found in ${toString palettesDir}. Available: ${
-        lib.concatStringsSep ", " (builtins.attrNames palettes)
-      }";
+  normalized = lib.mapAttrs validate imported;
 
-  TOK = picked.tokens; # ergonomic aliases
-  RAW = picked.raw;
+  # Optional host-level choice: ui.theme.scheme
+  hostScheme =
+    if (osConfig ? ui) && (osConfig.ui ? theme) && (osConfig.ui.theme ? scheme)
+    then osConfig.ui.theme.scheme
+    else null;
+
+  chosenName =
+    if cfg.scheme != null
+    then cfg.scheme
+    else if hostScheme != null
+    then hostScheme
+    else "gruvbox-dark";
+
+  available = builtins.attrNames normalized;
+
+  chosenPalette =
+    if builtins.hasAttr chosenName normalized
+    then normalized.${chosenName}
+    else throw "hm.theme: palette '${chosenName}' not found. Available: ${lib.concatStringsSep ", " available}";
+
+  T = chosenPalette.tokens;
+
+  # ---- Writers --------------------------------------------------------------
+
+  # Waybar & Wofi use GTK CSS -> @define-color entries
+  mkGtkPalette = tokens: let
+    names = lib.sort (a: b: a < b) (builtins.attrNames tokens);
+    lines = map (k: "@define-color ${k} ${tokens.${k}};") names;
+  in
+    lib.concatStringsSep "\n" lines + "\n";
+
+  # ~/.config/theme/env -> THEME_* exports
+  mkEnv = tokens: let
+    names = lib.sort (a: b: a < b) (builtins.attrNames tokens);
+    lines = map (k: "export THEME_${lib.toUpper k}=${tokens.${k}}") names;
+  in
+    lib.concatStringsSep "\n" lines + "\n";
+
+  waybarCss = mkGtkPalette T;
+  wofiCss = mkGtkPalette T;
+  envTxt = mkEnv T;
 in {
+  #### Options ###############################################################
   options.hm.theme = {
-    enable = lib.mkEnableOption "Theming tokens";
+    enable = lib.mkEnableOption "Home-Manager token theming";
 
+    # Palette name (no .nix). If null, uses host ui.theme.scheme or gruvbox-dark.
     scheme = lib.mkOption {
-      type = lib.types.str;
-      default = "gruvbox-dark";
-      description = ''
-        Palette basename from ${toString palettesDir} (without extension).
-        Available: ${lib.concatStringsSep ", " (builtins.attrNames palettes)}
-      '';
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = "Palette name to use from home/themes/palettes (without .nix).";
     };
 
     writeWaybarPalette = lib.mkOption {
       type = lib.types.bool;
       default = true;
+      description = "Write ~/.config/waybar/palette.css with @define-color entries.";
     };
+
     writeWofiPalette = lib.mkOption {
       type = lib.types.bool;
       default = true;
+      description = "Write ~/.config/wofi/palette.css with @define-color entries.";
     };
+
     writeZshEnv = lib.mkOption {
       type = lib.types.bool;
       default = true;
+      description = "Write ~/.config/theme/env with THEME_* variables.";
     };
 
-    # New: expose tokens + raw
+    # Read-only, filled once in config below.
     tokens = lib.mkOption {
       type = lib.types.attrsOf lib.types.str;
       readOnly = true;
-      description = "Semantic token colors for the active scheme.";
-    };
-    raw = lib.mkOption {
-      type = lib.types.attrsOf lib.types.str;
-      readOnly = true;
-      description = "Low-level palette (raw colors) for the active scheme.";
+      description = "Resolved semantic tokens from the chosen palette.";
     };
 
-    # Back-compat alias if you still reference hm.theme.colors elsewhere:
-    colors = lib.mkOption {
-      type = lib.types.attrsOf lib.types.str;
+    raw = lib.mkOption {
+      type = lib.types.attrs;
       readOnly = true;
-      description = "Alias of hm.theme.tokens (deprecated).";
+      description = "Raw palette colors as provided by the palette file.";
     };
   };
 
+  #### Implementation ########################################################
   config = lib.mkIf cfg.enable {
-    # publish
-    hm.theme = {
-      tokens = TOK;
-      raw = RAW;
-      colors = TOK; # alias
-    };
+    # Publish tokens/raw exactly once (works with readOnly).
+    hm.theme.tokens = T;
+    hm.theme.raw = chosenPalette.raw;
 
-    xdg.configFile = {
-      "waybar/palette.css" = lib.mkIf cfg.writeWaybarPalette {
-        text =
-          lib.concatStringsSep "\n"
-          (map (k: "@define-color ${k} ${TOK.${k}};") (builtins.attrNames TOK));
+    # Define home.file ONCE; extend with optional attrs so we don't collide.
+    home.file =
+      {
+        ".config/theme/active-scheme".text = "${chosenPalette.name}\n";
+        ".config/theme/available-schemes".text =
+          lib.concatStringsSep "\n" available + "\n";
+      }
+      // lib.optionalAttrs cfg.writeWaybarPalette {
+        ".config/waybar/palette.css".text = waybarCss;
+      }
+      // lib.optionalAttrs cfg.writeWofiPalette {
+        ".config/wofi/palette.css".text = wofiCss;
+      }
+      // lib.optionalAttrs cfg.writeZshEnv {
+        ".config/theme/env".text = envTxt;
       };
-
-      "wofi/palette.css" = lib.mkIf cfg.writeWofiPalette {
-        text =
-          lib.concatStringsSep "\n"
-          (map (k: "@define-color ${k} ${TOK.${k}};") (builtins.attrNames TOK));
-      };
-
-      # Shell: export COLOR_<TOKEN>=#hex
-      "theme/env" = lib.mkIf cfg.writeZshEnv {
-        text =
-          lib.concatStringsSep "\n"
-          (map (k: ''export COLOR_${lib.toUpper k}="${TOK.${k}}"'')
-            (builtins.attrNames TOK));
-      };
-    };
   };
 }

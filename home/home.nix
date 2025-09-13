@@ -37,8 +37,7 @@ in {
   hm = {
     theme = {
       enable = true;
-      # catppucin-frappe everforest-dark gruvbox-dark gruvbox-light kanagawa nord solarized-dark tokyonight-storm
-      scheme = "everforest-dark"; # or "gruvbox-light"
+      scheme = lib.mkDefault (osConfig.ui.theme.scheme or null);
       writeWaybarPalette = true; # generates ~/.config/waybar/palette.css
       writeWofiPalette = true; # generates ~/.config/wofi/palette.css
       writeZshEnv = true; # generates ~/.config/theme/env
@@ -46,9 +45,9 @@ in {
 
     swayTheme = lib.mkIf swaySwitch {
       enable = true;
-      wallpapersDir = ../media/wallpapers;
-      wallpaper = "anna-scarfiello.jpg";
-      wallpaperMode = "stretch"; # stretch fill
+      wallpapersDir = lib.mkDefault osConfig.ui.theme.wallpapersDir;
+      wallpaper = lib.mkDefault osConfig.ui.theme.wallpaper;
+      wallpaperMode = lib.mkDefault osConfig.ui.theme.wallpaperMode;
       swaylock.image = ../media/wallpapers/village.jpg;
     };
 
@@ -99,10 +98,14 @@ in {
       VISUAL = "nvim";
       GTK_THEME = "Adwaita:dark";
     };
+
+    # packages = ["qt6ct"];
   }; # end of home = {};
 
   programs = {
     home-manager.enable = true; # let home manager manage itself
+
+    # kvantum.enable = true;
 
     neovim = {
       enable = true;
@@ -147,35 +150,18 @@ in {
   # Wayland, X, etc. support for session vars
   # systemd.user.sessionVariables = config.home-manager.users.mhr.home.sessionVariables;
 
-  # qt = {
-  #   enable = true;
-  #   platformTheme.name = "qtct";
-  #   style.name = "kvantum";
+  # xdg.configFile = {
+  #   "Kvantum/kvantum.kvconfig".text = ''
+  #     [General]
+  #     theme=WhiteSur
+  #   '';
+
+  #   "Kvantum/WhiteSurDark".source = "${pkgs.whitesur-kde}/share/Kvantum/WhiteSur";
   # };
 
-  xdg.configFile = {
-    "Kvantum/kvantum.kvconfig".text = ''
-      [General]
-      theme=WhiteSur
-    '';
-
-    "Kvantum/WhiteSurDark".source = "${pkgs.whitesur-kde}/share/Kvantum/WhiteSur";
-  };
+  # programs.kvantum.enable = true;
 
   gtk = {
     enable = true;
-
-    # theme = {
-    #   name = "WhiteSur-Dark";
-    #   package = pkgs.whitesur-gtk-theme;
-    # };
-    # cursorTheme = {
-    #   package = pkgs.bibata-cursors;
-    #   name = "Bibata-Modern-Ice";
-    # };
-    # iconTheme = {
-    #   package = pkgs.whitesur-icon-theme;
-    #   name = "WhiteSur-Dark"; # "WhiteSur-Dark" "WhiteSur-Light"
-    # };
   };
 }
