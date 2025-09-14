@@ -20,6 +20,7 @@
     ./roles/tailscale-node.nix
     ./roles/laptop.nix
     ./setups/3gpplab.nix
-    ./ui-theme.nix
+    ./ui/theme.nix
+    ./ui/stylix-bridge.nix
   ];
 }

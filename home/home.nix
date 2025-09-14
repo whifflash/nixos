@@ -2,14 +2,36 @@
   pkgs,
   lib,
   osConfig,
-  # inputs,
   ...
-}:
-# let
-#   gruvboxPlus = import ./themes/icons/gruvbox-plus.nix { inherit pkgs; };
-# in
-let
+}: let
+  #   gruvboxPlus = import ./themes/icons/gruvbox-plus.nix { inherit pkgs; };
   swaySwitch = osConfig.programs.sway.enable or false; # read the host switch
+
+  hasHostTheme =
+    (osConfig ? ui) && (osConfig.ui ? theme);
+
+  hostHas = name:
+    hasHostTheme && (osConfig.ui.theme ? ${name});
+
+  hostWallpapersDir =
+    if hostHas "wallpapersDir"
+    then osConfig.ui.theme.wallpapersDir
+    else ../media/wallpapers;
+
+  hostWallpaper =
+    if hostHas "wallpaper"
+    then osConfig.ui.theme.wallpaper
+    else "anna-scarfiello.jpg";
+
+  hostWallpaperMode =
+    if hostHas "wallpaperMode"
+    then osConfig.ui.theme.wallpaperMode
+    else "stretch";
+
+  hostSwaylockImage =
+    if hostHas "swaylockImage"
+    then osConfig.ui.theme.swaylockImage
+    else ../media/wallpapers/village.jpg;
 in {
   imports = [
     ./packages.nix
@@ -21,7 +43,6 @@ in {
     ./themes/tokens.nix
 
     # Then token consumers
-    ./themes/stylix-bridge.nix
     ./themes/sway-colors.nix
     ./themes/sway-theme.nix
 
@@ -37,28 +58,26 @@ in {
   hm = {
     theme = {
       enable = true;
-      scheme = lib.mkDefault (osConfig.ui.theme.scheme or null);
-      writeWaybarPalette = true; # generates ~/.config/waybar/palette.css
-      writeWofiPalette = true; # generates ~/.config/wofi/palette.css
-      writeZshEnv = true; # generates ~/.config/theme/env
+      # If host provides ui.theme.scheme, use it; otherwise leave unset (token layer can default)
+      scheme = lib.mkDefault (
+        if hostHas "scheme"
+        then osConfig.ui.theme.scheme
+        else null
+      );
+      writeWaybarPalette = true;
+      writeWofiPalette = true;
+      writeZshEnv = true;
     };
 
     swayTheme = lib.mkIf swaySwitch {
       enable = true;
-      wallpapersDir = lib.mkDefault osConfig.ui.theme.wallpapersDir;
-      wallpaper = lib.mkDefault osConfig.ui.theme.wallpaper;
-      wallpaperMode = lib.mkDefault osConfig.ui.theme.wallpaperMode;
-      swaylock.image = ../media/wallpapers/village.jpg;
+      wallpapersDir = lib.mkDefault hostWallpapersDir;
+      wallpaper = lib.mkDefault hostWallpaper;
+      wallpaperMode = lib.mkDefault hostWallpaperMode;
+      swaylock.image = hostSwaylockImage;
     };
 
-    tmux = {
-      enable = true;
-      # terminal = "tmux-256color";
-      # historyLimit = 200000;
-      # shell = "${pkgs.zsh}/bin/zsh";
-      # mouse = true;
-      # escapeTime = 10;
-    };
+    tmux.enable = true;
   };
 
   home = {
@@ -138,14 +157,14 @@ in {
     };
   }; # end of services = {};
 
-  dconf.settings = {
-    "org/gnome/desktop/background" = {
-      picture-uri-dark = "file://${pkgs.nixos-artwork.wallpapers.nineish-dark-gray.src}";
-    };
-    "org/gnome/desktop/interface" = {
-      color-scheme = "prefer-dark";
-    };
-  };
+  # dconf.settings = {
+  #   "org/gnome/desktop/background" = {
+  #     picture-uri-dark = "file://${pkgs.nixos-artwork.wallpapers.nineish-dark-gray.src}";
+  #   };
+  #   "org/gnome/desktop/interface" = {
+  #     color-scheme = "prefer-dark";
+  #   };
+  # };
 
   # Wayland, X, etc. support for session vars
   # systemd.user.sessionVariables = config.home-manager.users.mhr.home.sessionVariables;

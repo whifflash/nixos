@@ -222,16 +222,18 @@
             lib.nixosSystem {
               system = systemFor name;
               modules = [
+                # Your host
                 (hostsDir + "/${name}")
 
+                # Home-Manager (no Stylix module here)
                 inputs.home-manager.nixosModules.home-manager
                 ({config, ...}: {
                   nixpkgs.overlays = [(import ./overlays/disable-tests.nix)];
                   home-manager = {
                     useGlobalPkgs = true;
                     useUserPackages = true;
-
-                    sharedModules = [inputs.stylix.homeManagerModules.stylix];
+                    # No inputs.stylix.homeManagerModules.stylix here anymore
+                    # No HM stylix bridge either
                     extraSpecialArgs = {
                       inherit inputs;
                       osConfig = config;
@@ -239,7 +241,8 @@
                   };
                 })
 
-                # inputs.stylix.nixosModules.stylix
+                # System Stylix (the only Stylix we use)
+                inputs.stylix.nixosModules.stylix
               ];
               # Pass flake inputs to modules
               specialArgs = {inherit inputs;};

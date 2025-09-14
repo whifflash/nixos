@@ -32,6 +32,10 @@ in {
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
     ./../../modules/modules.nix
+
+    ./../../modules/ui/theme.nix
+    ./../../modules/ui/stylix-bridge.nix
+
     inputs.nixos-hardware.nixosModules.lenovo-thinkpad-x270
   ];
 
@@ -133,20 +137,18 @@ in {
   };
 
   ui.theme = {
-    enable = true;
+    # enable = true;
 
-    # point to your repo paths
-    palettesDir = ../../home/themes/palettes;
-    scheme = "kanagawa"; # catppucin-frappe everforest-dark gruvbox-dark gruvbox-light kanagawa nord solarized-dark tokyonight-storm
-
+    # palettesDir = ../../home/themes/palettes;
+    scheme = "gruvbox-light"; # catppucin-frappe everforest-dark gruvbox-dark gruvbox-light kanagawa nord solarized-dark tokyonight-storm
     wallpapersDir = ../../media/wallpapers;
     wallpaper = "anna-scarfiello.jpg";
-    wallpaperMode = "stretch";
+    # wallpaperMode = "stretch";
 
     swaylock.image = ../../media/wallpapers/village.jpg;
 
     # TODO, perhapsremove this
-    stylix.enable = false;
+    stylix.enable = true;
     qt.enable = false;
   };
 
