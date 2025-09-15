@@ -94,11 +94,11 @@ in {
       then perOut
       else {"*" = {bg = baseBg;};};
 
-    fallback = cfg.wallpapersDir + "/${cfg.wallpaper}";
-    resolvedSwaylockImage =
-      if cfg.swaylock.image != null
-      then cfg.swaylock.image
-      else fallback;
+    # fallback = cfg.wallpapersDir + "/${cfg.wallpaper}";
+    # resolvedSwaylockImage =
+    #   if cfg.swaylock.image != null
+    #   then cfg.swaylock.image
+    #   else fallback;
 
     imagePath =
       if cfg.swaylock.image != null

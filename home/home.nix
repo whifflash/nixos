@@ -4,9 +4,6 @@
   osConfig,
   ...
 }: let
-  # Does the host even have ui.theme?
-  hasHostTheme = (osConfig ? ui) && (osConfig.ui ? theme);
-
   # Returns a PATH; falls back to `def` if host value is missing, null, or not a path.
   getPathOr = attrs: def: let
     v = lib.attrByPath attrs osConfig null;
@@ -36,9 +33,8 @@
   # String-typed fields
   hostWallpaper = getStrOr ["ui" "theme" "wallpaper"] "anna-scarfiello.jpg";
   hostWallpaperMode = getStrOr ["ui" "theme" "wallpaperMode"] "stretch";
-
-  # Scheme: optional; don't set it if host didn't specify it
-  hostScheme = lib.attrByPath ["ui" "theme" "scheme"] osConfig null;
+  # # Scheme: optional; don't set it if host didn't specify it
+  # hostScheme = lib.attrByPath ["ui" "theme" "scheme"] osConfig null;
 in {
   imports = [
     ./packages.nix

@@ -3,7 +3,6 @@
   lib,
   config,
   osConfig,
-  pkgs,
   ...
 }: let
   cfg = config.hm.theme;
