@@ -4,34 +4,41 @@
   osConfig,
   ...
 }: let
-  #   gruvboxPlus = import ./themes/icons/gruvbox-plus.nix { inherit pkgs; };
-  swaySwitch = osConfig.programs.sway.enable or false; # read the host switch
+  # Does the host even have ui.theme?
+  hasHostTheme = (osConfig ? ui) && (osConfig.ui ? theme);
 
-  hasHostTheme =
-    (osConfig ? ui) && (osConfig.ui ? theme);
+  # Returns a PATH; falls back to `def` if host value is missing, null, or not a path.
+  getPathOr = attrs: def: let
+    v = lib.attrByPath attrs osConfig null;
+  in
+    if v != null && builtins.isPath v
+    then v
+    else def;
 
-  hostHas = name:
-    hasHostTheme && (osConfig.ui.theme ? ${name});
+  # Returns a STRING; falls back to `def` if host value is missing, null, or not a string.
+  getStrOr = attrs: def: let
+    v = lib.attrByPath attrs osConfig null;
+  in
+    if v != null && builtins.isString v
+    then v
+    else def;
 
-  hostWallpapersDir =
-    if hostHas "wallpapersDir"
-    then osConfig.ui.theme.wallpapersDir
-    else ../media/wallpapers;
+  swaySwitch = osConfig.programs.sway.enable or false;
 
-  hostWallpaper =
-    if hostHas "wallpaper"
-    then osConfig.ui.theme.wallpaper
-    else "anna-scarfiello.jpg";
+  # Path defaults (literals, not strings)
+  defaultWallpapersDir = ../media/wallpapers;
+  defaultSwaylockImage = ../media/wallpapers/village.jpg;
 
-  hostWallpaperMode =
-    if hostHas "wallpaperMode"
-    then osConfig.ui.theme.wallpaperMode
-    else "stretch";
+  # Read from host, never yielding null for path-typed fields
+  hostWallpapersDir = getPathOr ["ui" "theme" "wallpapersDir"] defaultWallpapersDir;
+  hostSwaylockImage = getPathOr ["ui" "theme" "swaylockImage"] defaultSwaylockImage;
 
-  hostSwaylockImage =
-    if hostHas "swaylockImage"
-    then osConfig.ui.theme.swaylockImage
-    else ../media/wallpapers/village.jpg;
+  # String-typed fields
+  hostWallpaper = getStrOr ["ui" "theme" "wallpaper"] "anna-scarfiello.jpg";
+  hostWallpaperMode = getStrOr ["ui" "theme" "wallpaperMode"] "stretch";
+
+  # Scheme: optional; don't set it if host didn't specify it
+  hostScheme = lib.attrByPath ["ui" "theme" "scheme"] osConfig null;
 in {
   imports = [
     ./packages.nix
@@ -58,12 +65,7 @@ in {
   hm = {
     theme = {
       enable = true;
-      # If host provides ui.theme.scheme, use it; otherwise leave unset (token layer can default)
-      scheme = lib.mkDefault (
-        if hostHas "scheme"
-        then osConfig.ui.theme.scheme
-        else null
-      );
+      # scheme = lib.mkDefault hostScheme; # null is fine; token layer may default
       writeWaybarPalette = true;
       writeWofiPalette = true;
       writeZshEnv = true;
@@ -71,10 +73,10 @@ in {
 
     swayTheme = lib.mkIf swaySwitch {
       enable = true;
-      wallpapersDir = lib.mkDefault hostWallpapersDir;
-      wallpaper = lib.mkDefault hostWallpaper;
-      wallpaperMode = lib.mkDefault hostWallpaperMode;
-      swaylock.image = hostSwaylockImage;
+      wallpapersDir = lib.mkDefault hostWallpapersDir; # PATH
+      wallpaper = lib.mkDefault hostWallpaper; # STRING
+      wallpaperMode = lib.mkDefault hostWallpaperMode; # STRING
+      swaylock.image = hostSwaylockImage; # PATH
     };
 
     tmux.enable = true;

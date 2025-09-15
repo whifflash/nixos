@@ -1,6 +1,6 @@
 # modules/ui/theme.nix
 {lib, ...}: let
-  inherit (lib) mkEnableOption mkIf mkOption types;
+  inherit (lib) mkEnableOption mkOption types;
 in {
   options.ui.theme = {
     scheme = mkOption {
@@ -9,14 +9,17 @@ in {
       description = "Logical theme name used by the token layer.";
     };
 
+    # Make these nullable so hosts that don't set them won't explode
     wallpapersDir = mkOption {
-      type = types.path;
-      description = "Directory containing wallpapers.";
+      type = types.nullOr types.path;
+      default = null;
+      description = "Directory containing wallpapers (nullable: host may omit).";
     };
 
     wallpaper = mkOption {
-      type = types.str;
-      description = "Wallpaper filename (relative to wallpapersDir).";
+      type = types.nullOr types.str;
+      default = null;
+      description = "Wallpaper filename relative to wallpapersDir (nullable).";
     };
 
     swaylock.image = mkOption {
@@ -26,9 +29,6 @@ in {
     };
 
     stylix.enable = mkEnableOption "Enable system Stylix integration (image, etc.)";
-    qt.enable = mkEnableOption "Enable Qt theming (handled at HM level; leave off unless you add qt6ct/Kvantum)";
+    qt.enable = mkEnableOption "Enable Qt theming (handled elsewhere if needed)";
   };
-
-  # NOTE: No ui.theme.base16 is defined or assigned here on purpose.
-  # Base16 is provided by HM’s token->Stylix bridge.
 }

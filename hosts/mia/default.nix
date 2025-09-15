@@ -140,20 +140,16 @@ in {
     # enable = true;
 
     # palettesDir = ../../home/themes/palettes;
-    scheme = "gruvbox-light"; # catppucin-frappe everforest-dark gruvbox-dark gruvbox-light kanagawa nord solarized-dark tokyonight-storm
+    scheme = "gruvbox-dark"; # catppucin-frappe everforest-dark gruvbox-dark gruvbox-light kanagawa nord solarized-dark tokyonight-storm
     wallpapersDir = ../../media/wallpapers;
     wallpaper = "anna-scarfiello.jpg";
     # wallpaperMode = "stretch";
 
     swaylock.image = ../../media/wallpapers/village.jpg;
 
-    # TODO, perhapsremove this
     stylix.enable = true;
     qt.enable = false;
   };
-
-  # Let Stylix theme Qt apps at the system level
-  # stylix.targets.qt.enable = true;
 
   # Pick how Qt reads its theme; qt5ct works broadly.
   qt.enable = true;
