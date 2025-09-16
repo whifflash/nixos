@@ -201,6 +201,10 @@ cmd_mount_luks() {
   LABEL="$1"
   SSD="${2:-}"
 
+  # Determine the "real" invoking user (works even when called via sudo)
+  OWNER_UID="${SUDO_UID:-$(id -u)}"
+  OWNER_GID="${SUDO_GID:-$(id -g)}"
+
   # Prefer a device with TRAN=usb when multiple exist; otherwise pick first match.
   best=""
   usb=""
@@ -238,7 +242,12 @@ EOF
     cryptsetup open "/dev/disk/by-uuid/$LUKS_UUID" "crypt-$LABEL"
     mount "/dev/mapper/crypt-$LABEL" "$MNT"
   fi
-  printf "Mounted at %s\n" "$MNT"
+
+  # Make the mount directory owned by the invoking user so they can write
+  chown "$OWNER_UID:$OWNER_GID" "$MNT" || true
+  chmod 700 "$MNT" || true
+
+  printf "Mounted at %s (owner uid:gid %s:%s)\n" "$MNT" "$OWNER_UID" "$OWNER_GID"
 }
 
 # --- umount-luks --------------------------------------------------------------

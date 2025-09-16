@@ -2,9 +2,8 @@
 {
   lib,
   config,
-  osConfig,
-  pkgs,
-  options,
+  # osConfig,
+  # options,
   ...
 }: let
   enabled = config.hm.theme.enable or false;
@@ -33,13 +32,11 @@
     base0E = get "secondary";
     base0F = get "accent3";
   };
-
   # Host-level toggle for Qt target
-  wantQt = osConfig.ui.theme.qt.enable or false;
-
+  # wantQt = osConfig.ui.theme.qt.enable or false;
   # These targets must exist in the Stylix HM module for this to be set.
-  hasGtk = lib.hasAttrByPath ["stylix" "targets" "gtk"] options;
-  hasQt = lib.hasAttrByPath ["stylix" "targets" "qt"] options;
+  # hasGtk = lib.hasAttrByPath ["stylix" "targets" "gtk"] options;
+  # hasQt = lib.hasAttrByPath ["stylix" "targets" "qt"] options;
 in {
   config = lib.mkIf enabled (lib.mkMerge [
     {
