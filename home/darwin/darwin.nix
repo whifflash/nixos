@@ -14,11 +14,18 @@
 
   programs.home-manager.enable = true;
 
+  home.sessionVariables = {
+    EDITOR = "vim";
+    VISUAL = "vim";
+    GIT_EDITOR = "vim";
+  };
+
   programs.git = {
     enable = true;
     userName = "mhr";
     userEmail = "mhr@c4rb0n.cloud";
     extraConfig.init.defaultBranch = "main";
+    extraConfig.core.editor = "vim";
   };
 
   programs.zsh = {
