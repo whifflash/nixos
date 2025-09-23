@@ -41,6 +41,7 @@
     starship
     direnv
     nil   # Nix LSP
+    vim
   ];
 
 }
