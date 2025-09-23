@@ -4,7 +4,8 @@
   inputs = {
     # nixpkgs.url = "github:NixOS/nixpkgs/nixos-stable";
     nixpkgs = {url = "github:nixos/nixpkgs/nixos-25.05";};
-    # unstable = { url = "github:nixos/nixpkgs/nixos-unstable"; };
+    # Darwin hosts use the darwin branch of the same release
+    nixpkgs-darwin = { url = "github:NixOS/nixpkgs/nixpkgs-25.05-darwin"; };
 
     # Core helper for structuring flakes
     flake-parts.url = "github:hercules-ci/flake-parts";
@@ -44,8 +45,18 @@
     stylix.inputs.nixpkgs.follows = "nixpkgs";
     # disko.url = "github:nix-community/disko";
     # disko.inputs.nixpkgs.follows = "nixpkgs";
-    # nix-darwin.url = "github:LnL7/nix-darwin/nix-darwin-24.11";
-    # nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
+
+    # nix-darwin (macOS management)
+    nix-darwin = {
+    url = "github:LnL7/nix-darwin/nix-darwin-25.05";
+    inputs.nixpkgs.follows = "nixpkgs-darwin";
+    };
+    home-manager-darwin = {
+  url = "github:nix-community/home-manager/release-25.05";
+  inputs.nixpkgs.follows = "nixpkgs-darwin";
+};
+
+
   };
 
   outputs = inputs @ {
@@ -62,10 +73,8 @@
   }:
     flake-parts.lib.mkFlake {inherit inputs;}
     {
-      # Add more if you build for Darwin/etc.
-      systems = ["x86_64-linux" "aarch64-linux"];
+      systems = ["x86_64-linux" "aarch64-linux" "aarch64-darwin"];
 
-      # Bring in ready-made modules
       imports = [
         treefmt-nix.flakeModule
         git-hooks.flakeModule
@@ -74,8 +83,6 @@
       perSystem = {
         pkgs,
         config,
-        # system,
-        # lib,
         ...
       }: {
         ##### Developer UX #####
@@ -198,12 +205,10 @@
       ##### System-wide (cross-system) outputs #####
 
       flake = {
-        # Auto-discover hosts from ./hosts
+        # Auto-discover linux hosts from ./hosts
         nixosConfigurations = let
           inherit (nixpkgs) lib;
-          # lib = nixpkgs.lib;
           hostsDir = ./hosts;
-          # dir = builtins.readDir hostsDir;
           dir =
             if builtins.pathExists hostsDir
             then builtins.readDir hostsDir
@@ -232,8 +237,6 @@
                   home-manager = {
                     useGlobalPkgs = true;
                     useUserPackages = true;
-                    # No inputs.stylix.homeManagerModules.stylix here anymore
-                    # No HM stylix bridge either
                     extraSpecialArgs = {
                       inherit inputs;
                       osConfig = config;
@@ -249,6 +252,42 @@
             };
         in
           lib.genAttrs hostNames mkHost;
+
+            # macOS hosts (auto-discovered like NixOS, but from ./hosts-darwin)
+  darwinConfigurations = let
+    inherit (nixpkgs) lib;
+    darwin = inputs.nix-darwin;
+    hostsDir = ./hosts-darwin;
+    dir = if builtins.pathExists hostsDir then builtins.readDir hostsDir else {};
+    hostNames = builtins.attrNames (lib.filterAttrs (_: v: v == "directory") dir);
+
+    systemFor = name:
+      let path = hostsDir + "/${name}/system";
+      in if builtins.pathExists path
+         then lib.strings.trim (builtins.readFile path)
+         else "aarch64-darwin";
+
+    mkHost = name: darwin.lib.darwinSystem {
+      system = systemFor name;
+      modules = [
+        (hostsDir + "/${name}")           # the host's ./default.nix
+        ./modules/darwin/common.nix       # shared macOS settings
+
+        inputs.home-manager-darwin.darwinModules.home-manager
+        ({ config, ... }: {
+          home-manager = {
+            useGlobalPkgs = true;
+            useUserPackages = true;
+            extraSpecialArgs = { inherit inputs; osConfig = config; };
+            users."mhr" = import ./home/darwin.nix;  # adjust username if needed
+          };
+        })
+      ];
+      # Pass full flake inputs to modules (like you do for NixOS)
+      specialArgs = { inherit inputs; };
+    };
+  in lib.genAttrs hostNames mkHost;
+
       };
     };
 }
