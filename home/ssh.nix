@@ -33,7 +33,7 @@ in {
       "github.com" = {
         user = "git";
         hostname = "github.com";
-        identityFile = "/home/mhr/.ssh/githubwhifflash";
+        identityFile = "~/.ssh/githubwhifflash";
         identitiesOnly = true;
         port = 22;
       };
@@ -41,14 +41,14 @@ in {
       "vps" = {
         user = "mhr";
         hostname = "wgbsw.vps.webdock.cloud";
-        identityFile = "/home/mhr/.ssh/webdockvps";
+        identityFile = "~/.ssh/webdockvps";
         identitiesOnly = true;
         port = 22;
       };
       "git.c4rb0n.cloud 10.20.31.41" = {
         user = "git";
         hostname = "git.c4rb0n.cloud";
-        identityFile = "/home/mhr/.ssh/gitea";
+        identityFile = "~/.ssh/gitea";
         identitiesOnly = true;
         port = 2222;
       };

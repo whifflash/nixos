@@ -1,9 +1,6 @@
 { config, pkgs, lib, ... }:
 
 {
-  # nix-darwin now manages nix-daemon; remove the old toggle
-  # services.nix-daemon.enable = true;  # ← delete
-
   # REQUIRED by nix-darwin (set once on first install)
   system.stateVersion = 6;  # use the suggested value from the error
 

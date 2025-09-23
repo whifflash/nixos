@@ -6,6 +6,10 @@
     nixpkgs = {url = "github:nixos/nixpkgs/nixos-25.05";};
     # Darwin hosts use the darwin branch of the same release
     nixpkgs-darwin = { url = "github:NixOS/nixpkgs/nixpkgs-25.05-darwin"; };
+    nix-homebrew = {
+  url = "github:zhaofengli/nix-homebrew";
+  # inputs.nixpkgs.follows = "nixpkgs-darwin"; # follow your Darwin nixpkgs
+};
 
     # Core helper for structuring flakes
     flake-parts.url = "github:hercules-ci/flake-parts";
@@ -63,7 +67,6 @@
     self,
     nixpkgs,
     flake-parts,
-    # flake-utils,
     home-manager,
     # nixos-hardware,
     treefmt-nix,
@@ -272,6 +275,16 @@
       modules = [
         (hostsDir + "/${name}")           # the host's ./default.nix
         ./modules/darwin/common.nix       # shared macOS settings
+        ./modules/darwin/devtools.nix
+        ./modules/darwin/gopass-picker.nix
+
+  # bootstrap Homebrew itself declaratively
+  inputs.nix-homebrew.darwinModules.nix-homebrew
+  { nix-homebrew = { enable = true; user = "mhr"; autoMigrate = true; }; }
+
+  # only try to install brews once CLT exists
+  ./modules/darwin/homebrew.nix
+
 
         inputs.home-manager-darwin.darwinModules.home-manager
         ({ config, ... }: {
@@ -279,7 +292,7 @@
             useGlobalPkgs = true;
             useUserPackages = true;
             extraSpecialArgs = { inherit inputs; osConfig = config; };
-            users."mhr" = import ./home/darwin.nix;  # adjust username if needed
+            users."mhr" = import ./home/darwin/darwin.nix;  # adjust username if needed
           };
         })
       ];

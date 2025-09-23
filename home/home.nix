@@ -155,29 +155,6 @@ in {
     };
   }; # end of services = {};
 
-  # dconf.settings = {
-  #   "org/gnome/desktop/background" = {
-  #     picture-uri-dark = "file://${pkgs.nixos-artwork.wallpapers.nineish-dark-gray.src}";
-  #   };
-  #   "org/gnome/desktop/interface" = {
-  #     color-scheme = "prefer-dark";
-  #   };
-  # };
-
-  # Wayland, X, etc. support for session vars
-  # systemd.user.sessionVariables = config.home-manager.users.mhr.home.sessionVariables;
-
-  # xdg.configFile = {
-  #   "Kvantum/kvantum.kvconfig".text = ''
-  #     [General]
-  #     theme=WhiteSur
-  #   '';
-
-  #   "Kvantum/WhiteSurDark".source = "${pkgs.whitesur-kde}/share/Kvantum/WhiteSur";
-  # };
-
-  # programs.kvantum.enable = true;
-
   gtk = {
     enable = true;
   };

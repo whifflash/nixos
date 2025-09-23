@@ -3,13 +3,14 @@
 {
 
 	imports = [
-    ./ssh.nix
+    ../ssh.nix
+    ./gopass.nix
   ];
 
 
-  home.username = "mhr";             # <-- change if your macOS user differs
-  home.homeDirectory = lib.mkForce "/Users/mhr"; # <-- change if needed
-  home.stateVersion = "24.11";       # align with your repo
+  home.username = "mhr";            
+  home.homeDirectory = lib.mkForce "/Users/mhr"; 
+  home.stateVersion = "24.11";
 
   programs.home-manager.enable = true;
 
@@ -41,4 +42,5 @@
     direnv
     nil   # Nix LSP
   ];
+
 }
