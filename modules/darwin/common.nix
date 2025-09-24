@@ -19,6 +19,7 @@
   };
   # Target Apple Silicon
   nixpkgs.hostPlatform = "aarch64-darwin";
+  # nixpkgs.config.allowUnfree = true;
 
   # Useful tools
   environment.systemPackages = with pkgs; [

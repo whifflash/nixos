@@ -6,6 +6,7 @@
 }: {
   imports = [
     ../ssh.nix
+    ../apps/sublime.nix
     ./gopass.nix
     ./aerospace.nix
     ./tmux.nix

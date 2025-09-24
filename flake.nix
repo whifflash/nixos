@@ -285,6 +285,7 @@
                 ./modules/darwin/aerospace.nix
                 ./modules/darwin/devtools.nix
                 ./modules/darwin/gopass-picker.nix
+                ./modules/darwin/brews/sublime.nix
 
                 # bootstrap Homebrew itself declaratively
                 inputs.nix-homebrew.darwinModules.nix-homebrew
