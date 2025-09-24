@@ -17,3 +17,7 @@ creation_rules:
     key_groups:
       - age:
           - *primary
+  - path_regex: secrets/sublime.yaml$
+    key_groups:
+      - age:
+          - *primary
