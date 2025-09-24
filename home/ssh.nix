@@ -22,13 +22,10 @@ in {
 
     matchBlocks = {
       "*" = {
-
-      extraOptions = {
-      controlPersist = "12h";
-        controlMaster = "auto";
-
-      };
-        
+        extraOptions = {
+          controlPersist = "12h";
+          controlMaster = "auto";
+        };
       };
       "github.com" = {
         user = "git";

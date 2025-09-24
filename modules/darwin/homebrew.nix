@@ -1,8 +1,7 @@
-{ ... }:
-{
+{...}: {
   homebrew = {
     enable = true;
-    brews = [ "choose-gui" ];
+    brews = ["choose-gui"];
     onActivation = {
       autoUpdate = false;
       upgrade = false;

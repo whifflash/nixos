@@ -5,11 +5,11 @@
     # nixpkgs.url = "github:NixOS/nixpkgs/nixos-stable";
     nixpkgs = {url = "github:nixos/nixpkgs/nixos-25.05";};
     # Darwin hosts use the darwin branch of the same release
-    nixpkgs-darwin = { url = "github:NixOS/nixpkgs/nixpkgs-25.05-darwin"; };
+    nixpkgs-darwin = {url = "github:NixOS/nixpkgs/nixpkgs-25.05-darwin";};
     nix-homebrew = {
-  url = "github:zhaofengli/nix-homebrew";
-  # inputs.nixpkgs.follows = "nixpkgs-darwin"; # follow your Darwin nixpkgs
-};
+      url = "github:zhaofengli/nix-homebrew";
+      # inputs.nixpkgs.follows = "nixpkgs-darwin"; # follow your Darwin nixpkgs
+    };
 
     # Core helper for structuring flakes
     flake-parts.url = "github:hercules-ci/flake-parts";
@@ -52,15 +52,13 @@
 
     # nix-darwin (macOS management)
     nix-darwin = {
-    url = "github:LnL7/nix-darwin/nix-darwin-25.05";
-    inputs.nixpkgs.follows = "nixpkgs-darwin";
+      url = "github:LnL7/nix-darwin/nix-darwin-25.05";
+      inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
     home-manager-darwin = {
-  url = "github:nix-community/home-manager/release-25.05";
-  inputs.nixpkgs.follows = "nixpkgs-darwin";
-};
-
-
+      url = "github:nix-community/home-manager/release-25.05";
+      inputs.nixpkgs.follows = "nixpkgs-darwin";
+    };
   };
 
   outputs = inputs @ {
@@ -256,51 +254,64 @@
         in
           lib.genAttrs hostNames mkHost;
 
-            # macOS hosts (auto-discovered like NixOS, but from ./hosts-darwin)
-  darwinConfigurations = let
-    inherit (nixpkgs) lib;
-    darwin = inputs.nix-darwin;
-    hostsDir = ./hosts-darwin;
-    dir = if builtins.pathExists hostsDir then builtins.readDir hostsDir else {};
-    hostNames = builtins.attrNames (lib.filterAttrs (_: v: v == "directory") dir);
+        # macOS hosts (auto-discovered like NixOS, but from ./hosts-darwin)
+        darwinConfigurations = let
+          inherit (nixpkgs) lib;
+          darwin = inputs.nix-darwin;
+          hostsDir = ./hosts-darwin;
+          dir =
+            if builtins.pathExists hostsDir
+            then builtins.readDir hostsDir
+            else {};
+          hostNames = builtins.attrNames (lib.filterAttrs (_: v: v == "directory") dir);
 
-    systemFor = name:
-      let path = hostsDir + "/${name}/system";
-      in if builtins.pathExists path
-         then lib.strings.trim (builtins.readFile path)
-         else "aarch64-darwin";
+          systemFor = name: let
+            path = hostsDir + "/${name}/system";
+          in
+            if builtins.pathExists path
+            then lib.strings.trim (builtins.readFile path)
+            else "aarch64-darwin";
 
-    mkHost = name: darwin.lib.darwinSystem {
-      system = systemFor name;
-      modules = [
-        (hostsDir + "/${name}")           # the host's ./default.nix
-        ./modules/darwin/common.nix       # shared macOS settings
-        ./modules/darwin/devtools.nix
-        ./modules/darwin/gopass-picker.nix
+          mkHost = name:
+            darwin.lib.darwinSystem {
+              system = systemFor name;
+              modules = [
+                (hostsDir + "/${name}") # the host's ./default.nix
+                ./modules/darwin/common.nix # shared macOS settings
+                ./modules/darwin/devtools.nix
+                ./modules/darwin/gopass-picker.nix
 
-  # bootstrap Homebrew itself declaratively
-  inputs.nix-homebrew.darwinModules.nix-homebrew
-  { nix-homebrew = { enable = true; user = "mhr"; autoMigrate = true; }; }
+                # bootstrap Homebrew itself declaratively
+                inputs.nix-homebrew.darwinModules.nix-homebrew
+                {
+                  nix-homebrew = {
+                    enable = true;
+                    user = "mhr";
+                    autoMigrate = true;
+                  };
+                }
 
-  # only try to install brews once CLT exists
-  ./modules/darwin/homebrew.nix
+                # only try to install brews once CLT exists
+                ./modules/darwin/homebrew.nix
 
-
-        inputs.home-manager-darwin.darwinModules.home-manager
-        ({ config, ... }: {
-          home-manager = {
-            useGlobalPkgs = true;
-            useUserPackages = true;
-            extraSpecialArgs = { inherit inputs; osConfig = config; };
-            users."mhr" = import ./home/darwin/darwin.nix;  # adjust username if needed
-          };
-        })
-      ];
-      # Pass full flake inputs to modules (like you do for NixOS)
-      specialArgs = { inherit inputs; };
-    };
-  in lib.genAttrs hostNames mkHost;
-
+                inputs.home-manager-darwin.darwinModules.home-manager
+                ({config, ...}: {
+                  home-manager = {
+                    useGlobalPkgs = true;
+                    useUserPackages = true;
+                    extraSpecialArgs = {
+                      inherit inputs;
+                      osConfig = config;
+                    };
+                    users."mhr" = import ./home/darwin/darwin.nix; # adjust username if needed
+                  };
+                })
+              ];
+              # Pass full flake inputs to modules (like you do for NixOS)
+              specialArgs = {inherit inputs;};
+            };
+        in
+          lib.genAttrs hostNames mkHost;
       };
     };
 }

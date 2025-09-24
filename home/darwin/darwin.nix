@@ -1,15 +1,16 @@
-{ config, pkgs, lib, ... }:
-
 {
-
-	imports = [
+  config,
+  pkgs,
+  lib,
+  ...
+}: {
+  imports = [
     ../ssh.nix
     ./gopass.nix
   ];
 
-
-  home.username = "mhr";            
-  home.homeDirectory = lib.mkForce "/Users/mhr"; 
+  home.username = "mhr";
+  home.homeDirectory = lib.mkForce "/Users/mhr";
   home.stateVersion = "24.11";
 
   programs.home-manager.enable = true;
@@ -47,8 +48,7 @@
   home.packages = with pkgs; [
     starship
     direnv
-    nil   # Nix LSP
+    nil # Nix LSP
     vim
   ];
-
 }

@@ -1,9 +1,11 @@
-{ config, pkgs, lib, ... }:
-
-let
-  home = config.home.homeDirectory;
-in
 {
+  config,
+  pkgs,
+  lib,
+  ...
+}: let
+  home = config.home.homeDirectory;
+in {
   # Tools the scripts rely on
   home.packages = with pkgs; [
     gopass
@@ -19,11 +21,10 @@ in
   };
 
   # macOS GUI pinentry
-  home.file.".gnupg/gpg-agent.conf".text =
-    "pinentry-program ${pkgs.pinentry_mac}/bin/pinentry-mac\n";
+  home.file.".gnupg/gpg-agent.conf".text = "pinentry-program ${pkgs.pinentry_mac}/bin/pinentry-mac\n";
 
   # Reload agent after switches
-  home.activation.reloadGpgAgent = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+  home.activation.reloadGpgAgent = lib.hm.dag.entryAfter ["writeBoundary"] ''
     ${pkgs.gnupg}/bin/gpgconf --kill gpg-agent || true
   '';
 

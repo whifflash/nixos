@@ -23,8 +23,9 @@ if [ ! -s "$store/.gpg-id" ]; then
 fi
 
 # Build entry list
-list_file="$(mktemp)"; trap 'rm -f "$list_file"' EXIT
-if ! gopass ls --flat > "$list_file" 2>>"$log"; then
+list_file="$(mktemp)"
+trap 'rm -f "$list_file"' EXIT
+if ! gopass ls --flat >"$list_file" 2>>"$log"; then
   logit "ERR: gopass ls failed"
   /usr/bin/osascript -e 'display notification "Failed to list entries" with title "gopass"'
   exit 1
@@ -33,7 +34,8 @@ fi
 
 # Fuzzy pick
 set +e
-selection="$(choose < "$list_file")"; rc=$?
+selection="$(choose <"$list_file")"
+rc=$?
 set -e
 [ -z "${selection:-}" ] && exit 0
 logit "selection=$selection (rc=$rc)"
@@ -42,7 +44,7 @@ logit "selection=$selection (rc=$rc)"
 pw="$(gopass show -o "$selection" 2>>"$log" || true)"
 if [ -z "$pw" ]; then
   logit "WARN: empty password for $selection"
-  /usr/bin/osascript -e "display notification \"Empty password (first line)\" with title \"gopass\""
+  /usr/bin/osascript -e 'display notification "Empty password (first line)" with title "gopass"'
   exit 0
 fi
 
@@ -51,7 +53,11 @@ printf %s "$pw" | /usr/bin/pbcopy
 /usr/bin/osascript -e "display notification \"Copied: $selection\" with title \"gopass\""
 
 # …and schedule a clear + toast in the background (45s)
-( sleep 45; /usr/bin/pbcopy < /dev/null; /usr/bin/osascript -e 'display notification "Clipboard cleared" with title "gopass"' ) >/dev/null 2>&1 &
+(
+  sleep 45
+  /usr/bin/pbcopy </dev/null
+  /usr/bin/osascript -e 'display notification "Clipboard cleared" with title "gopass"'
+) >/dev/null 2>&1 &
 
 # (Optional) log clipboard length (not the secret)
 clip_len="$(/usr/bin/pbpaste | wc -c | tr -d ' ')"

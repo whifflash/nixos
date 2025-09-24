@@ -1,18 +1,36 @@
-{ config, pkgs, lib, ... }:
-
 {
-  # REQUIRED by nix-darwin (set once on first install)
-  system.stateVersion = 6;  # use the suggested value from the error
+  config,
+  pkgs,
+  lib,
+  ...
+}: {
+  system.stateVersion = 6;
 
   # REQUIRED since activation runs as root; these defaults apply to this user
-  system.primaryUser = "mhr";  # change if your macOS login differs
+  system.primaryUser = "mhr";
 
+  nix = {
+    # package = pkgs.nixVersions.stable;
+
+    settings = {
+      experimental-features = ["nix-command" "flakes"];
+      warn-dirty = false;
+    };
+  };
   # Target Apple Silicon
   nixpkgs.hostPlatform = "aarch64-darwin";
 
   # Useful tools
   environment.systemPackages = with pkgs; [
-    git gnupg jq tree curl wget htop ripgrep fd
+    git
+    gnupg
+    jq
+    tree
+    curl
+    wget
+    htop
+    ripgrep
+    fd
   ];
 
   # macOS defaults (these will now apply to system.primaryUser)
@@ -20,7 +38,7 @@
 
   system.defaults = {
     dock.autohide = true;
-    dock.tilesize = 48;  # host can override
+    dock.tilesize = 48; # host can override
     finder = {
       AppleShowAllExtensions = true;
       FXPreferredViewStyle = "Nlsv";

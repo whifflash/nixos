@@ -1,6 +1,9 @@
-{ config, pkgs, lib, ... }:
-
 {
+  config,
+  pkgs,
+  lib,
+  ...
+}: {
   # global hotkey daemon (built into nix-darwin)
   services.skhd.enable = true;
 
