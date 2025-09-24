@@ -7,6 +7,7 @@
   imports = [
     ../ssh.nix
     ./gopass.nix
+    ./aerospace.nix
   ];
 
   home.username = "mhr";

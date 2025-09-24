@@ -10,6 +10,10 @@
       url = "github:zhaofengli/nix-homebrew";
       # inputs.nixpkgs.follows = "nixpkgs-darwin"; # follow your Darwin nixpkgs
     };
+    aerospace-scratchpad = {
+      url = "github:cristianoliveira/aerospace-scratchpad";
+      inputs.nixpkgs.follows = "nixpkgs-darwin";
+    };
 
     # Core helper for structuring flakes
     flake-parts.url = "github:hercules-ci/flake-parts";
@@ -278,6 +282,7 @@
               modules = [
                 (hostsDir + "/${name}") # the host's ./default.nix
                 ./modules/darwin/common.nix # shared macOS settings
+                ./modules/darwin/aerospace.nix
                 ./modules/darwin/devtools.nix
                 ./modules/darwin/gopass-picker.nix
 
