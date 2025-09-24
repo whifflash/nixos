@@ -8,6 +8,8 @@
     ../ssh.nix
     ./gopass.nix
     ./aerospace.nix
+    ./tmux.nix
+    ./alacritty.nix
   ];
 
   home.username = "mhr";
