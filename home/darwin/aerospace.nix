@@ -14,39 +14,34 @@
 
   xdg.enable = true;
 
-  # Helper that: show/spawn the scratch terminal, find its window id,
-  # force tiling, then force fullscreen (no outer gaps) every time.
-  xdg.configFile."aerospace/toggle_scratch_full.sh" = {
+  # Minimal helper: show/spawn + focus (no fullscreen, no layout gymnastics)
+  xdg.configFile."aerospace/toggle_scratch.sh" = {
     text = ''
       #!/usr/bin/env bash
       set -euo pipefail
 
+      # Ensure expected PATH when launched by AeroSpace
+      export PATH="$HOME/.nix-profile/bin:/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+
       TITLE="TMuxScratchpad"
       BUNDLE="org.alacritty"
 
-      # 1) Show (or spawn) the scratch terminal
+      # 1) Try to show existing scratch; if missing, spawn it
       if ! aerospace-scratchpad show alacritty -F window-title="$TITLE"; then
         alacritty -t "$TITLE" -e tmux new-session -A -s scratch &
-        # Give the window a moment to appear
-        sleep 0.15
+        sleep 0.3
       else
-        # Still give it a split-second to become focusable/listable
-        sleep 0.05
+        sleep 0.1
       fi
 
-      # 2) Find the *latest* Alacritty window with our title
+      # 2) Find the newest matching Alacritty window and focus it
       id="$(
         aerospace list-windows --all --app-bundle-id "$BUNDLE" --json \
-          | jq -r --arg t "$TITLE" '
-              [ .[] | select(."window-title" == $t) ][-1]."window-id"
-            '
+          | jq -r --arg t "$TITLE" '[ .[] | select(."window-title" == $t) ][-1]."window-id"'
       )"
 
-      # 3) Force tiling (fullscreen works on tiling windows)
-      if [[ -n "${id:-}" && "$id" != "null" ]]; then
-        aerospace layout tiling --window-id "$id" || true
-        # 4) Re-apply fullscreen without outer gaps
-        aerospace fullscreen on --window-id "$id" --no-outer-gaps || true
+      if [ -n "$id" ] && [ "$id" != "null" ]; then
+        aerospace focus --window-id "$id" || true
       fi
     '';
     executable = true;
@@ -90,6 +85,7 @@
       alt-7 = "workspace 7"
       alt-8 = "workspace 8"
       alt-9 = "workspace 9"
+      alt-space = "workspace-back-and-forth"
       alt-shift-1 = "move-node-to-workspace 1"
       alt-shift-2 = "move-node-to-workspace 2"
       alt-shift-3 = "move-node-to-workspace 3"
@@ -99,13 +95,12 @@
       alt-shift-7 = "move-node-to-workspace 7"
       alt-shift-8 = "move-node-to-workspace 8"
       alt-shift-9 = "move-node-to-workspace 9"
-      alt-space = "workspace-back-and-forth"
       alt-f = "fullscreen"
       alt-t = "layout floating tiling"
 
-      # Scratchpad toggle (always ends fullscreen)
-      alt-i = "exec-and-forget bash -lc '~/.config/aerospace/toggle_scratch_full.sh'"
+      # Scratchpad toggle (simple)
+      alt-i = "exec-and-forget bash -lc '~/.config/aerospace/toggle_scratch.sh'"
 
-    # IMPORTANT: Do not force the scratch terminal to floating here.
+    # No special rules for the scratchpad window.
   '';
 }
