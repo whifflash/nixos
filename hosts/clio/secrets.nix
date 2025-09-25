@@ -16,7 +16,6 @@
       mode = "0400";
     };
 
-    # OPTIONAL: where sops-nix finds age keys on the target
-    age.keyFile = "~/.config/sops/age/keys.txt";
+    age.keyFile = "/etc/sops/age/key.txt";
   };
 }
