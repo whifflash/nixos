@@ -1,0 +1,3 @@
+{ ... }: {
+  clio.domain = "example.com";
+}

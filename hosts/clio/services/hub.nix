@@ -1,0 +1,42 @@
+{ config, pkgs, lib, ... }:
+
+let
+  domain = config.clio.domain;
+  hubRoot = "/etc/clio-hub";
+in
+{
+  # ship hub assets from the repo (declarative)
+  environment.etc."clio-hub".source = ./../assets/hub;
+
+  # nginx for the hub (public vhost, catch-all, and local-only backend)
+  services.nginx = {
+    enable = true;
+    recommendedTlsSettings = true;
+    recommendedProxySettings = true;
+
+    virtualHosts = {
+      # public hub.<domain> -> proxy to local-only backend
+      "${"hub." + domain}" = {
+        enableACME = false;           # use our wildcard cert
+        useACMEHost = "wildcard";
+        forceSSL = true;
+        locations."/".proxyPass = "http://127.0.0.1:8082";
+      };
+
+      # catch-all: redirect any unknown subdomain to hub.<domain>
+      "_" = {
+        enableACME = false;
+        useACMEHost = "wildcard";
+        forceSSL = true;
+        locations."/".return = "302 https://hub.${domain}";
+      };
+
+      # local-only backend that serves the static hub
+      "hub-local" = {
+        listen = [ { addr = "127.0.0.1"; port = 8082; } ];
+        root = hubRoot;
+        extraConfig = '' autoindex off; '';
+      };
+    };
+  };
+}

@@ -1,5 +1,6 @@
 keys:
   - &primary age1ev0c24yd8ddjakymr3uyxv2jzk66lwzmwnpk0vftxnc3xqqdnsmsfge5pv
+  - &clio age14lm8f2dztnzx9n0xrqdpmmw70ka64qpajztjtwwv0p5xwer6zgvqtxdm4s
 creation_rules:
   - path_regex: secrets/secrets.yaml$
     key_groups:
@@ -21,3 +22,8 @@ creation_rules:
     key_groups:
       - age:
           - *primary
+  - path_regex: secrets/clio\.yaml$
+    key_groups:
+      - age:
+          - *clio
+

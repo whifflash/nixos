@@ -1,12 +1,13 @@
 { inputs, lib, pkgs, ... }:
 {
   imports = [
-    ../../modules/nixos/common.nix
+    inputs.sops-nix.nixosModules.sops
+    ./domain.nix
+    ./secrets.nix
+    ./services.nix
   ];
 
   networking.hostName = "clio";
 
-  # (Optional) any server-specific bits you want here…
-  # services.openssh.enable = true;
-  # time.timeZone = "Europe/Berlin";
+  system.stateVersion = "24.05";
 }
