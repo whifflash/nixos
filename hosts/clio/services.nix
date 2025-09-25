@@ -4,7 +4,7 @@
   lib,
   ...
 }: let
-  inherit (config.clio.domain) domain;
+  inherit (config.clio) domain;
 in {
   options.clio.domain = lib.mkOption {
     type = lib.types.str;

@@ -5,7 +5,7 @@
   lib,
   ...
 }: let
-  inherit (config.clio.domain) domain;
+  inherit (config.clio) domain;
   hubRoot = "/etc/clio-hub";
 in {
   environment.etc."clio-hub".source = ./../assets/hub;
