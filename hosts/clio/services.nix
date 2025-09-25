@@ -37,6 +37,10 @@ in {
     networking = {
       hostName = "clio";
       useDHCP = true;
+      firewall = {
+        enable = true;
+        allowedTCPPorts = [22 80 443];
+      };
     };
 
     users.users.mhr = {
@@ -45,26 +49,25 @@ in {
       openssh.authorizedKeys.keys = ["ssh-ed25519 AAAA...replace-with-your-key..."];
     };
     services.openssh.enable = true;
-    security.sudo.wheelNeedsPassword = false;
 
-    networking.firewall = {
-      enable = true;
-      allowedTCPPorts = [22 80 443];
-    };
+    security = {
+      sudo.wheelNeedsPassword = false;
 
-    # ACME via Cloudflare (DNS-01). One wildcard cert reused by vhosts.
-    security.acme = {
-      acceptTerms = true;
-      defaults = {
-        email = "mail@EXAMPLE.invalid";
-        dnsProvider = "cloudflare";
-        environmentFile = config.sops.secrets."cloudflare/env".path;
-        group = "nginx"; # <-- allow nginx to read cert/key
-      };
-      certs."wildcard" = {
-        domain = "*.${config.clio.domain}";
-        extraDomainNames = [config.clio.domain];
-        # server = "https://acme-staging-v02.api.letsencrypt.org/directory";
+      # ACME via Cloudflare (DNS-01). One wildcard cert reused by vhosts.
+
+      acme = {
+        acceptTerms = true;
+        defaults = {
+          email = "mail@EXAMPLE.invalid";
+          dnsProvider = "cloudflare";
+          environmentFile = config.sops.secrets."cloudflare/env".path;
+          group = "nginx";
+        };
+        certs."wildcard" = {
+          domain = "*.${domain}";
+          extraDomainNames = [domain];
+          # server = "https://acme-staging-v02.api.letsencrypt.org/directory";
+        };
       };
     };
   };

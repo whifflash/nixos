@@ -1,3 +1,4 @@
+# hosts/clio/services/hub.nix
 {
   config,
   pkgs,
@@ -17,7 +18,7 @@ in {
     virtualHosts = {
       # public hub.<domain> -> proxy to local-only backend
       "${"hub." + domain}" = {
-        enableACME = false; # use our wildcard cert
+        enableACME = false; # use the wildcard cert
         useACMEHost = "wildcard";
         forceSSL = true;
         locations."/".proxyPass = "http://127.0.0.1:8082";
