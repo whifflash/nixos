@@ -1,3 +1,3 @@
 _: {
-  clio.domain = "c4rb0n.cloud";
+  clio.domain = "example.com";
 }
