@@ -5,10 +5,8 @@ let
   hubRoot = "/etc/clio-hub";
 in
 {
-  # ship hub assets from the repo (declarative)
   environment.etc."clio-hub".source = ./../assets/hub;
 
-  # nginx for the hub (public vhost, catch-all, and local-only backend)
   services.nginx = {
     enable = true;
     recommendedTlsSettings = true;
@@ -17,7 +15,7 @@ in
     virtualHosts = {
       # public hub.<domain> -> proxy to local-only backend
       "${"hub." + domain}" = {
-        enableACME = false;           # use our wildcard cert
+        enableACME = false;     # use our wildcard cert
         useACMEHost = "wildcard";
         forceSSL = true;
         locations."/".proxyPass = "http://127.0.0.1:8082";

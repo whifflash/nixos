@@ -1,3 +1,3 @@
 { ... }: {
-  clio.domain = "example.com";
+  clio.domain = "c4rb0n.cloud";
 }

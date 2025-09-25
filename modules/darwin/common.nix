@@ -13,9 +13,16 @@
     # package = pkgs.nixVersions.stable;
 
     settings = {
-      experimental-features = ["nix-command" "flakes"];
-      warn-dirty = false;
-    };
+    experimental-features = [ "nix-command" "flakes" ];
+    trusted-users = [ "root" "mhr" ];
+    builders-use-substitutes = true;
+    # builders = "ssh-ng://YOUR_LINUX_USER@icarus x86_64-linux - 4 1 big-parallel,kvm";
+  };
+
+    #settings = {
+    #  experimental-features = ["nix-command" "flakes"];
+    #  warn-dirty = false;
+    #};
   };
   # Target Apple Silicon
   nixpkgs.hostPlatform = "aarch64-darwin";

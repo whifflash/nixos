@@ -1,20 +1,16 @@
 { config, pkgs, lib, ... }:
 
 let
-  domain = lib.strings.trim (builtins.readFile config.sops.secrets."clio/domain_name".path);
+  domain = config.clio.domain;
 in
 {
-  #### make domain available to all service modules
   options.clio.domain = lib.mkOption {
     type = lib.types.str;
-    readOnly = true;
-    description = "Primary domain for Clio (from secret).";
+    description = "Primary domain for Clio (provided by hosts/clio/domain.nix).";
   };
 
-  #### import services (only hub for now)
   imports = [
     ./services/hub.nix
-
     # ./services/gitea.nix
     # ./services/grafana.nix
     # ./services/home-assistant.nix
@@ -24,10 +20,7 @@ in
     # ./services/unifi.nix
   ];
 
-  #### host config
   config = {
-    clio.domain = domain;
-
     time.timeZone = "Europe/Berlin";
     networking.hostName = "clio";
     networking.useDHCP = true;
@@ -43,18 +36,20 @@ in
     networking.firewall.enable = true;
     networking.firewall.allowedTCPPorts = [ 22 80 443 ];
 
+    # ACME via Cloudflare (DNS-01). One wildcard cert reused by vhosts.
     security.acme = {
-      acceptTerms = true;
-      defaults = {
-        email = "mail@EXAMPLE.invalid";
-        dnsProvider = "cloudflare";
-        environmentFile = config.sops.secrets."cloudflare/env".path;
-      };
-      certs."wildcard" = {
-        domain = "*.${domain}";
-        extraDomainNames = [ "${domain}" ];
-        # server = "https://acme-staging-v02.api.letsencrypt.org/directory";
-      };
-    };
+  acceptTerms = true;
+  defaults = {
+    email = "mail@EXAMPLE.invalid";
+    dnsProvider = "cloudflare";
+    environmentFile = config.sops.secrets."cloudflare/env".path;
+    group = "nginx";  # <-- allow nginx to read cert/key
+  };
+  certs."wildcard" = {
+    domain = "*.${config.clio.domain}";
+    extraDomainNames = [ config.clio.domain ];
+    # server = "https://acme-staging-v02.api.letsencrypt.org/directory";
+  };
+};
   };
 }

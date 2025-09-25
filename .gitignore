@@ -1,3 +1,4 @@
 age.key
 key.txt
 hosts/clio/domain.nix
+build-clio.sh
