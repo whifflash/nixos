@@ -1,10 +1,12 @@
-{ config, pkgs, lib, ... }:
-
-let
-  domain = config.clio.domain;
-  hubRoot = "/etc/clio-hub";
-in
 {
+  config,
+  pkgs,
+  lib,
+  ...
+}: let
+  inherit (config.clio.domain) domain;
+  hubRoot = "/etc/clio-hub";
+in {
   environment.etc."clio-hub".source = ./../assets/hub;
 
   services.nginx = {
@@ -15,7 +17,7 @@ in
     virtualHosts = {
       # public hub.<domain> -> proxy to local-only backend
       "${"hub." + domain}" = {
-        enableACME = false;     # use our wildcard cert
+        enableACME = false; # use our wildcard cert
         useACMEHost = "wildcard";
         forceSSL = true;
         locations."/".proxyPass = "http://127.0.0.1:8082";
@@ -31,9 +33,14 @@ in
 
       # local-only backend that serves the static hub
       "hub-local" = {
-        listen = [ { addr = "127.0.0.1"; port = 8082; } ];
+        listen = [
+          {
+            addr = "127.0.0.1";
+            port = 8082;
+          }
+        ];
         root = hubRoot;
-        extraConfig = '' autoindex off; '';
+        extraConfig = ''autoindex off; '';
       };
     };
   };

@@ -4,20 +4,49 @@
   lib,
   ...
 }: {
-  system.stateVersion = 6;
+  system = {
+    stateVersion = 6;
+    primaryUser = "mhr";
+    defaults = {
+      dock = {
+        autohide = true;
+        tilesize = 48; # host can override
+      };
 
-  # REQUIRED since activation runs as root; these defaults apply to this user
-  system.primaryUser = "mhr";
+      finder = {
+        AppleShowAllExtensions = true;
+        FXPreferredViewStyle = "Nlsv";
+        _FXShowPosixPathInTitle = true;
+        ShowPathbar = true;
+        ShowStatusBar = true;
+      };
+      NSGlobalDomain = {
+        AppleShowAllExtensions = true;
+        InitialKeyRepeat = 15;
+        KeyRepeat = 2;
+      };
+    };
+
+    # Rosetta 2 (installs once, no-op if present)
+    activationScripts.installRosetta.text = ''
+      if /usr/bin/pgrep oahd >/dev/null 2>&1; then
+        echo "Rosetta already installed."
+      else
+        echo "Installing Rosetta 2…"
+        /usr/sbin/softwareupdate --install-rosetta --agree-to-license
+      fi
+    '';
+  };
 
   nix = {
     # package = pkgs.nixVersions.stable;
 
     settings = {
-    experimental-features = [ "nix-command" "flakes" ];
-    trusted-users = [ "root" "mhr" ];
-    builders-use-substitutes = true;
-    # builders = "ssh-ng://YOUR_LINUX_USER@icarus x86_64-linux - 4 1 big-parallel,kvm";
-  };
+      experimental-features = ["nix-command" "flakes"];
+      trusted-users = ["root" "mhr"];
+      builders-use-substitutes = true;
+      # builders = "ssh-ng://YOUR_LINUX_USER@icarus x86_64-linux - 4 1 big-parallel,kvm";
+    };
 
     #settings = {
     #  experimental-features = ["nix-command" "flakes"];
@@ -43,33 +72,6 @@
 
   # macOS defaults (these will now apply to system.primaryUser)
   programs.zsh.enable = true;
-
-  system.defaults = {
-    dock.autohide = true;
-    dock.tilesize = 48; # host can override
-    finder = {
-      AppleShowAllExtensions = true;
-      FXPreferredViewStyle = "Nlsv";
-      _FXShowPosixPathInTitle = true;
-      ShowPathbar = true;
-      ShowStatusBar = true;
-    };
-    NSGlobalDomain = {
-      AppleShowAllExtensions = true;
-      InitialKeyRepeat = 15;
-      KeyRepeat = 2;
-    };
-  };
-
-  # Rosetta 2 (installs once, no-op if present)
-  system.activationScripts.installRosetta.text = ''
-    if /usr/bin/pgrep oahd >/dev/null 2>&1; then
-      echo "Rosetta already installed."
-    else
-      echo "Installing Rosetta 2…"
-      /usr/sbin/softwareupdate --install-rosetta --agree-to-license
-    fi
-  '';
 
   # Optional: apply defaults immediately without logout
   # system.activationScripts.postUserActivation.text = ''

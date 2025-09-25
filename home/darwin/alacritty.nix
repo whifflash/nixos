@@ -1,9 +1,8 @@
 # home/darwin/alacritty.nix
-{...}: {
+_: {
   programs.alacritty = {
     enable = true;
     settings = {
-      # Add only what we need; keep the rest of your Alacritty config as-is
       keyboard = {
         bindings = [
           # Option+vim arrows -> send ESC-prefixed letters (Meta-h/j/k/l)

@@ -13,46 +13,50 @@
     ./alacritty.nix
   ];
 
-  home.username = "mhr";
-  home.homeDirectory = lib.mkForce "/Users/mhr";
-  home.stateVersion = "24.11";
+  home = {
+    username = "mhr";
+    homeDirectory = lib.mkForce "/Users/mhr";
+    stateVersion = "24.11";
 
-  programs.home-manager.enable = true;
+    sessionVariables = {
+      EDITOR = "vim";
+      VISUAL = "vim";
+      GIT_EDITOR = "vim";
+    };
 
-  home.sessionVariables = {
-    EDITOR = "vim";
-    VISUAL = "vim";
-    GIT_EDITOR = "vim";
+    packages = with pkgs; [
+      starship
+      direnv
+      nil # Nix LSP
+      vim
+    ];
   };
 
-  programs.git = {
-    enable = true;
-    userName = "mhr";
-    userEmail = "mhr@c4rb0n.cloud";
-    extraConfig.init.defaultBranch = "main";
-    extraConfig.core.editor = "vim";
-  };
+  programs = {
+    home-manager.enable = true;
 
-  programs.zsh = {
-    enable = true;
-    # autosuggestions.enable = true;
-    syntaxHighlighting.enable = true;
-    shellAliases = {
-      ll = "ls -alh";
-      gs = "git status";
-      gd = "git diff";
+    git = {
+      enable = true;
+      userName = "mhr";
+      userEmail = "mhr@c4rb0n.cloud";
+      extraConfig.init.defaultBranch = "main";
+      extraConfig.core.editor = "vim";
+    };
+
+    zsh = {
+      enable = true;
+      # autosuggestions.enable = true;
+      syntaxHighlighting.enable = true;
+      shellAliases = {
+        ll = "ls -alh";
+        gs = "git status";
+        gd = "git diff";
+      };
+    };
+
+    starship = {
+      enable = true;
+      enableZshIntegration = true;
     };
   };
-
-  programs.starship = {
-    enable = true;
-    enableZshIntegration = true;
-  };
-
-  home.packages = with pkgs; [
-    starship
-    direnv
-    nil # Nix LSP
-    vim
-  ];
 }

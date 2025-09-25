@@ -1,7 +1,13 @@
-{ inputs, lib, pkgs, ... }:
 {
+  inputs,
+  lib,
+  pkgs,
+  ...
+}: {
   imports = [
+    # ../mia/hardware-configuration.nix
     inputs.sops-nix.nixosModules.sops
+    ./vm.nix
     ./domain.nix
     ./secrets.nix
     ./services.nix

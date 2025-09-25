@@ -97,7 +97,7 @@ in {
     # fallback = cfg.wallpapersDir + "/${cfg.wallpaper}";
     # resolvedSwaylockImage =
     #   if cfg.swaylock.image != null
-    #   then cfg.swaylock.image
+    #   then cfg.swaylock.iimage
     #   else fallback;
 
     imagePath =
