@@ -12,9 +12,6 @@
     # select the nested YAML key precisely:
     key = "[\"cloudflare\"][\"env\"]";
     format = "dotenv";
-    owner = "mhr";
-    group = "mhr";
-    mode = "0600";
   };
 
   # optional: indicate where the age private key lives on the machine
