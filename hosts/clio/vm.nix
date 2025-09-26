@@ -9,6 +9,12 @@
         # optional:
         graphics = false; # headless
 
+        sharedDirectories.repo = {
+          source = "/home/mhr/nixos"; # path on host (mia)
+          target = "/mnt/host/nixos"; # mount point *inside* the VM
+          # writable = true;            # set if you want to edit from the VM
+        };
+
         forwardPorts = [
           {
             from = "host";
