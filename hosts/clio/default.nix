@@ -24,6 +24,7 @@
   networking.hostName = "clio";
   environment.systemPackages = with pkgs; [
     git
+    sops
   ];
 
   system.stateVersion = "24.05";
