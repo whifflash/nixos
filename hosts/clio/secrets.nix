@@ -16,6 +16,8 @@
       mode = "0400";
     };
 
+    validateSopsFiles = false;
+
     age.keyFile = "/etc/sops/age/key.txt";
   };
 }

@@ -39,16 +39,32 @@ in {
       useDHCP = true;
       firewall = {
         enable = true;
-        allowedTCPPorts = [22 80 443];
+        allowedTCPPorts = [
+          22 # ssh
+          80 # nginx
+          443 #nginz
+          1883 # mqtt
+          6789 # unify speed test
+          8080 # unify device mgmt
+        ];
+        allowedUDPPorts = [
+          3478 # unifi stun
+          10001 # unifi ap discovery
+        ];
       };
     };
 
     users.users.mhr = {
       isNormalUser = true;
       extraGroups = ["wheel"];
-      openssh.authorizedKeys.keys = ["ssh-ed25519 AAAA...replace-with-your-key..."];
+      openssh.authorizedKeys.keys = [];
+      # openssh.authorizedKeys.keys = ["ssh-ed25519 AAAA...replace-with-your-key..."];
     };
-    services.openssh.enable = true;
+
+    services.openssh = {
+      enable = true;
+      settings.PasswordAuthentication = true;
+    };
 
     security = {
       sudo.wheelNeedsPassword = false;
