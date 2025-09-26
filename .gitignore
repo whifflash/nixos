@@ -2,3 +2,6 @@ age.key
 key.txt
 hosts/clio/domain.nix
 build-clio.sh
+result
+cliosetup.md
+clio.qcow2
