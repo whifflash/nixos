@@ -121,12 +121,22 @@ in {
     };
   };
 
+  # # Optional but handy if you also use libvirt/virt-manager
+  # virtualisation.libvirtd.enable = true;
+  # programs.virt-manager.enable = true;
+
+  users.users.mhr.extraGroups = ["kvm" "libvirtd"]; # add yourself to kvm group
+
+  # Optional: nested virtualization (usually not needed)
+  # boot.extraModprobeConfig = "options kvm-intel nested=1";
+
   # Bootloader.
   boot = {
     loader = {
       systemd-boot.enable = true;
       efi.canTouchEfiVariables = true;
     };
+    kernelModules = ["kvm" "kvm-intel"];
     kernelParams = [
       "psmouse.synaptics_intertouch=1" # try 0 first; if no joy, try =1
       "i915.enable_dc=0"
