@@ -1,5 +1,9 @@
 { ... }:
 {
+
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
+
   disko.devices = {
     disk.main = {
       device = "/dev/vda";      # QEMU disk name inside the VM
