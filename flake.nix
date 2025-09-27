@@ -74,7 +74,7 @@
     # nixos-hardware,
     treefmt-nix,
     git-hooks,
-    # sops-nix,
+    sops-nix,
     disko,
     ...
   }:

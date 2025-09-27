@@ -7,6 +7,7 @@
   imports = [
     # ../mia/hardware-configuration.nix
     inputs.sops-nix.nixosModules.sops
+    inputs.disko.nixosModules.disko
     ./disko.nix
     #./secrets.nix
     ./vm.nix
