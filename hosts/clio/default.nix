@@ -9,10 +9,10 @@
     inputs.sops-nix.nixosModules.sops
     inputs.disko.nixosModules.disko
     ./disko.nix
-    #./secrets.nix
+    ./secrets.nix
     ./vm.nix
-    #./domain.nix
-    #./services.nix
+    ./domain.nix
+    ./services.nix
   ];
 
   nix.settings = {

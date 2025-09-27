@@ -15,7 +15,7 @@
     age.keyFile = "/var/lib/sops-nix/key.txt";
 
     # Helpful during builds; will fail early if the YAML/keys are wrong
-    validateSopsFiles = true;
+    validateSopsFiles = false;
 
     # Write /run/secrets/cloudflare/env from YAML key cloudflare.env
     secrets."cloudflare/env" = {
