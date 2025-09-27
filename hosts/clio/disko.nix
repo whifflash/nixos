@@ -2,9 +2,8 @@
 {
   disko.devices = {
     disk.main = {
-      device = "/dev/vda";    # QEMU presents the VM disk as /dev/vda
+      device = "/dev/vda";      # QEMU disk name inside the VM
       type = "disk";
-      size = "20G";           # VM disk size
       content = {
         type = "gpt";
         partitions = {
