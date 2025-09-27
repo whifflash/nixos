@@ -29,7 +29,7 @@ in {
         enableACME = false;
         useACMEHost = "wildcard";
         forceSSL = true;
-        locations."/".return = "302 https://hub.${domain}";
+        locations."/".return = "302 https://hub-t.${domain}";
       };
 
       # local-only backend that serves the static hub
