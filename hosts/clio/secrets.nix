@@ -1,6 +1,11 @@
-{ inputs, config, lib, pkgs, ... }:
 {
-  imports = [ inputs.sops-nix.nixosModules.sops ];
+  inputs,
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
+  imports = [inputs.sops-nix.nixosModules.sops];
 
   sops = {
     # Encrypted file that contains `cloudflare.env` (YAML)
@@ -15,10 +20,10 @@
     # Write /run/secrets/cloudflare/env from YAML key cloudflare.env
     secrets."cloudflare/env" = {
       format = "yaml";
-      key    = "cloudflare.env";  # NOTE: case must match the YAML exactly
-      owner  = "root";
-      group  = "root";
-      mode   = "0400";
+      key = "cloudflare.env"; # NOTE: case must match the YAML exactly
+      owner = "root";
+      group = "root";
+      mode = "0400";
     };
   };
 }

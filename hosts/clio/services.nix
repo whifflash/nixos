@@ -54,11 +54,15 @@ in {
       };
     };
 
-    users.users.mhr = {
-      isNormalUser = true;
-      extraGroups = ["wheel"];
-      openssh.authorizedKeys.keys = [];
-      # openssh.authorizedKeys.keys = ["ssh-ed25519 AAAA...replace-with-your-key..."];
+    users = {
+      users.mhr = {
+        isNormalUser = true;
+        extraGroups = ["wheel"];
+        openssh.authorizedKeys.keys = [];
+        # openssh.authorizedKeys.keys = ["ssh-ed25519 AAAA...replace-with-your-key..."];
+      };
+
+      groups.acme = {}; # ensure the group exists
     };
 
     services.openssh = {
@@ -72,22 +76,19 @@ in {
       # ACME via Cloudflare (DNS-01). One wildcard cert reused by vhosts.
 
       acme = {
-  acceptTerms = true;
-  defaults = {
-    email           = "mhr@c4rb0n.cloud";
-    dnsProvider     = "cloudflare";
-    environmentFile = config.sops.secrets."cloudflare/env".path;
-    group           = "acme";
-  };
-  certs."wildcard" = {
-    domain = "*.${config.clio.domain}";
-    extraDomainNames = [ config.clio.domain ];
-    # server = "https://acme-staging-v02.api.letsencrypt.org/directory"; # while testing
-  };
-};
-users.groups.acme = {};  # ensure the group exists
-
-
+        acceptTerms = true;
+        defaults = {
+          email = "mhr@c4rb0n.cloud";
+          dnsProvider = "cloudflare";
+          environmentFile = config.sops.secrets."cloudflare/env".path;
+          group = "acme";
+        };
+        certs."wildcard" = {
+          domain = "*.${config.clio.domain}";
+          extraDomainNames = [config.clio.domain];
+          # server = "https://acme-staging-v02.api.letsencrypt.org/directory"; # while testing
+        };
+      };
     };
   };
 }
