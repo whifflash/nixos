@@ -62,7 +62,7 @@ in {
         # openssh.authorizedKeys.keys = ["ssh-ed25519 AAAA...replace-with-your-key..."];
       };
 
-      groups.acme = {}; # ensure the group exists
+      groups.nginx = {}; # ensure the group exists
     };
 
     services.openssh = {
@@ -81,7 +81,7 @@ in {
           email = "mhr@c4rb0n.cloud";
           dnsProvider = "cloudflare";
           environmentFile = config.sops.secrets."cloudflare/env".path;
-          group = "acme";
+          group = "nginx";
         };
         certs."wildcard" = {
           domain = "*.${config.clio.domain}";
