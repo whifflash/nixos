@@ -13,7 +13,7 @@
     ./services.nix
   ];
 
-  settings = {
+  nix.settings = {
       experimental-features = ["nix-command" "flakes"];
       # builders = "ssh-ng://YOUR_LINUX_USER@icarus x86_64-linux - 4 1 big-parallel,kvm";
     };
