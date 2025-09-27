@@ -4,7 +4,7 @@
     vmVariant = {
       imports = [(modulesPath + "/virtualisation/qemu-vm.nix")];
       virtualisation = {
-        cores = 4;
+        cores = 2;
         diskSize = 40960;
         memorySize = 4096;
         # optional:
