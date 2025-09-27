@@ -7,10 +7,11 @@
   imports = [
     # ../mia/hardware-configuration.nix
     inputs.sops-nix.nixosModules.sops
-    ./secrets.nix
+    ./disko.nix
+    #./secrets.nix
     ./vm.nix
-    ./domain.nix
-    ./services.nix
+    #./domain.nix
+    #./services.nix
   ];
 
   nix.settings = {
