@@ -51,8 +51,9 @@
 
     stylix.url = "github:danth/stylix/release-24.11";
     stylix.inputs.nixpkgs.follows = "nixpkgs";
-    # disko.url = "github:nix-community/disko";
-    # disko.inputs.nixpkgs.follows = "nixpkgs";
+
+    disko.url = "github:nix-community/disko";
+    disko.inputs.nixpkgs.follows = "nixpkgs";
 
     # nix-darwin (macOS management)
     nix-darwin = {
@@ -74,6 +75,7 @@
     treefmt-nix,
     git-hooks,
     # sops-nix,
+    disko,
     ...
   }:
     flake-parts.lib.mkFlake {inherit inputs;}
