@@ -11,7 +11,8 @@
     defaultSopsFile = ../../secrets/clio.yaml;
 
   secrets."cloudflare/env" = {
-    format = "dotenv";
+    format = "yaml";
+    key = "cloudflare.env";
     # If the consumer is a non-root service, set owner/group to that user.
     owner = "root";
     group = "root";
