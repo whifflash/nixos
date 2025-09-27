@@ -72,19 +72,22 @@ in {
       # ACME via Cloudflare (DNS-01). One wildcard cert reused by vhosts.
 
       acme = {
-        acceptTerms = true;
-        defaults = {
-          email = "mail@EXAMPLE.invalid";
-          dnsProvider = "cloudflare";
-          environmentFile = config.sops.secrets."cloudflare/env".path;
-          group = "nginx";
-        };
-        certs."wildcard" = {
-          domain = "*.${domain}";
-          extraDomainNames = [domain];
-          # server = "https://acme-staging-v02.api.letsencrypt.org/directory";
-        };
-      };
+  acceptTerms = true;
+  defaults = {
+    email           = "mhr@c4rb0n.cloud";
+    dnsProvider     = "cloudflare";
+    environmentFile = config.sops.secrets."cloudflare/env".path;
+    group           = "acme";
+  };
+  certs."wildcard" = {
+    domain = "*.${config.clio.domain}";
+    extraDomainNames = [ config.clio.domain ];
+    # server = "https://acme-staging-v02.api.letsencrypt.org/directory"; # while testing
+  };
+};
+users.groups.acme = {};  # ensure the group exists
+
+
     };
   };
 }

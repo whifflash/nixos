@@ -7,9 +7,9 @@
   imports = [
     # ../mia/hardware-configuration.nix
     inputs.sops-nix.nixosModules.sops
+    ./secrets.nix
     ./vm.nix
     ./domain.nix
-    ./secrets.nix
     ./services.nix
   ];
 

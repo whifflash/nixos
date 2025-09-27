@@ -1,29 +1,24 @@
+{ inputs, config, lib, pkgs, ... }:
 {
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
-}: {
   imports = [ inputs.sops-nix.nixosModules.sops ];
-  # All clio secrets live here
+
   sops = {
+    # Encrypted file that contains `cloudflare.env` (YAML)
     defaultSopsFile = ../../secrets/clio.yaml;
 
-  secrets."cloudflare/env" = {
-    format = "yaml";
-    key = "cloudflare.env";
-    # If the consumer is a non-root service, set owner/group to that user.
-    owner = "root";
-    group = "root";
-    mode  = "0400";
-    # If a service reads it, add it here to restart on change, e.g.:
-    # restartUnits = [ "caddy.service" ];
-  };
+    # Decryption key available at activation time
+    age.keyFile = "/var/lib/sops-nix/key.txt";
 
-  age.keyFile = "/var/lib/sops-nix/key.txt";
+    # Helpful during builds; will fail early if the YAML/keys are wrong
+    validateSopsFiles = true;
 
-  validateSopsFiles = true;
-
+    # Write /run/secrets/cloudflare/env from YAML key cloudflare.env
+    secrets."cloudflare/env" = {
+      format = "yaml";
+      key    = "cloudflare.env";  # NOTE: case must match the YAML exactly
+      owner  = "root";
+      group  = "root";
+      mode   = "0400";
+    };
   };
 }
