@@ -29,8 +29,10 @@ in {
     };
     boot.loader = {
       grub.enable = false;
-      systemd-boot.enable = false;
+      #systemd-boot.enable = false;
       efi.canTouchEfiVariables = false;
+      systemd-boot.enable = true;
+      efi.canTouchEfiVariables = true;
     };
 
     time.timeZone = "Europe/Berlin";
