@@ -2,12 +2,26 @@
   virtualisation = {
     # Provide a VM variant that brings in the qemu-vm machinery
     vmVariant = {
-      # 🔒 Disable bootloader installation in the VM
+
+      imports = [(modulesPath + "/virtualisation/qemu-vm.nix")];
+
+      # Disable bootloader installation in the VM
       boot.loader.systemd-boot.enable = lib.mkForce false;
       boot.loader.efi.canTouchEfiVariables = lib.mkForce false;
       boot.loader.grub.enable = lib.mkForce false;
 
-      imports = [(modulesPath + "/virtualisation/qemu-vm.nix")];
+
+          # IMPORTANT: provide / and /boot so evaluation knows there is a root fs
+    fileSystems."/" = {
+      device = "/dev/vda2";   # matches the root partition in your disko (vda2)
+      fsType = "ext4";
+      neededForBoot = true;
+    };
+    fileSystems."/boot" = {
+      device = "/dev/vda1";   # ESP created by disko (vda1)
+      fsType = "vfat";
+      neededForBoot = true;
+    };
 
       virtualisation = {
         useDefaultFilesystems = false; # account ing for disko

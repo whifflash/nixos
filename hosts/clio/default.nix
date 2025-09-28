@@ -9,8 +9,8 @@
     inputs.sops-nix.nixosModules.sops
     inputs.disko.nixosModules.disko
     ./disko.nix
-    ./secrets.nix
     ./vm.nix
+    ./secrets.nix
     ./domain.nix
     ./services.nix
   ];
