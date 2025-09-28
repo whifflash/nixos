@@ -4,6 +4,9 @@
   pkgs,
   ...
 }: {
+
+    clio.enableDisko = false;
+
   imports = [
     # ../mia/hardware-configuration.nix
     inputs.sops-nix.nixosModules.sops
@@ -15,7 +18,6 @@
     ./vm.nix
   ];
 
-    clio.enableDisko = false;
 
 
   nix.settings = {
