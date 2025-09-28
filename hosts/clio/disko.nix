@@ -1,4 +1,8 @@
-_: {
+{ ... }:
+{
+  # Ask Disko to generate fileSystems (and do the formatting at switch)
+  disko.enableConfig = true;
+
   disko.devices = {
     disk.main = {
       device = "/dev/vda";
