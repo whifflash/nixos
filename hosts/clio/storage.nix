@@ -1,4 +1,8 @@
-{lib, ...}: let
+{
+  lib,
+  config,
+  ...
+}: let
   inherit (lib) mkIf mkEnableOption;
 in {
   options.clio.enableDisko = mkEnableOption "Enable Disko-managed disks for Clio";
