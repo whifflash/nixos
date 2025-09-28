@@ -14,6 +14,7 @@
     ./domain.nix
     ./services.nix
     ./vm.nix # VM-only overrides last
+    ./vm-guards.nix
   ];
 
   # Defaults for the real host (the VM will override them via vm.nix)
