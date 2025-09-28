@@ -7,6 +7,8 @@
     # Provide a VM variant that brings in the qemu-vm machinery
     vmVariant = {
       imports = [(modulesPath + "/virtualisation/qemu-vm.nix")];
+          clio.enableDisko = lib.mkForce false;
+
 
 
       # Satisfy the VM's eval-time root requirement (matches disko's layout)
