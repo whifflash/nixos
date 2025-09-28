@@ -1,4 +1,4 @@
-{modulesPath, ...}: {
+{lib, modulesPath, ...}: {
   virtualisation = {
     # Provide a VM variant that brings in the qemu-vm machinery
     vmVariant = {
