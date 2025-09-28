@@ -12,13 +12,13 @@
   ];
 
   networking.hostName = lib.mkForce "clio-vm";
-
+  /*
   fileSystems."/" = {
     device = "none";
     fsType = "tmpfs";
     options = ["mode=0755"];
   };
-
+  */
   # never try to install a bootloader inside the run-*-vm environment
   boot.loader.systemd-boot.enable = lib.mkForce false;
   boot.loader.efi.canTouchEfiVariables = lib.mkForce false;
