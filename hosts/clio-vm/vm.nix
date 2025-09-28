@@ -1,39 +1,21 @@
-{
-  lib,
-  modulesPath,
-  ...
-}: {
+# hosts/clio-vm/vm.nix
+{lib, ...}: {
   virtualisation = {
-    # Provide a VM variant that brings in the qemu-vm machinery
     vmVariant = {
-      imports = [(modulesPath + "/virtualisation/qemu-vm.nix")];
-
-      # Tell our modules “this is the VM”
-      clio.isVM = true;
-
-      # And ensure Disko is OFF in the VM even if enabled by default for host
-      clio.enableDisko = lib.mkForce false;
-
-      # The run-*-vm script boots kernel/initrd directly; don’t try to install a bootloader
-      boot.loader = {
-        systemd-boot.enable = lib.mkForce false;
-        efi.canTouchEfiVariables = lib.mkForce false;
-        grub.enable = lib.mkForce false;
-      };
-
       virtualisation = {
-        # ✅ Let the VM supply its own tmpfs/overlay root filesystem
+        # let the VM provide its own tmpfs/overlay root
         useDefaultFilesystems = true;
 
+        # your original knobs, preserved
         cores = 2;
-        diskSize = 40960;
+        diskSize = 40960; # 40 GiB
         memorySize = 4096;
         graphics = false; # headless
 
         sharedDirectories.repo = {
-          source = "/home/mhr/nixos"; # path on host (mia)
-          target = "/mnt/host/nixos"; # mount point *inside* the VM
-          # writable = true;         # enable if you want to edit from the VM
+          source = "/home/mhr/nixos"; # host path
+          target = "/mnt/host/nixos"; # inside the VM
+          # writable = true;
         };
 
         forwardPorts = [

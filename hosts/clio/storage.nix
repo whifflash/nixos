@@ -1,39 +1,35 @@
 # hosts/clio/storage.nix
 {
-  config,
   lib,
+  inputs,
   ...
-}: let
-  cfg = config.clio;
-in {
-  # Do NOT set imports here; disko is imported in default.nix
+}: {
+  # Disko module for the real machine
+  imports = [inputs.disko.nixosModules.disko];
 
-  # Only declare disks when enabled and not the VM
-  config = lib.mkIf (cfg.enableDisko && !cfg.isVM) {
-    disko.devices = {
-      disk.main = {
-        # TODO: on bare metal, change to your real disk (e.g., /dev/nvme0n1)
-        device = "/dev/vda";
-        type = "disk";
-        content = {
-          type = "gpt";
-          partitions = {
-            ESP = {
-              size = "512M";
-              type = "ef00";
-              content = {
-                type = "filesystem";
-                format = "vfat";
-                mountpoint = "/boot";
-              };
+  # Adjust this to the *real* disk when you migrate (e.g., /dev/nvme0n1)
+  disko.devices = {
+    disk.main = {
+      device = "/dev/vda";
+      type = "disk";
+      content = {
+        type = "gpt";
+        partitions = {
+          ESP = {
+            size = "512M";
+            type = "ef00";
+            content = {
+              type = "filesystem";
+              format = "vfat";
+              mountpoint = "/boot";
             };
-            root = {
-              size = "100%";
-              content = {
-                type = "filesystem";
-                format = "ext4";
-                mountpoint = "/";
-              };
+          };
+          root = {
+            size = "100%";
+            content = {
+              type = "filesystem";
+              format = "ext4";
+              mountpoint = "/";
             };
           };
         };
