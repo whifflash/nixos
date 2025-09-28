@@ -1,8 +1,5 @@
-# hosts/clio/disko.nix
 { ... }:
 {
-  disko.enableConfig = true;
-
   disko.devices = {
     disk.main = {
       device = "/dev/vda";

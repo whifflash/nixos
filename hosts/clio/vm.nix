@@ -8,10 +8,6 @@
     vmVariant = {
       imports = [(modulesPath + "/virtualisation/qemu-vm.nix")];
 
-    # All config overrides for the VM go under this 'config' attr
-    config = {
-      # We provide our own root via disko, so don't use the VM tmpfs defaults
-      virtualisation.useDefaultFilesystems = false;
 
       # Satisfy the VM's eval-time root requirement (matches disko's layout)
       fileSystems."/" = {
@@ -25,13 +21,19 @@
         neededForBoot = true;
       };
 
+      boot.loader = {
+
+
       # VM boots kernel/initrd directly; don’t try to install a bootloader
-      boot.loader.systemd-boot.enable   = lib.mkForce false;
-      boot.loader.efi.canTouchEfiVariables = lib.mkForce false;
-      boot.loader.grub.enable           = lib.mkForce false;
-    };
+      systemd-boot.enable   = lib.mkForce false;
+      efi.canTouchEfiVariables = lib.mkForce false;
+      grub.enable           = lib.mkForce false;
+
+      };
+
 
       virtualisation = {
+        useDefaultFilesystems = false;
         cores = 2;
         diskSize = 40960;
         memorySize = 4096;
