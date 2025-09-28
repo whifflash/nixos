@@ -10,6 +10,7 @@
   imports = [
     # ../mia/hardware-configuration.nix
     inputs.sops-nix.nixosModules.sops
+    inputs.disko.nixosModules.disko
         # Storage switch (conditionally imports Disko when enabled)
     ./storage.nix
     ./secrets.nix

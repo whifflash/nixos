@@ -237,7 +237,7 @@
                 # Your host
                 (hostsDir + "/${name}")
 
-                # Home-Manager (no Stylix module here)
+                inputs.disko.nixosModules.disko
                 inputs.home-manager.nixosModules.home-manager
                 ({config, ...}: {
                   nixpkgs.overlays = [(import ./overlays/disable-tests.nix)];
