@@ -1,5 +1,6 @@
 # hosts/clio/common.nix
 {
+  pkgs,
   inputs,
   lib,
   ...
