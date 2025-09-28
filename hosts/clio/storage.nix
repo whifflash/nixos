@@ -5,17 +5,21 @@
   inputs,
   ...
 }: let
-  inherit (lib) mkIf;
+  inherit (lib) mkIf mkEnableOption optional;
   cfg = config.clio;
+  enableDiskoHere = cfg.enableDisko && !cfg.isVM;
 in {
-  # Only import disko + define disks on the real machine
-  config = mkIf (cfg.enableDisko && !cfg.isVM) {
-    imports = [inputs.disko.nixosModules.disko];
+  # toggle lives in hosts/clio/options.nix
+  # options.clio.enableDisko is defined there
 
-    # (No disko.enableConfig here; we’re only declaring desired layout)
+  # 1) imports must be top-level; make it conditional with lib.optional
+  imports = optional enableDiskoHere inputs.disko.nixosModules.disko;
+
+  # 2) the rest of the config can be gated with mkIf
+  config = mkIf enableDiskoHere {
     disko.devices = {
       disk.main = {
-        # ⚠️ set to your real device on bare metal later (e.g. /dev/nvme0n1)
+        # NOTE: set to your real device on bare metal later (e.g. /dev/nvme0n1)
         device = "/dev/vda";
         type = "disk";
         content = {
