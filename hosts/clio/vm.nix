@@ -2,8 +2,15 @@
   virtualisation = {
     # Provide a VM variant that brings in the qemu-vm machinery
     vmVariant = {
+      # 🔒 Disable bootloader installation in the VM
+      boot.loader.systemd-boot.enable = lib.mkForce false;
+      boot.loader.efi.canTouchEfiVariables = lib.mkForce false;
+      boot.loader.grub.enable = lib.mkForce false;
+
       imports = [(modulesPath + "/virtualisation/qemu-vm.nix")];
+
       virtualisation = {
+        useDefaultFilesystems = false; # account ing for disko
         cores = 2;
         diskSize = 40960;
         memorySize = 4096;
