@@ -12,15 +12,18 @@
     defaultSopsFile = ../../secrets/clio.yaml;
 
     # Decryption key available at activation time
-    age.keyFile = "/var/lib/sops-nix/key.txt";
+    age.keyFile = "/root/.config/sops/age/keys.txt";
 
     # Helpful during builds; will fail early if the YAML/keys are wrong
     validateSopsFiles = false;
 
     # Write /run/secrets/cloudflare/env from YAML key cloudflare.env
     secrets."cloudflare/env" = {
-      format = "yaml";
-      key = "cloudflare.env"; # NOTE: case must match the YAML exactly
+      sopsFile = ../../secrets/clio.yaml;
+      # ✅ precise nested path (robust against dots in key names)
+      key = "[\"cloudflare\"][\"env\"]";
+      # ✅ tell sops-nix to treat it as a dotenv file
+      format = "dotenv";
       owner = "root";
       group = "root";
       mode = "0400";
