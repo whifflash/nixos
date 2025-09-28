@@ -11,7 +11,7 @@
     ./vm.nix
   ];
 
-  networking.hostName = "clio-vm";
+  networking.hostName = lib.mkForce "clio-vm";
 
   # never try to install a bootloader inside the run-*-vm environment
   boot.loader.systemd-boot.enable = lib.mkForce false;
