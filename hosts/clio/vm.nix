@@ -14,37 +14,26 @@
       # And ensure Disko is OFF in the VM even if enabled by default for host
       clio.enableDisko = lib.mkForce false;
 
-      # Satisfy the VM's eval-time root requirement (matches disko's layout)
-      fileSystems."/" = {
-        device = "/dev/vda2"; # root partition created by disko
-        fsType = "ext4";
-        neededForBoot = true;
-      };
-      fileSystems."/boot" = {
-        device = "/dev/vda1"; # ESP created by disko
-        fsType = "vfat";
-        neededForBoot = true;
-      };
-
+      # The run-*-vm script boots kernel/initrd directly; don’t try to install a bootloader
       boot.loader = {
-        # VM boots kernel/initrd directly; don’t try to install a bootloader
         systemd-boot.enable = lib.mkForce false;
         efi.canTouchEfiVariables = lib.mkForce false;
         grub.enable = lib.mkForce false;
       };
 
       virtualisation = {
-        useDefaultFilesystems = false;
+        # ✅ Let the VM supply its own tmpfs/overlay root filesystem
+        useDefaultFilesystems = true;
+
         cores = 2;
         diskSize = 40960;
         memorySize = 4096;
-        # optional:
         graphics = false; # headless
 
         sharedDirectories.repo = {
           source = "/home/mhr/nixos"; # path on host (mia)
           target = "/mnt/host/nixos"; # mount point *inside* the VM
-          # writable = true;            # set if you want to edit from the VM
+          # writable = true;         # enable if you want to edit from the VM
         };
 
         forwardPorts = [

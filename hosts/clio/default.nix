@@ -6,6 +6,7 @@
 }: {
   imports = [
     inputs.sops-nix.nixosModules.sops
+    inputs.disko.nixosModules.disko
 
     ./options.nix # defines clio.isVM and clio.enableDisko
     ./storage.nix # uses the flags above
