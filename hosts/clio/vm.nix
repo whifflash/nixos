@@ -8,25 +8,30 @@
     vmVariant = {
       imports = [(modulesPath + "/virtualisation/qemu-vm.nix")];
 
-      # Disable bootloader installation in the VM
-      boot.loader.systemd-boot.enable = lib.mkForce false;
-      boot.loader.efi.canTouchEfiVariables = lib.mkForce false;
-      boot.loader.grub.enable = lib.mkForce false;
+    # All config overrides for the VM go under this 'config' attr
+    config = {
+      # We provide our own root via disko, so don't use the VM tmpfs defaults
+      virtualisation.useDefaultFilesystems = false;
 
-      # IMPORTANT: provide / and /boot so evaluation knows there is a root fs
+      # Satisfy the VM's eval-time root requirement (matches disko's layout)
       fileSystems."/" = {
-        device = "/dev/vda2"; # matches the root partition in your disko (vda2)
+        device = "/dev/vda2";   # root partition created by disko
         fsType = "ext4";
         neededForBoot = true;
       };
       fileSystems."/boot" = {
-        device = "/dev/vda1"; # ESP created by disko (vda1)
+        device = "/dev/vda1";   # ESP created by disko
         fsType = "vfat";
         neededForBoot = true;
       };
 
+      # VM boots kernel/initrd directly; don’t try to install a bootloader
+      boot.loader.systemd-boot.enable   = lib.mkForce false;
+      boot.loader.efi.canTouchEfiVariables = lib.mkForce false;
+      boot.loader.grub.enable           = lib.mkForce false;
+    };
+
       virtualisation = {
-        useDefaultFilesystems = false; # account ing for disko
         cores = 2;
         diskSize = 40960;
         memorySize = 4096;

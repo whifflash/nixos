@@ -1,5 +1,6 @@
-{...}: {
-  # Ask Disko to generate fileSystems (and do the formatting at switch)
+# hosts/clio/disko.nix
+{ ... }:
+{
   disko.enableConfig = true;
 
   disko.devices = {
