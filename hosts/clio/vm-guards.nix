@@ -10,6 +10,6 @@ in {
     boot.loader.systemd-boot.enable = lib.mkForce false;
     boot.loader.efi.canTouchEfiVariables = lib.mkForce false;
     boot.loader.grub.enable = lib.mkForce false;
-    virtualisation.useDefaultFilesystems = lib.mkDefault true;
+    virtualisation.virtualisation.useDefaultFilesystems = lib.mkDefault true;
   };
 }
