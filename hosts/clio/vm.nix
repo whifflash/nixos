@@ -7,32 +7,26 @@
     # Provide a VM variant that brings in the qemu-vm machinery
     vmVariant = {
       imports = [(modulesPath + "/virtualisation/qemu-vm.nix")];
-          clio.enableDisko = lib.mkForce false;
-
-
+      clio.enableDisko = lib.mkForce false;
 
       # Satisfy the VM's eval-time root requirement (matches disko's layout)
       fileSystems."/" = {
-        device = "/dev/vda2";   # root partition created by disko
+        device = "/dev/vda2"; # root partition created by disko
         fsType = "ext4";
         neededForBoot = true;
       };
       fileSystems."/boot" = {
-        device = "/dev/vda1";   # ESP created by disko
+        device = "/dev/vda1"; # ESP created by disko
         fsType = "vfat";
         neededForBoot = true;
       };
 
       boot.loader = {
-
-
-      # VM boots kernel/initrd directly; don’t try to install a bootloader
-      systemd-boot.enable   = lib.mkForce false;
-      efi.canTouchEfiVariables = lib.mkForce false;
-      grub.enable           = lib.mkForce false;
-
+        # VM boots kernel/initrd directly; don’t try to install a bootloader
+        systemd-boot.enable = lib.mkForce false;
+        efi.canTouchEfiVariables = lib.mkForce false;
+        grub.enable = lib.mkForce false;
       };
-
 
       virtualisation = {
         useDefaultFilesystems = false;

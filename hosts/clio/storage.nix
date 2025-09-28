@@ -1,8 +1,6 @@
-{ lib, ... }:
-let
+{lib, ...}: let
   inherit (lib) mkIf mkEnableOption;
-in
-{
+in {
   options.clio.enableDisko = mkEnableOption "Enable Disko-managed disks for Clio";
 
   config = mkIf config.clio.enableDisko {
@@ -10,7 +8,7 @@ in
     # Define your disk layout here. (singular 'disk' is correct)
     disko.devices = {
       disk.main = {
-        device = "/dev/vda";   # change to your real disk on bare metal
+        device = "/dev/vda"; # change to your real disk on bare metal
         type = "disk";
         content = {
           type = "gpt";

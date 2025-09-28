@@ -4,14 +4,11 @@
   pkgs,
   ...
 }: {
-
-    clio.enableDisko = false;
-
   imports = [
     # ../mia/hardware-configuration.nix
     inputs.sops-nix.nixosModules.sops
     inputs.disko.nixosModules.disko
-        # Storage switch (conditionally imports Disko when enabled)
+    # Storage switch (conditionally imports Disko when enabled)
     ./storage.nix
     ./secrets.nix
     ./domain.nix
@@ -19,7 +16,7 @@
     ./vm.nix
   ];
 
-
+  clio.enableDisko = false;
 
   nix.settings = {
     experimental-features = ["nix-command" "flakes"];
