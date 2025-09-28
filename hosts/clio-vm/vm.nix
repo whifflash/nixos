@@ -28,7 +28,7 @@
       # SSH
       {
         from = "host";
-        host.address = "127.0.0.1";
+        host.address = "0.0.0.0";
         host.port = 3333;
         guest.address = "10.0.2.15";
         guest.port = 22;
@@ -37,14 +37,14 @@
       # HTTP/S
       {
         from = "host";
-        host.address = "127.0.0.1";
+        host.address = "0.0.0.0";
         host.port = 8880;
         guest.address = "10.0.2.15";
         guest.port = 80;
       }
       {
         from = "host";
-        host.address = "127.0.0.1";
+        host.address = "0.0.0.0";
         host.port = 8443;
         guest.address = "10.0.2.15";
         guest.port = 443;
@@ -53,21 +53,21 @@
       # TCP services
       {
         from = "host";
-        host.address = "127.0.0.1";
+        host.address = "0.0.0.0";
         host.port = 1883;
         guest.address = "10.0.2.15";
         guest.port = 1883;
       }
       {
         from = "host";
-        host.address = "127.0.0.1";
+        host.address = "0.0.0.0";
         host.port = 6789;
         guest.address = "10.0.2.15";
         guest.port = 6789;
       }
       {
         from = "host";
-        host.address = "127.0.0.1";
+        host.address = "0.0.0.0";
         host.port = 8080;
         guest.address = "10.0.2.15";
         guest.port = 8080;
