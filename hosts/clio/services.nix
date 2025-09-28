@@ -23,10 +23,6 @@ in {
   ];
 
   config = {
-    fileSystems."/" = {
-      device = "none";
-      fsType = "tmpfs";
-    };
     boot.loader = {
       grub.enable = false;
       #systemd-boot.enable = false;

@@ -1,11 +1,8 @@
-{ ... }:
+_:
 {
-
-
-
   disko.devices = {
     disk.main = {
-      device = "/dev/vda";      # QEMU disk name inside the VM
+      device = "/dev/vda";
       type = "disk";
       content = {
         type = "gpt";
