@@ -5,18 +5,19 @@
   ...
 }: {
   imports = [
-    # ../mia/hardware-configuration.nix
     inputs.sops-nix.nixosModules.sops
-    inputs.disko.nixosModules.disko
-    # Storage switch (conditionally imports Disko when enabled)
-    ./storage.nix
+
+    ./options.nix # defines clio.isVM and clio.enableDisko
+    ./storage.nix # uses the flags above
     ./secrets.nix
     ./domain.nix
     ./services.nix
-    ./vm.nix
+    ./vm.nix # VM-only overrides last
   ];
 
-  clio.enableDisko = false;
+  # Defaults for the real host (the VM will override them via vm.nix)
+  clio.enableDisko = true;
+  clio.isVM = false;
 
   nix.settings = {
     experimental-features = ["nix-command" "flakes"];

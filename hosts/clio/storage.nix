@@ -1,16 +1,22 @@
+# hosts/clio/storage.nix
 {
-  lib,
   config,
+  lib,
+  inputs,
   ...
 }: let
-  inherit (lib) mkIf mkEnableOption;
+  inherit (lib) mkIf;
+  cfg = config.clio;
 in {
-  options.clio.enableDisko = mkEnableOption "Enable Disko-managed disks for Clio";
+  # Only import disko + define disks on the real machine
+  config = mkIf (cfg.enableDisko && !cfg.isVM) {
+    imports = [inputs.disko.nixosModules.disko];
 
-  config = mkIf config.clio.enableDisko {
+    # (No disko.enableConfig here; we’re only declaring desired layout)
     disko.devices = {
       disk.main = {
-        device = "/dev/vda"; # change to your real disk on bare metal
+        # ⚠️ set to your real device on bare metal later (e.g. /dev/nvme0n1)
+        device = "/dev/vda";
         type = "disk";
         content = {
           type = "gpt";
