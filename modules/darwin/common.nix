@@ -9,8 +9,12 @@
     primaryUser = "mhr";
     defaults = {
       dock = {
-        autohide = true;
+        autohide = false;
+        mru-spaces = false;          # don’t auto-rearrange Spaces
         tilesize = 48; # host can override
+      };
+      spaces = {
+        spans-displays = true;      # true  = OFF (“Displays have separate Spaces”) → one Space spans all displays
       };
 
       finder = {
