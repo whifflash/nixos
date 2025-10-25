@@ -7,7 +7,7 @@
   ...
 }: let
   haveInputsSops = inputs ? sops-nix;
-  inherit (pkgs.stdenv.isDarwin) isDarwin;
+  inherit (pkgs.stdenv) isDarwin;
 
   sublimeBaseDir =
     if isDarwin
