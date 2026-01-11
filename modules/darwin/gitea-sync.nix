@@ -1,140 +1,288 @@
 {
   config,
+  inputs,
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   inherit (lib) mkEnableOption mkIf mkOption types optionalString;
 
   cfg = config.services.giteaSync;
 
-  # Reuse your existing repo script verbatim (same as NixOS role does)
+  user = config.system.primaryUser;
+
+  home =
+    let
+      h = config.users.users.${user}.home or null;
+    in
+    if h == null then "/Users/${user}" else h;
+
+  hmCfg = config.home-manager.users.${user};
+
+  giteaHostFromBaseUrl =
+    let
+      m = builtins.match "^https?://([^/]+).*$" cfg.baseUrl;
+    in
+    if m == null then cfg.baseUrl else builtins.elemAt m 0;
+
+  envFile = "${home}/.config/sops-nix/templates/gitea.env";
+
   giteaSyncScript =
     pkgs.writeShellScript "gitea-sync-user-repos.sh"
     (builtins.readFile ../../scripts/gitea-sync-user-repos.sh);
 
-  # Wrapper to emulate systemd preStart + RandomizedDelaySec
+  runLog = "${home}/Library/Logs/gitea-sync-run.log";
+
+  # Dedicated SSH config used *only* for this job. It reuses your existing
+  # trust store (known_hosts) but makes host/port and options deterministic.
+  #
+  # Note: "Host git.c4rb0n.cloud" matches clone URLs that use the hostname.
+  # If some repos use the IP in the URL, add a second Host stanza below.
+  sshConfig = pkgs.writeText "gitea-sync-ssh_config" ''
+    Host git.c4rb0n.cloud
+      HostName ${cfg.sshHostName}
+      Port ${toString cfg.sshPort}
+      User git
+      BatchMode yes
+      StrictHostKeyChecking yes
+      UserKnownHostsFile ${cfg.knownHostsFile}
+      ConnectTimeout 10
+      ConnectionAttempts 1
+      IdentitiesOnly no
+
+    Host 10.20.31.41
+      HostName 10.20.31.41
+      Port ${toString cfg.sshPort}
+      User git
+      BatchMode yes
+      StrictHostKeyChecking yes
+      UserKnownHostsFile ${cfg.knownHostsFile}
+      ConnectTimeout 10
+      ConnectionAttempts 1
+      IdentitiesOnly no
+  '';
+
   wrapper = pkgs.writeShellScriptBin "gitea-sync-run" ''
     set -euo pipefail
 
-    # RandomizedDelaySec equivalent (optional)
+    ts="$(${pkgs.coreutils}/bin/date -Iseconds)"
+    start_epoch="$(${pkgs.coreutils}/bin/date +%s)"
+    rc=0
+
+    {
+      echo "===== gitea-sync run start: $ts ====="
+      echo "BASE_URL=''${BASE_URL:-}"
+      echo "DEST_DIR=''${DEST_DIR:-}"
+      echo "STATE_DIR=''${STATE_DIR:-}"
+      echo "LOG_LEVEL=''${LOG_LEVEL:-}"
+      echo "KNOWN_HOSTS_FILE=''${KNOWN_HOSTS_FILE:-}"
+      echo "GIT_SSH_COMMAND=''${GIT_SSH_COMMAND:-}"
+      echo "SSH_CONFIG=${sshConfig}"
+      echo "PATH=''${PATH:-}"
+      echo "HOME=''${HOME:-} USER=''${USER:-} EUID=$(${pkgs.coreutils}/bin/id -u)"
+    } >> "${runLog}"
+
+    finish() {
+      end_epoch="$(${pkgs.coreutils}/bin/date +%s)"
+      dur="$((end_epoch - start_epoch))"
+      {
+        echo "wrapper_exit_code=$rc duration_sec=$dur"
+        echo "===== gitea-sync run end: $ts rc=$rc ====="
+      } >> "${runLog}"
+    }
+    trap 'rc=$?; finish' EXIT
+
     ${optionalString (cfg.randomizedDelaySec != null) ''
       delay="${toString cfg.randomizedDelaySec}"
       if [ "$delay" -gt 0 ]; then
-        sleep "$(${pkgs.coreutils}/bin/shuf -i 0-"$delay" -n 1)"
+        d="$(${pkgs.coreutils}/bin/shuf -i 0-"$delay" -n 1)"
+        echo "randomized_delay_sec=$d" >> "${runLog}"
+        sleep "$d"
       fi
     ''}
 
-    # PreStart equivalent: ensure state dir + populate known_hosts
     install -m 700 -d "${cfg.stateDir}"
-    ${pkgs.openssh}/bin/ssh-keyscan -T 5 "${cfg.giteaHost}" >> "${cfg.stateDir}/known_hosts" 2>/dev/null || true
+    install -m 755 -d "${cfg.destDir}"
 
-    exec "${giteaSyncScript}"
+    if [ -f "${envFile}" ]; then
+      # shellcheck disable=SC1090
+      . "${envFile}"
+    fi
+
+    export TOKEN
+    if [ -z "''${TOKEN:-}" ]; then
+      echo "ERROR: TOKEN missing after sourcing ${envFile}" >> "${runLog}"
+      exit 78
+    fi
+
+    if [ "''${GITEA_SYNC_TRACE:-0}" = "1" ]; then
+      set -x
+    fi
+
+    echo "about_to_run_sync_script=1" >> "${runLog}"
+
+    "${giteaSyncScript}" >> "${runLog}" 2>&1
   '';
-in {
+in
+{
   options.services.giteaSync = {
-    enable = mkEnableOption "Sync all Gitea repositories visible to the token (launchd user agent)";
+    enable = mkEnableOption "Sync repositories from Gitea (Darwin launchd user agent)";
+
+    debug = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Enable debug logging and shell tracing for gitea-sync.";
+    };
 
     baseUrl = mkOption {
       type = types.str;
-      example = "https://git.c4rb0n.cloud";
-      description = "Base URL of the Gitea instance (https://host).";
+      default = "https://git.c4rb0n.cloud";
+      description = "Base URL of the Gitea instance.";
     };
 
     giteaHost = mkOption {
       type = types.str;
-      example = "git.c4rb0n.cloud";
-      description = "Host portion used for ssh-keyscan.";
+      default = giteaHostFromBaseUrl;
+      description = "Host used for SSH operations; defaults to the host parsed from baseUrl.";
     };
 
     destDir = mkOption {
       type = types.str;
-      default = "${config.users.users.${config.system.primaryUser}.home}/git.c4rb0n.cloud";
-      description = "Destination directory containing one folder per repo.";
+      default = "${home}/git/${giteaHostFromBaseUrl}";
+      description = "Destination directory for checked out repositories.";
     };
 
     stateDir = mkOption {
       type = types.str;
-      default = "${config.users.users.${config.system.primaryUser}.home}/Library/Application Support/gitea-sync";
-      description = "State directory (known_hosts, counters). Passed as STATE_DIRECTORY.";
+      default = "${home}/Library/ApplicationSupport/gitea-sync";
+      description = "State directory passed to the sync script as STATE_DIR.";
     };
 
-    # Token handling:
-    # NixOS uses sops template envFile. On Darwin you can also do that,
-    # but this module keeps it generic: a file containing TOKEN=...
-    envFile = mkOption {
-      type = types.nullOr types.str;
-      default = null;
-      description = "Optional path to an env file containing TOKEN=... (and optionally others).";
+    knownHostsFile = mkOption {
+      type = types.str;
+      default = "${home}/.ssh/known_hosts";
+      description = "Known hosts file to use for SSH; reuses terminal trust to avoid drift.";
     };
 
-    # Schedule:
+    sshPort = mkOption {
+      type = types.int;
+      default = 2222;
+      description = "SSH port for Gitea.";
+    };
+
+    # Canonical HostName for git.c4rb0n.cloud within the job.
+    # Set to 10.20.31.41 to match your proven working path.
+    sshHostName = mkOption {
+      type = types.str;
+      default = "10.20.31.41";
+      description = "HostName used in the job-specific ssh_config for git.c4rb0n.cloud.";
+    };
+
     startIntervalSec = mkOption {
       type = types.int;
       default = 3600;
-      description = "How often to run the sync (seconds).";
+      description = "Run interval in seconds (launchd StartInterval).";
     };
 
     randomizedDelaySec = mkOption {
       type = types.nullOr types.int;
       default = 600;
-      description = "Random sleep (seconds) before each run; approximates systemd RandomizedDelaySec.";
+      description = "Random delay before each run (seconds).";
     };
 
     logLevel = mkOption {
       type = types.str;
       default = "INFO";
-      description = "LOG_LEVEL for the script (DEBUG, INFO, WARN, ERROR).";
+      description = "LOG_LEVEL passed to the sync script.";
+    };
+
+    tokenSopsFile = mkOption {
+      type = types.path;
+      default = ../../secrets/gitea-token.yaml;
+      description = "SOPS YAML file containing the Gitea token (key: token).";
     };
   };
 
   config = mkIf cfg.enable {
-    # Ensure required tools exist for the script + wrapper.
-    environment.systemPackages = with pkgs; [
-      curl
-      jq
-      git
-      openssh
-      coreutils
+    home-manager.sharedModules = [
+      inputs.sops-nix.homeManagerModules.sops
     ];
 
-    # launchd user agent = closest equivalent to your NixOS oneshot+timer as user mhr
+    home-manager.users.${user}.sops = {
+      age.keyFile = "${home}/.config/sops/age/keys.txt";
+
+      secrets."gitea/token" = {
+        sopsFile = cfg.tokenSopsFile;
+        format = "yaml";
+        key = "token";
+        mode = "0400";
+      };
+
+      templates."gitea.env" = {
+        content = ''
+          TOKEN=${hmCfg.sops.placeholder."gitea/token"}
+        '';
+        path = envFile;
+        mode = "0400";
+      };
+    };
+
+    environment.systemPackages = with pkgs; [
+      coreutils
+      curl
+      git
+      jq
+      openssh
+      gnused
+    ];
+
     launchd.user.agents.gitea-sync = {
-      enable = true;
-
-      # run wrapper
-      programArguments = [ "${wrapper}/bin/gitea-sync-run" ];
-
       serviceConfig = {
+        ProgramArguments = [ "${wrapper}/bin/gitea-sync-run" ];
+
         RunAtLoad = true;
         StartInterval = cfg.startIntervalSec;
 
-        StandardOutPath = "${config.users.users.${config.system.primaryUser}.home}/Library/Logs/gitea-sync.log";
-        StandardErrorPath = "${config.users.users.${config.system.primaryUser}.home}/Library/Logs/gitea-sync.err.log";
+        StandardOutPath = "${home}/Library/Logs/gitea-sync.log";
+        StandardErrorPath = "${home}/Library/Logs/gitea-sync.err.log";
+
+        ExitTimeOut = 300;
 
         EnvironmentVariables = {
           BASE_URL = cfg.baseUrl;
           DEST_DIR = cfg.destDir;
-          LOG_LEVEL = cfg.logLevel;
+
+          STATE_DIR = cfg.stateDir;
           STATE_DIRECTORY = cfg.stateDir;
 
-          # Make sure PATH contains required binaries at runtime.
-          PATH = lib.makeBinPath [ pkgs.curl pkgs.jq pkgs.git pkgs.openssh pkgs.coreutils ];
+          LOG_LEVEL = if cfg.debug then "DEBUG" else cfg.logLevel;
+
+          KNOWN_HOSTS_FILE = cfg.knownHostsFile;
+
+          # Non-interactive.
+          GIT_TERMINAL_PROMPT = "0";
+          SSH_ASKPASS = "/usr/bin/false";
+          SSH_ASKPASS_REQUIRE = "force";
+
+          # Use a dedicated ssh_config to make host/port/known_hosts deterministic.
+          GIT_SSH_COMMAND = "ssh -F ${sshConfig}";
+
+          # Optional bash tracing (very noisy).
+          GITEA_SYNC_TRACE = if cfg.debug then "1" else "0";
+
+          PATH =
+            lib.makeBinPath [
+              pkgs.coreutils
+              pkgs.curl
+              pkgs.git
+              pkgs.jq
+              pkgs.openssh
+              pkgs.gnused
+            ]
+            + ":/usr/bin:/bin:/usr/sbin:/sbin";
         };
       };
     };
-
-    # If you want an env file like NixOS EnvironmentFile=:
-    # launchd doesn’t have an "EnvironmentFile" knob; we emulate by sourcing it in wrapper.
-    # Easiest: put TOKEN=... into cfg.envFile and teach wrapper to source it.
-    assertions = [
-      {
-        assertion = cfg.envFile == null || builtins.pathExists cfg.envFile;
-        message = "services.giteaSync.envFile was set but does not exist.";
-      }
-    ];
-
-    # Patch wrapper to source envFile, if provided:
-    # Keep it linter-friendly by using a separate override of wrapper generation if you prefer.
   };
 }

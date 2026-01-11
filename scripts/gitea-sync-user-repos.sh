@@ -58,7 +58,7 @@ fi
 GITEA_HOST="$(printf '%s\n' "$BASE_URL" | sed -E 's~^https?://([^/]+).*~\1~')"
 
 # Prepare directories
-STATE_DIR="${STATE_DIRECTORY:-/var/lib/gitea-sync}"
+STATE_DIR="${STATE_DIR:-${STATE_DIRECTORY:-/var/lib/gitea-sync}}"
 KNOWN_HOSTS="${STATE_DIR}/known_hosts"
 
 install -m 700 -d "$STATE_DIR" || die "Failed to create state dir: $STATE_DIR"
@@ -69,8 +69,8 @@ install -m 755 -d "$DEST_DIR" || die "Failed to create dest dir: $DEST_DIR"
 if ! ssh-keyscan -T 5 "$GITEA_HOST" >>"$KNOWN_HOSTS" 2>/dev/null; then
   log WARN "ssh-keyscan failed for ${GITEA_HOST}; continuing (StrictHostKeyChecking will still enforce trust if key exists)"
 fi
-export GIT_SSH_COMMAND=${GIT_SSH_COMMAND:-"ssh -o UserKnownHostsFile=$KNOWN_HOSTS -o StrictHostKeyChecking=yes"}
-
+GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=\"$KNOWN_HOSTS\""
+export GIT_SSH_COMMAND
 # Quick connectivity probe (non-fatal but helpful)
 if ! curl -fsS --connect-timeout 5 --max-time 10 "${BASE_URL}/api/v1/version" >/dev/null 2>&1; then
   log WARN "Gitea API probe failed; continuing anyway"
