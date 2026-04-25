@@ -1,5 +1,6 @@
 {
   inputs,
+  config,
   lib,
   pkgs,
   ...
@@ -16,6 +17,7 @@ with lib;
     #      ];
 
     programs.firefox = {
+      configPath = "${config.xdg.configHome}/mozilla/firefox";
       enable = true;
       profiles = {
         default = {
@@ -99,15 +101,6 @@ with lib;
               }
             ];
           };
-          # extensions = with inputs.nur.repos.rycee.firefox-addons; [
-          #  extensions = with inputs.firefox-addons.packages.${pkgs.system};
-          #  [
-          #     ublock-origin
-          #     # video-downloadhelper
-          #     gopass-bridge
-          #     darkreader
-          # # tree-style-tab
-          #   ];
           extensions.packages = with firefox-addons; [
             ublock-origin
             gopass-bridge
@@ -116,29 +109,7 @@ with lib;
             violentmonkey
             privacy-badger
           ];
-          # extensions = with pkgs; [
-          #   nur.repos.rycee.firefox-addons.ublock-origin
-          #   nur.repos.rycee.firefox-addons.video-downloadhelper
-          #   nur.repos.rycee.firefox-addons.gopass-bridge
-          #   # bitwarden
-          #   # darkreader
-          #   # vimium
-          # ];
         };
       };
     };
-    # # TODO: Add things to exploade cac certs and install them into firefox here
-    # campground.services.cac.enable = mkIf cfg.cac true;
-    # };
   }
-# TODO: Read this and do something with it
-# https://github.com/NixOS/nixpkgs/issues/171978
-# Firefox needs to be convinced to use p11-kit-proxy by running a command like this:
-#
-# modutil -add p11-kit-proxy -libfile ${p11-kit}/lib/p11-kit-proxy.so -dbdir ~/.mozilla/firefox/*.default
-# I was also able to accomplish the same by making use of extraPolciies when overriding the firefox package:
-#
-#         extraPolicies = {
-#           SecurityDevices.p11-kit-proxy = "${pkgs.p11-kit}/lib/p11-kit-proxy.so";
-#         };
-

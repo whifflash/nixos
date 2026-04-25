@@ -11,7 +11,7 @@
 
   system.defaults.dock.tilesize = 48;
 
-    services.giteaSync = {
+  services.giteaSync = {
     enable = true;
     debug = true;
 

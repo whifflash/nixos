@@ -12,6 +12,6 @@ in {
 
   config = lib.mkIf cfg.enable {
     # Enable the GNOME Desktop Environment.
-    services.xserver.displayManager.gdm.enable = true;
+    services.displayManager.gdm.enable = true;
   };
 }

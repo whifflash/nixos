@@ -11,7 +11,8 @@ _:
   programs.git = {
     enable = true;
     # userName = builtins.readFile config.sops.secrets.git.userName.path;
-    userEmail = "34140499+whifflash@users.noreply.github.com";
+    settings.user.mail = "34140499+whifflash@users.noreply.github.com";
+    signing.format = "openpgp";
   };
 
   #   [includeIf "hasconfig:remote.*.url:git@*.${builtins.readFile "${work_stuff}/internal_domain"}:*/*"]

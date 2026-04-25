@@ -31,16 +31,16 @@
     "max-length": 50,
     "tooltip": false
   },
-  "bluetooth": {
-    "interval": 30,
-    "format": "{icon}",
-    // "format-alt": "{status}",
-    "format-icons": {
-      "enabled": "",
-      "disabled": "ss"
-    },
-    "on-click": "blueberry"
-  },
+  // "bluetooth": {
+  //   "interval": 30,
+  //   "format": "{icon}",
+  //   // "format-alt": "{status}",
+  //   "format-icons": {
+  //     "enabled": "",
+  //     "disabled": "ss"
+  //   },
+  //   "on-click": "blueman"
+  // },
   "idle_inhibitor": {
     "format": "{icon}",
     "format-icons": {

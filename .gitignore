@@ -4,5 +4,6 @@ hosts/clio/domain.nix
 build-clio.sh
 result
 cliosetup.md
-clio.qcow2
+*.qcow2
 deploy-clio-key.sh
+clio-vm.qcow2

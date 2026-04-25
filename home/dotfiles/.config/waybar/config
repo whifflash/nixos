@@ -63,7 +63,7 @@
         "custom/R2L-arrow#three", 
         "custom/R2L-arrow#two", 
         "custom/R2L-arrow#one",  
-        "network", "bluetooth", "tray"
+        "network", "tray"
     ],
 }
 ]

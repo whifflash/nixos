@@ -50,11 +50,11 @@ in {
       enable = true;
     };
     logind = {
-      # Close lid -> suspend to RAM
-      lidSwitch = "suspend";
-      lidSwitchExternalPower = "suspend";
-      # If docked with external display/keyboard, don't sleep on lid:
-      lidSwitchDocked = "suspend"; # set "suspend" if you *do* want it to sleep when docked
+      settings.Login = {
+        HandleLidSwitchDocked = "suspend";
+        HandleLidSwitch = "suspend";
+        HandleLidSwitchExternalPower = "suspend";
+      };
     };
     udev.extraRules = ''
       SUBSYSTEM=="usb", ACTION=="add", TEST=="power/wakeup", \
@@ -101,12 +101,13 @@ in {
       };
     };
 
-    sleep.extraConfig = ''
-      # Ensure we use RAM sleep
-      SuspendState=mem
-      # Example: auto-hibernate if left asleep for 1h (requires working hibernate)
-      # HibernateDelaySec=1h
-    '';
+    # TODO implement suspend to RAM after renaming of option
+    # sleep.settings.Sleep = ''
+    #   # Ensure we use RAM sleep
+    #   SuspendState=mem
+    #   # Example: auto-hibernate if left asleep for 1h (requires working hibernate)
+    #   # HibernateDelaySec=1h
+    # '';
   };
 
   sops = {

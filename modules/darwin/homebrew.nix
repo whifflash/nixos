@@ -1,7 +1,7 @@
 _: {
   homebrew = {
     enable = true;
-    casks = [ "alacritty" ];
+    casks = ["alacritty"];
     brews = ["choose-gui"];
     onActivation = {
       autoUpdate = false;

@@ -2,8 +2,8 @@
   description = "NixOS configuration (flake-parts layout)";
 
   inputs = {
-    # nixpkgs.url = "github:NixOS/nixpkgs/nixos-stable";
-    nixpkgs = {url = "github:nixos/nixpkgs/nixos-25.05";};
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # nixpkgs = {url = "github:nixos/nixpkgs/nixos-25.05";};
     # Darwin hosts use the darwin branch of the same release
     nixpkgs-darwin = {url = "github:NixOS/nixpkgs/nixpkgs-25.05-darwin";};
     nix-homebrew = {
@@ -99,7 +99,7 @@
             jq
             alejandra
             shfmt
-            nodePackages.prettier
+            prettier
             statix
             deadnix
             pre-commit
@@ -289,7 +289,6 @@
                 ./modules/darwin/gopass-picker.nix
                 ./modules/darwin/brews/sublime.nix
                 ./modules/darwin/gitea-sync.nix
-
 
                 # bootstrap Homebrew itself declaratively
                 inputs.nix-homebrew.darwinModules.nix-homebrew

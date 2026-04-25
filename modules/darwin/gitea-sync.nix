@@ -4,27 +4,28 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   inherit (lib) mkEnableOption mkIf mkOption types optionalString;
 
   cfg = config.services.giteaSync;
 
   user = config.system.primaryUser;
 
-  home =
-    let
-      h = config.users.users.${user}.home or null;
-    in
-    if h == null then "/Users/${user}" else h;
+  home = let
+    h = config.users.users.${user}.home or null;
+  in
+    if h == null
+    then "/Users/${user}"
+    else h;
 
   hmCfg = config.home-manager.users.${user};
 
-  giteaHostFromBaseUrl =
-    let
-      m = builtins.match "^https?://([^/]+).*$" cfg.baseUrl;
-    in
-    if m == null then cfg.baseUrl else builtins.elemAt m 0;
+  giteaHostFromBaseUrl = let
+    m = builtins.match "^https?://([^/]+).*$" cfg.baseUrl;
+  in
+    if m == null
+    then cfg.baseUrl
+    else builtins.elemAt m 0;
 
   envFile = "${home}/.config/sops-nix/templates/gitea.env";
 
@@ -124,8 +125,7 @@ let
 
     "${giteaSyncScript}" >> "${runLog}" 2>&1
   '';
-in
-{
+in {
   options.services.giteaSync = {
     enable = mkEnableOption "Sync repositories from Gitea (Darwin launchd user agent)";
 
@@ -239,7 +239,7 @@ in
 
     launchd.user.agents.gitea-sync = {
       serviceConfig = {
-        ProgramArguments = [ "${wrapper}/bin/gitea-sync-run" ];
+        ProgramArguments = ["${wrapper}/bin/gitea-sync-run"];
 
         RunAtLoad = true;
         StartInterval = cfg.startIntervalSec;
@@ -256,7 +256,10 @@ in
           STATE_DIR = cfg.stateDir;
           STATE_DIRECTORY = cfg.stateDir;
 
-          LOG_LEVEL = if cfg.debug then "DEBUG" else cfg.logLevel;
+          LOG_LEVEL =
+            if cfg.debug
+            then "DEBUG"
+            else cfg.logLevel;
 
           KNOWN_HOSTS_FILE = cfg.knownHostsFile;
 
@@ -269,7 +272,10 @@ in
           GIT_SSH_COMMAND = "ssh -F ${sshConfig}";
 
           # Optional bash tracing (very noisy).
-          GITEA_SYNC_TRACE = if cfg.debug then "1" else "0";
+          GITEA_SYNC_TRACE =
+            if cfg.debug
+            then "1"
+            else "0";
 
           PATH =
             lib.makeBinPath [

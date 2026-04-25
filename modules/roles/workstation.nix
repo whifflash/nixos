@@ -100,7 +100,7 @@ in {
     environment.systemPackages =
       (with pkgs; [
         alacritty
-        blueberry
+        blueman
         chromium
         # firefox
         gopass-jsonapi

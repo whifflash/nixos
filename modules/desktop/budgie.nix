@@ -11,6 +11,6 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    services.xserver.desktopManager.budgie.enable = true;
+    services.desktopManager.budgie.enable = true;
   };
 }
