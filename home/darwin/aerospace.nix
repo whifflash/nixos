@@ -6,7 +6,7 @@
   ...
 }: {
   home.packages = [
-    inputs.aerospace-scratchpad.packages.${pkgs.system}.default
+    inputs.aerospace-scratchpad.packages.${pkgs.stdenv.hostPlatform.system}.default
     pkgs.alacritty
     pkgs.tmux
     pkgs.jq

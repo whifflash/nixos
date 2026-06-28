@@ -2,10 +2,10 @@
   description = "NixOS configuration (flake-parts layout)";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    # nixpkgs = {url = "github:nixos/nixpkgs/nixos-25.05";};
+    # nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs = {url = "github:nixos/nixpkgs/nixos-26.05";};
     # Darwin hosts use the darwin branch of the same release
-    nixpkgs-darwin = {url = "github:NixOS/nixpkgs/nixpkgs-25.05-darwin";};
+    nixpkgs-darwin = {url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";};
     nix-homebrew = {
       url = "github:zhaofengli/nix-homebrew";
       # inputs.nixpkgs.follows = "nixpkgs-darwin"; # follow your Darwin nixpkgs
@@ -20,7 +20,8 @@
 
     # flake-utils.url = "github:numtide/flake-utils";
 
-    home-manager.url = "github:nix-community/home-manager";
+    # home-manager.url = "github:nix-community/home-manager";
+    home-manager.url = "github:nix-community/home-manager/release-26.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
     # Optional but handy on real machines; import per-host as needed
@@ -49,7 +50,8 @@
 
     # nur.url = "github:nix-community/NUR";
 
-    stylix.url = "github:danth/stylix/release-24.11";
+    # stylix.url = "github:danth/stylix/release-24.11";
+    stylix.url = "github:nix-community/stylix/release-26.05";
     stylix.inputs.nixpkgs.follows = "nixpkgs";
 
     disko.url = "github:nix-community/disko";
@@ -57,11 +59,11 @@
 
     # nix-darwin (macOS management)
     nix-darwin = {
-      url = "github:LnL7/nix-darwin/nix-darwin-25.05";
+      url = "github:LnL7/nix-darwin/nix-darwin-26.05";
       inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
     home-manager-darwin = {
-      url = "github:nix-community/home-manager/release-25.05";
+      url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
   };
@@ -104,6 +106,7 @@
             deadnix
             pre-commit
             config.treefmt.build.wrapper
+            ripgrep
             zsh
             oh-my-zsh
             zsh-autosuggestions

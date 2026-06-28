@@ -10,7 +10,7 @@ with lib;
 # with lib.campground;
   let
     # cfg = config.campground.apps.firefox;
-    firefox-addons = inputs.firefox-addons.packages.${pkgs.system};
+    firefox-addons = inputs.firefox-addons.packages.${pkgs.stdenv.hostPlatform.system};
   in {
     # nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
     #        "video-downloadhelper"

@@ -1,5 +1,5 @@
 # ---- nix devshell zshrc (generated) ----
-export ZSH="/nix/store/xajfv4gvnw1d2p1af6xii8vc2dilyj0m-oh-my-zsh-2026-02-19/share/oh-my-zsh"
+export ZSH="/nix/store/bm7sbsf7fs8rnm9jy0l6zjpkjnax3q7b-oh-my-zsh-2026-02-19/share/oh-my-zsh"
 ZSH_THEME="robbyrussell"
 plugins=(git)   # <- enables ga, gco, gst, etc.
 
