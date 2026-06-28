@@ -1,12 +1,11 @@
 # hosts/clio-vm/default.nix
 {
-  inputs,
   lib,
   modulesPath,
   ...
 }: {
   imports = [
-    # (modulesPath + "/virtualisation/qemu-vm.nix")
+    (modulesPath + "/virtualisation/qemu-vm.nix")
     ../clio/common.nix
     ./vm.nix
   ];

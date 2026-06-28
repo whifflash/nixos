@@ -72,12 +72,12 @@
     self,
     nixpkgs,
     flake-parts,
-    home-manager,
+    # home-manager,
     # nixos-hardware,
     treefmt-nix,
     git-hooks,
-    sops-nix,
-    disko,
+    # sops-nix,
+    # disko,
     ...
   }:
     flake-parts.lib.mkFlake {inherit inputs;}

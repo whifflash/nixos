@@ -1,9 +1,4 @@
-{
-  config,
-  pkgs,
-  lib,
-  ...
-}: {
+{pkgs, ...}: {
   system = {
     stateVersion = 6;
     primaryUser = "mhr";

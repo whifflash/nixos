@@ -21,49 +21,52 @@ in {
     enable = true;
     enableDefaultConfig = false;
 
-    matchBlocks = {
+    settings = {
       "*" = {
-        extraOptions = {
-          controlPersist = "12h";
-          controlMaster = "auto";
-        };
+        ControlMaster = "auto";
+        ControlPersist = "12h";
       };
+
       "github.com" = {
-        user = "git";
-        hostname = "github.com";
-        identityFile = "~/.ssh/githubwhifflash";
-        identitiesOnly = true;
-        port = 22;
+        User = "git";
+        HostName = "github.com";
+        IdentityFile = "~/.ssh/githubwhifflash";
+        IdentitiesOnly = true;
+        Port = 22;
       };
 
       "vps" = {
-        user = "mhr";
-        hostname = "wgbsw.vps.webdock.cloud";
-        identityFile = "~/.ssh/webdockvps";
-        identitiesOnly = true;
-        port = 22;
+        User = "mhr";
+        HostName = "wgbsw.vps.webdock.cloud";
+        IdentityFile = "~/.ssh/webdockvps";
+        IdentitiesOnly = true;
+        Port = 22;
       };
-      "git.c4rb0n.cloud 10.20.31.41" = {
-        user = "git";
-        hostname = "git.c4rb0n.cloud";
-        identityFile = "~/.ssh/gitea";
-        identitiesOnly = true;
-        port = 2222;
+
+      "git.c4rb0n.cloud" = {
+        User = "git";
+        HostName = "git.c4rb0n.cloud";
+        IdentityFile = "~/.ssh/gitea";
+        IdentitiesOnly = true;
+        Port = 2222;
       };
-      "icarus 10.20.31.41 attic.c4rb0n.cloud" = {
-        user = "mhr";
-        hostname = "10.20.31.41";
-        identityFile = "~/.ssh/bsw";
-        identitiesOnly = true; # ensures the specified key is used
-        port = 22;
+
+      "icarus attic.c4rb0n.cloud" = {
+        User = "mhr";
+        HostName = "10.20.31.41";
+        IdentityFile = "~/.ssh/bsw";
+        IdentitiesOnly = true;
+        Port = 22;
       };
+
       "poseidon" = {
-        user = "mhr";
-        hostname = "127.0.0.1";
-        proxyJump = "vps";
-        dynamicForwards = [{port = 1080;}];
+        User = "mhr";
+        HostName = "127.0.0.1";
+        ProxyJump = "vps";
+        DynamicForward = "1080";
       };
     };
   };
+
   services.ssh-agent.enable = false;
 }

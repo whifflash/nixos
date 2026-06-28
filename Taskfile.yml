@@ -3,7 +3,7 @@ version: "3"
 vars:
   HOST:
     sh: hostname -s
-  FLAKE: "path:{{.ROOT_DIR}}"
+  FLAKE: "{{.ROOT_DIR}}"
   TOPLEVEL: '{{.FLAKE}}#nixosConfigurations."{{.HOST}}".config.system.build.toplevel'
 
 tasks:

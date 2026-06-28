@@ -3,9 +3,10 @@
   pkgs,
   lib,
   ...
-}: let
-  inherit (config.clio) domain;
-in {
+  # }: let
+  #   inherit (config.clio) domain;
+  # in {
+}: {
   options.clio.domain = lib.mkOption {
     type = lib.types.str;
     description = "Primary domain for Clio (provided by hosts/clio/domain.nix).";

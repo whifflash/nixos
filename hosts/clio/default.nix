@@ -1,9 +1,5 @@
 # hosts/clio/default.nix
-{
-  inputs,
-  lib,
-  ...
-}: {
+{...}: {
   imports = [
     ./common.nix
     ./storage.nix

@@ -1,10 +1,5 @@
 # hosts/clio/services/hub.nix
-{
-  config,
-  pkgs,
-  lib,
-  ...
-}: let
+{config, ...}: let
   inherit (config.clio) domain;
   hubRoot = "/etc/clio-hub";
 in {

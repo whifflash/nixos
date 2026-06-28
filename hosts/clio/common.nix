@@ -2,7 +2,6 @@
 {
   pkgs,
   inputs,
-  lib,
   ...
 }: {
   # bring in sops-nix (shared)

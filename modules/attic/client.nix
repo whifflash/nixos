@@ -4,7 +4,7 @@
   inputs ? {},
   ...
 }: let
-  inherit (lib) mkOption mkIf mkMerge types optionalAttrs optionals;
+  inherit (lib) mkOption mkIf mkMerge types optionalAttrs;
   cfg = config.attic_client;
   rb = config.attic_remote;
 

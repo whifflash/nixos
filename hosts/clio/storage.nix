@@ -1,9 +1,5 @@
 # hosts/clio/storage.nix
-{
-  lib,
-  inputs,
-  ...
-}: {
+{inputs, ...}: {
   # Disko module for the real machine
   imports = [inputs.disko.nixosModules.disko];
 
