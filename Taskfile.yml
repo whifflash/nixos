@@ -1,0 +1,120 @@
+version: "3"
+
+vars:
+  HOST:
+    sh: hostname -s
+  FLAKE: "path:{{.ROOT_DIR}}"
+  TOPLEVEL: '{{.FLAKE}}#nixosConfigurations."{{.HOST}}".config.system.build.toplevel'
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list
+    silent: true
+
+  info:
+    desc: Show the selected host and flake
+    cmds:
+      - 'echo "Host:  {{.HOST}}"'
+      - 'echo "Flake: {{.FLAKE}}"'
+    silent: true
+
+  fmt:
+    desc: Format Nix, shell, YAML, JSON, and Markdown files
+    cmds:
+      - nix fmt "{{.FLAKE}}"
+
+  check:
+    desc: Run flake checks with nix-output-monitor
+    preconditions:
+      - sh: command -v nom >/dev/null 2>&1
+        msg: Run this task through `nix run .#task -- check` or from `nix develop`.
+    cmds:
+      - |
+        bash -o pipefail -c '
+          flake="$1"
+          shift
+          nix flake check "$flake" \
+            --show-trace \
+            --log-format internal-json \
+            -v \
+            "$@" 2>&1 | nom --json
+        ' -- "{{.FLAKE}}" {{.CLI_ARGS}}
+
+  build:
+    desc: Build the selected NixOS configuration without activating it
+    aliases: [b]
+    preconditions:
+      - sh: command -v nom >/dev/null 2>&1
+        msg: Run this task through `nix run .#task -- build` or from `nix develop`.
+    cmds:
+      - >-
+        nom build
+        '{{.TOPLEVEL}}'
+        --no-link
+        --show-trace
+        {{.CLI_ARGS}}
+
+  test:
+    desc: Build and activate temporarily; the change is lost after reboot
+    aliases: [t]
+    cmds:
+      - task: _rebuild
+        vars:
+          ACTION: test
+
+  boot:
+    desc: Build and make the configuration the next boot target
+    cmds:
+      - task: _rebuild
+        vars:
+          ACTION: boot
+
+  switch:
+    desc: Build and activate the selected NixOS configuration
+    aliases: [s]
+    cmds:
+      - task: _rebuild
+        vars:
+          ACTION: switch
+
+  update:
+    desc: Update all flake inputs, or inputs named after `--`
+    aliases: [u]
+    cmds:
+      - nix flake update {{.CLI_ARGS}}
+
+  upgrade:
+    desc: Update all inputs and switch to the resulting configuration
+    cmds:
+      - task: update
+      - task: switch
+
+  clean:
+    desc: Delete system generations and store paths older than AGE (default 3d)
+    vars:
+      AGE: '{{default "3d" .AGE}}'
+    cmds:
+      - sudo nix-collect-garbage --delete-older-than "{{.AGE}}"
+
+  _rebuild:
+    internal: true
+    requires:
+      vars:
+        - name: ACTION
+          enum: [test, boot, switch]
+    preconditions:
+      - sh: command -v nom >/dev/null 2>&1
+        msg: Run this task through `nix run .#task -- {{.ACTION}}` or from `nix develop`.
+    cmds:
+      - |
+        bash -o pipefail -c '
+          action="$1"
+          flake="$2"
+          shift 2
+          sudo -H nixos-rebuild "$action" \
+            --flake "$flake" \
+            --show-trace \
+            "$@" 2>&1 | nom
+        ' -- "{{.ACTION}}" "{{.FLAKE}}#{{.HOST}}" {{.CLI_ARGS}}

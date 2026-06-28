@@ -107,6 +107,8 @@
             pre-commit
             config.treefmt.build.wrapper
             ripgrep
+            go-task
+            nix-output-monitor
             zsh
             oh-my-zsh
             zsh-autosuggestions
@@ -147,6 +149,24 @@
                     exec ${pkgs.zsh}/bin/zsh -i
                   fi
           '';
+        };
+
+        # Project-local task runner. This allows commands such as
+        # `nix run .#task -- switch` without globally installing Task or nom.
+        apps.task = {
+          type = "app";
+          program = "${
+            pkgs.writeShellApplication {
+              name = "nixos-task";
+              runtimeInputs = with pkgs; [
+                go-task
+                nix-output-monitor
+              ];
+              text = ''
+                exec task "$@"
+              '';
+            }
+          }/bin/nixos-task";
         };
 
         pre-commit = {
