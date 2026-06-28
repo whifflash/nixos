@@ -32,6 +32,7 @@ in {
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
     ./../../modules/modules.nix
+    ./../../services
 
     ./../../modules/ui/theme.nix
     ./../../modules/ui/stylix-bridge.nix
@@ -212,6 +213,13 @@ in {
   role_hardware-development.enable = false;
   role_tailscale-node.enable = true;
   role_laptop.enable = true;
+
+  # Temporary bootstrap placement. Move this enable flag to Clio after migration.
+  infra.services.gitea = {
+    enable = true;
+    # Bootstrap only. The restored production database already contains users.
+    disableRegistration = false;
+  };
 
   # Enable the X11 windowing system.
   services.xserver.enable = true;

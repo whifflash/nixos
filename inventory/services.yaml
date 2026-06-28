@@ -1,0 +1,19 @@
+services:
+  gitea:
+    endpoint: https://git.c4rb0n.cloud
+    production_host: icarus
+    bootstrap_host: mia
+    intended_host: clio
+    status: parallel-bootstrap
+    implementation: nixos-native
+    stateful: true
+    backup:
+      local_dump: /var/backup/gitea
+      off_host: pending-restic-to-unraid
+
+  hub:
+    endpoint: https://hub.c4rb0n.cloud
+    current_host: clio
+    status: active
+    implementation: nixos-native
+    stateful: false

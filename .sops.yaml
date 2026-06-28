@@ -22,7 +22,8 @@ creation_rules:
     key_groups:
       - age:
           - *primary
-  - path_regex: secrets/clio\.yaml$
+  - path_regex: secrets/infrastructure\.yaml$
     key_groups:
       - age:
+          - *primary
           - *clio
