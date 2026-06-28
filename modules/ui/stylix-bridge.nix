@@ -47,11 +47,18 @@
   wallpaperPath = "${cfg.wallpapersDir}/${cfg.wallpaper}";
 in {
   # System Stylix is the only Stylix we use: feed it scheme + wallpaper.
-  config = lib.mkIf (cfg.stylix.enable or true) {
+
+  config = lib.mkIf cfg.stylix.enable {
     stylix = {
       enable = true;
       base16Scheme = base16;
       image = wallpaperPath;
     };
+
+    home-manager.sharedModules = [
+      {
+        stylix.targets.firefox.profileNames = ["default"];
+      }
+    ];
   };
 }

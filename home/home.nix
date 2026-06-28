@@ -38,6 +38,7 @@
 in {
   imports = [
     ./packages.nix
+    ./apps/direnv.nix
     ./apps/firefox
     ./git.nix
     ./ssh.nix

@@ -40,6 +40,11 @@ in {
 
       PROMPT='%F{'$THEME_ACCENT1'}%n%f@%F{'$THEME_PRIMARY'}%m%f %F{'$THEME_MUTED'}%~%f %# '
       RPROMPT='%F{'$THEME_SUCCESS'}$(__theme_git_branch)%f'
+
+      # Automatically load and unload project environments.
+      if command -v direnv >/dev/null 2>&1; then
+        eval "$(direnv hook zsh)"
+      fi
     '';
 
     "zsh/README-theme.txt".text = ''

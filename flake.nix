@@ -155,6 +155,9 @@
         # `nix run .#task -- switch` without globally installing Task or nom.
         apps.task = {
           type = "app";
+
+          meta.description = "Run this repository's Taskfile with Go Task and nix-output-monitor.";
+
           program = "${
             pkgs.writeShellApplication {
               name = "nixos-task";

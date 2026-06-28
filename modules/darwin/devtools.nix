@@ -1,4 +1,4 @@
-{_}: {
+_: {
   system.activationScripts.ensureCLT.text = ''
     if ! /usr/bin/xcode-select -p >/dev/null 2>&1; then
       echo "Command Line Tools not found — trying softwareupdate…"

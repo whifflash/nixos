@@ -5,6 +5,7 @@
 }: {
   imports = [
     ../ssh.nix
+    ../apps/direnv.nix
     ../apps/sublime.nix
     ./gopass.nix
     ./aerospace.nix
@@ -25,7 +26,6 @@
 
     packages = with pkgs; [
       starship
-      direnv
       nil # Nix LSP
       vim
     ];
@@ -46,6 +46,11 @@
       enable = true;
       # autosuggestions.enable = true;
       syntaxHighlighting.enable = true;
+
+      initContent = ''
+        eval "$(direnv hook zsh)"
+      '';
+
       shellAliases = {
         ll = "ls -alh";
         gs = "git status";
