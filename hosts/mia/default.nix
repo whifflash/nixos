@@ -168,10 +168,18 @@ in {
   qt.platformTheme = "qt5ct";
   # (You can use "qt6ct" if you’re mostly on Qt6.)
 
-  networking.hostName = "mia"; # Define your hostname.
+  networking = {
+    hosts = {
+      "10.20.0.20" = [
+        "git.c4rb0n.cloud"
+      ];
+    };
 
-  # Enable networking
-  networking.networkmanager.enable = true;
+    hostName = "mia"; # Define your hostname.
+
+    # Enable networking via networkmanager
+    networkmanager.enable = true;
+  };
 
   hardware.graphics = {
     enable = true;

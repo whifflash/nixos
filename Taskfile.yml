@@ -113,7 +113,11 @@ tasks:
           action="$1"
           flake="$2"
           shift 2
-          sudo -H nixos-rebuild "$action" \
+
+          # Authenticate before stdout/stderr are piped through nom so the
+          # password prompt remains visible. -n prevents a hidden second prompt.
+          sudo -v
+          sudo -n -H nixos-rebuild "$action" \
             --flake "$flake" \
             --show-trace \
             "$@" 2>&1 | nom
