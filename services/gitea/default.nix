@@ -41,59 +41,133 @@ in {
   config = lib.mkIf cfg.enable {
     infra.acme.enable = true;
 
-    services.gitea = {
-      enable = true;
-      database.type = "sqlite3";
-      lfs.enable = false;
-
-      dump = {
-        enable = true;
-        interval = "03:15";
-        backupDir = "/var/backup/gitea";
-        type = "tar.zst";
+    sops.secrets = {
+      "restic/gitea/repository_password" = {
+        sopsFile = ../../secrets/infrastructure.yaml;
+        key = "restic/gitea/repository_password";
+        format = "yaml";
+        mode = "0400";
       };
 
-      settings = {
-        server = {
-          DOMAIN = hostName;
-          ROOT_URL = "https://${hostName}/";
-          PROTOCOL = "http";
-          HTTP_ADDR = "127.0.0.1";
-          HTTP_PORT = cfg.httpPort;
-
-          START_SSH_SERVER = true;
-          BUILTIN_SSH_SERVER_USER = "git";
-          SSH_USER = "git";
-          SSH_DOMAIN = hostName;
-          SSH_LISTEN_HOST = "0.0.0.0";
-          SSH_LISTEN_PORT = cfg.sshPort;
-          SSH_PORT = cfg.sshPort;
-        };
-
-        service.DISABLE_REGISTRATION = cfg.disableRegistration;
-        session.COOKIE_SECURE = true;
+      "restic/gitea/environment" = {
+        sopsFile = ../../secrets/infrastructure.yaml;
+        key = "restic/gitea/environment";
+        format = "yaml";
+        mode = "0400";
       };
     };
 
-    services.nginx = {
-      enable = true;
-      recommendedGzipSettings = true;
-      recommendedProxySettings = true;
-      recommendedTlsSettings = true;
+    security.acme.certs.${hostName} = {};
 
-      virtualHosts.${hostName} = {
-        enableACME = true;
-        forceSSL = true;
+    services = {
+      gitea = {
+        enable = true;
+        database.type = "sqlite3";
+        lfs.enable = true;
 
-        extraConfig = ''
-          client_max_body_size 512M;
-        '';
+        dump = {
+          enable = true;
+          interval = "03:15";
+          backupDir = "/var/backup/gitea";
+          type = "tar.zst";
+        };
 
-        locations."/" = {
-          proxyPass = "http://127.0.0.1:${toString cfg.httpPort}";
-          proxyWebsockets = true;
+        settings = {
+          server = {
+            DOMAIN = hostName;
+            ROOT_URL = "https://${hostName}/";
+            PROTOCOL = "http";
+            HTTP_ADDR = "127.0.0.1";
+            HTTP_PORT = cfg.httpPort;
+
+            START_SSH_SERVER = true;
+            BUILTIN_SSH_SERVER_USER = "git";
+            SSH_USER = "git";
+            SSH_DOMAIN = hostName;
+            SSH_LISTEN_HOST = "0.0.0.0";
+            SSH_LISTEN_PORT = cfg.sshPort;
+            SSH_PORT = cfg.sshPort;
+          };
+
+          service.DISABLE_REGISTRATION = cfg.disableRegistration;
+          session.COOKIE_SECURE = true;
         };
       };
+
+      nginx = {
+        enable = true;
+        recommendedGzipSettings = true;
+        recommendedProxySettings = true;
+        recommendedTlsSettings = true;
+
+        virtualHosts.${hostName} = {
+          useACMEHost = hostName;
+          forceSSL = true;
+
+          extraConfig = ''
+            client_max_body_size 512M;
+          '';
+
+          locations."/" = {
+            proxyPass = "http://127.0.0.1:${toString cfg.httpPort}";
+            proxyWebsockets = true;
+          };
+        };
+      };
+
+      restic.backups.gitea = {
+        repository = "rest:https://restic.c4rb0n.cloud/restic-gitea";
+
+        passwordFile =
+          config.sops.secrets."restic/gitea/repository_password".path;
+
+        environmentFile =
+          config.sops.secrets."restic/gitea/environment".path;
+
+        paths = [
+          "/var/lib/gitea"
+        ];
+
+        initialize = true;
+
+        backupPrepareCommand = ''
+          systemctl stop gitea.service
+        '';
+
+        backupCleanupCommand = ''
+          systemctl start gitea.service
+        '';
+
+        timerConfig = {
+          OnCalendar = "04:00";
+          Persistent = true;
+          RandomizedDelaySec = "15m";
+        };
+
+        pruneOpts = [
+          "--keep-daily 7"
+          "--keep-weekly 5"
+          "--keep-monthly 12"
+          "--keep-yearly 3"
+          "--group-by host,paths"
+        ];
+      };
+
+      # restic.backups.gitea = {
+      #   repository = "rest:https://restic.c4rb0n.cloud/restic-gitea";
+
+      #   passwordFile =
+      #     config.sops.secrets."restic/gitea/repository_password".path;
+
+      #   environmentFile =
+      #     config.sops.secrets."restic/gitea/environment".path;
+
+      #   paths = [
+      #     "/var/lib/gitea"
+      #   ];
+
+      #   initialize = true;
+      # };
     };
 
     networking.firewall.allowedTCPPorts = [
