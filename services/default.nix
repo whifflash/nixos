@@ -7,7 +7,11 @@
     inputs.sops-nix.nixosModules.sops
     ./acme.nix
     ./gitea
+    ./home-assistant
+    ./home-automation-backup
     ./hub
+    ./influxdb
+    ./mosquitto
   ];
 
   options.infra.domain = lib.mkOption {

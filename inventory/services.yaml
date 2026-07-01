@@ -1,15 +1,14 @@
 services:
   gitea:
     endpoint: https://git.c4rb0n.cloud
-    production_host: icarus
-    bootstrap_host: mia
+    production_host: mia
     intended_host: clio
-    status: parallel-bootstrap
+    status: active-on-mia
     implementation: nixos-native
     stateful: true
     backup:
       local_dump: /var/backup/gitea
-      off_host: pending-restic-to-unraid
+      off_host: restic-to-vela
 
   hub:
     endpoint: https://hub.c4rb0n.cloud
@@ -17,3 +16,30 @@ services:
     status: active
     implementation: nixos-native
     stateful: false
+
+  mosquitto:
+    endpoint: mqtt.c4rb0n.cloud:1883
+    production_host: icarus
+    intended_host: mia
+    status: migration-preparation
+    implementation: nixos-native
+    stateful: true
+
+  influxdb:
+    endpoint: https://influx.c4rb0n.cloud
+    intended_host: mia
+    status: fresh-deployment
+    implementation: nixos-native
+    stateful: true
+
+  home-assistant:
+    endpoint: https://ha.c4rb0n.cloud
+    production_host: icarus
+    intended_host: mia
+    status: migration-preparation
+    implementation: nixos-managed-oci
+    stateful: true
+    hardware:
+      zigbee: Silicon Labs Sonoff Zigbee 3.0 USB Dongle Plus
+    backup:
+      off_host: restic-to-vela-after-cutover

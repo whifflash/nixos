@@ -222,11 +222,25 @@ in {
   role_tailscale-node.enable = true;
   role_laptop.enable = true;
 
-  # Temporary bootstrap placement. Move this enable flag to Clio after migration.
-  infra.services.gitea = {
-    enable = true;
-    # Bootstrap only. The restored production database already contains users.
-    disableRegistration = false;
+  infra.services = {
+    # Temporary bootstrap placement. Move this enable flag to Clio after migration.
+    gitea = {
+      enable = true;
+      # Bootstrap only. The restored production database already contains users.
+      disableRegistration = false;
+    };
+
+    mosquitto.enable = true;
+    influxdb.enable = true;
+
+    homeAssistant = {
+      enable = true;
+      # Enable after the cold state copy and Zigbee coordinator move.
+      autoStart = false;
+    };
+
+    # Enable only after the migrated stack passes functional validation.
+    homeAutomationBackup.enable = false;
   };
 
   # Enable the X11 windowing system.
