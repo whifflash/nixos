@@ -1,7 +1,4 @@
-{
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [
     ./disko.nix
     ./hardware-configuration.nix
@@ -59,9 +56,12 @@
 
   # nixos-anywhere --copy-host-keys preserves this key across installation.
   # The corresponding public key must be a recipient for infrastructure.yaml.
-  sops.age.sshKeyPaths = [
-    "/etc/ssh/ssh_host_ed25519_key"
-  ];
+  sops = {
+    age = {
+      generateKey = false;
+      keyFile = "/var/lib/sops-nix/key.txt";
+    };
+  };
 
   infra.services.gitea = {
     enable = true;
