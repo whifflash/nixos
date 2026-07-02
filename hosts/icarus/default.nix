@@ -72,7 +72,7 @@
 
     homeAssistant = {
       enable = true;
-      autoStart = false;
+      autoStart = true;
     };
 
     homeAutomationBackup.enable = false;
