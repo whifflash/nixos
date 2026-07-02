@@ -57,24 +57,24 @@ in {
     infra.acme.enable = true;
 
     sops.secrets = {
-      ${adminPasswordSecret} = {
+      "influxdb/admin_password" = {
         sopsFile = ../../secrets/infrastructure.yaml;
-        key = adminPasswordSecret;
-        format = "yaml";
+        owner = "influxdb2";
+        group = "influxdb2";
         mode = "0400";
       };
 
-      ${operatorTokenSecret} = {
+      "influxdb/operator_token" = {
         sopsFile = ../../secrets/infrastructure.yaml;
-        key = operatorTokenSecret;
-        format = "yaml";
+        owner = "influxdb2";
+        group = "influxdb2";
         mode = "0400";
       };
 
-      ${homeAssistantTokenSecret} = {
+      "influxdb/home_assistant_token" = {
         sopsFile = ../../secrets/infrastructure.yaml;
-        key = homeAssistantTokenSecret;
-        format = "yaml";
+        owner = "influxdb2";
+        group = "influxdb2";
         mode = "0400";
       };
     };
