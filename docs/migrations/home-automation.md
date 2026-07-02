@@ -1,6 +1,6 @@
 # Home automation migration and recovery
 
-This runbook moves Home Assistant and Mosquitto from Icarus to Mia and creates
+This runbook restores Home Assistant and Mosquitto onto the rebuilt Icarus host and creates
 a fresh native InfluxDB 2 deployment.
 
 ## Target architecture
@@ -71,7 +71,7 @@ sudo cut -d: -f2- \
 
 Do not commit Icarus's plaintext Home Assistant `secrets.yaml`.
 
-## Preparation deployment on Mia
+## Preparation deployment on Icarus
 
 The host enables native Mosquitto and InfluxDB immediately, while Home
 Assistant and the combined backup remain disabled from automatic execution:
@@ -95,8 +95,8 @@ Validate and apply:
 ```bash
 nix fmt
 nix flake check
-task build HOST=mia
-task switch HOST=mia
+task build HOST=icarus
+task switch HOST=icarus
 
 systemctl status mosquitto influxdb2 --no-pager
 curl --fail http://127.0.0.1:8086/health
@@ -105,50 +105,66 @@ systemctl status podman-home-assistant --no-pager
 
 Home Assistant being inactive is expected while `autoStart = false`.
 
-## Create the cold transfer on Icarus
+## Existing recovery archive
 
-Stop only the services being moved:
+The pre-installation backup is a complete archive of `/home/mhr/docker-compose`:
 
-```bash
-cd ~/docker-compose
-docker compose stop homeassistant mosquitto
+```text
+icarus-docker-compose.tar.zst
+└── docker-compose/
+    ├── docker-compose.yml
+    └── data/
+        ├── home-assistant-data/
+        └── mosquitto-data/
 ```
 
-Archive the complete Home Assistant configuration and Mosquitto persistence:
+Keep the archive on another machine until the restored services and off-host backups have been
+validated. Verify its checksum before restoration.
+
+## Restore state on Icarus
+
+Apply the preparation configuration first. Mosquitto and InfluxDB may start, but Home Assistant
+must remain stopped because `autoStart = false`. Copy the archive from the Mac:
 
 ```bash
-stamp="$(date +%F-%H%M%S)"
+scp \
+  ./icarus-docker-compose.tar.zst \
+  mhr@icarus:/var/tmp/icarus-docker-compose.tar.zst
+```
+
+Stop the services whose state is being restored and extract into a temporary directory:
+
+```bash
+sudo systemctl stop mosquitto
+sudo systemctl stop podman-home-assistant 2>/dev/null || true
+
+sudo rm -rf /var/tmp/icarus-docker-compose-restore
+sudo install -d -m 0700 /var/tmp/icarus-docker-compose-restore
 
 sudo tar \
+  --zstd \
   --xattrs \
   --acls \
   --numeric-owner \
-  --zstd \
-  -C data \
-  -cpf "/tmp/home-automation-${stamp}.tar.zst" \
-  home-assistant-data/config \
-  mosquitto-data/data/mosquitto.db
-
-sudo chown mhr:mhr "/tmp/home-automation-${stamp}.tar.zst"
-scp "/tmp/home-automation-${stamp}.tar.zst" \
-  mhr@mia:/var/tmp/
+  -xpf /var/tmp/icarus-docker-compose.tar.zst \
+  -C /var/tmp/icarus-docker-compose-restore
 ```
 
-Leave the Icarus containers stopped and their state unchanged for rollback.
-
-## Restore state on Mia
+Confirm the expected paths before copying anything:
 
 ```bash
-sudo rm -rf /var/tmp/home-automation-restore
-sudo install -d -m 0700 /var/tmp/home-automation-restore
+sudo test -d \
+  /var/tmp/icarus-docker-compose-restore/docker-compose/data/home-assistant-data/config
 
-sudo tar \
-  --zstd \
-  --xattrs \
-  --acls \
-  --numeric-owner \
-  -xpf "/var/tmp/home-automation-${stamp}.tar.zst" \
-  -C /var/tmp/home-automation-restore
+sudo test -f \
+  /var/tmp/icarus-docker-compose-restore/docker-compose/data/mosquitto-data/data/mosquitto.db
+```
+
+Restore the complete Home Assistant configuration, including `.storage`, dashboards, authentication,
+the recorder database, custom integrations, and ZHA state:
+
+```bash
+sudo install -d -m 0750 /var/lib/home-assistant
 
 sudo rsync \
   --archive \
@@ -156,20 +172,29 @@ sudo rsync \
   --acls \
   --xattrs \
   --delete \
-  /var/tmp/home-automation-restore/home-assistant-data/config/ \
+  /var/tmp/icarus-docker-compose-restore/docker-compose/data/home-assistant-data/config/ \
   /var/lib/home-assistant/
+```
 
-sudo systemctl stop mosquitto
+Restore Mosquitto persistence. The password hash is provided separately through SOPS, while
+`mosquitto.db` preserves retained messages and persistent client sessions:
+
+```bash
 sudo install \
   -o mosquitto \
   -g mosquitto \
   -m 0600 \
-  /var/tmp/home-automation-restore/mosquitto-data/data/mosquitto.db \
+  /var/tmp/icarus-docker-compose-restore/docker-compose/data/mosquitto-data/data/mosquitto.db \
   /var/lib/mosquitto/mosquitto.db
+
+sudo chown -R mosquitto:mosquitto /var/lib/mosquitto
 ```
 
-The SOPS-managed `/config/secrets.yaml` mount overrides the copied runtime
-file. Ensure `home_assistant/secrets_yaml` contains every required key before
+Do not restore the old InfluxDB container files. The previous instance contained no meaningful
+measurements, so the native service is provisioned as a fresh database.
+
+The SOPS-managed `/config/secrets.yaml` mount overrides the copied runtime file. Ensure
+`home_assistant/secrets_yaml` contains every key referenced by the restored configuration before
 starting the container.
 
 ## Adjust Home Assistant configuration
@@ -196,12 +221,12 @@ influxdb:
 ```
 
 After startup, change the MQTT integration from the old Icarus address to
-`127.0.0.1:1883`. External MQTT clients use Mia's LAN address or the stable
+`127.0.0.1:1883`. External MQTT clients use Icarus's LAN address or the stable
 `mqtt.c4rb0n.cloud` name.
 
 ## Move hardware and start
 
-Move the Sonoff dongle from Icarus to Mia and verify it:
+Connect the Sonoff dongle to the rebuilt Icarus host and verify it:
 
 ```bash
 ls -l /dev/serial/by-id/
@@ -220,8 +245,8 @@ infra.services.homeAssistant.autoStart = true;
 Then apply and inspect:
 
 ```bash
-task build HOST=mia
-task switch HOST=mia
+task build HOST=icarus
+task switch HOST=icarus
 
 systemctl status mosquitto influxdb2 podman-home-assistant --no-pager
 journalctl -fu podman-home-assistant
@@ -270,8 +295,8 @@ infra.services.homeAutomationBackup.enable = true;
 Apply and test:
 
 ```bash
-task build HOST=mia
-task switch HOST=mia
+task build HOST=icarus
+task switch HOST=icarus
 
 sudo systemctl start restic-backups-home-automation.service
 sudo journalctl -fu restic-backups-home-automation.service

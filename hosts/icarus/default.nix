@@ -61,9 +61,21 @@
     age.generateKey = false;
   };
 
-  infra.services.gitea = {
-    enable = true;
-    disableRegistration = true;
+  infra.services = {
+    gitea = {
+      enable = true;
+      disableRegistration = true;
+    };
+
+    mosquitto.enable = true;
+    influxdb.enable = true;
+
+    homeAssistant = {
+      enable = true;
+      autoStart = false;
+    };
+
+    homeAutomationBackup.enable = false;
   };
 
   zramSwap.enable = true;
