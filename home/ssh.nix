@@ -43,13 +43,13 @@ in {
         Port = 22;
       };
 
-      "git.c4rb0n.cloud" = {
-        User = "git";
-        HostName = "git.c4rb0n.cloud";
-        IdentityFile = "~/.ssh/gitea";
-        IdentitiesOnly = true;
-        Port = 2222;
-      };
+      # "git.c4rb0n.cloud" = {
+      #   User = "git";
+      #   HostName = "git.c4rb0n.cloud";
+      #   IdentityFile = "~/.ssh/gitea";
+      #   IdentitiesOnly = true;
+      #   Port = 2222;
+      # };
 
       "icarus attic.c4rb0n.cloud" = {
         User = "mhr";
