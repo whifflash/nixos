@@ -41,14 +41,7 @@
     };
   };
 
-  security = {
-    acme = {
-      acceptTerms = true;
-
-      defaults.email = "h.mohr.hd@gmail.com";
-    };
-    sudo.wheelNeedsPassword = false;
-  };
+  security.sudo.wheelNeedsPassword = false;
 
   services.openssh = {
     enable = true;
