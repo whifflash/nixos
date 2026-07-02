@@ -57,10 +57,8 @@
   # nixos-anywhere --copy-host-keys preserves this key across installation.
   # The corresponding public key must be a recipient for infrastructure.yaml.
   sops = {
-    age = {
-      generateKey = false;
-      keyFile = "/var/lib/sops-nix/key.txt";
-    };
+    age.keyFile = "/var/lib/sops-nix/key.txt";
+    age.generateKey = false;
   };
 
   infra.services.gitea = {

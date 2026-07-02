@@ -48,3 +48,26 @@ are available. Extra arguments can be forwarded after `--`, for example:
 task update -- nixpkgs home-manager stylix
 task build -- --print-build-logs
 ```
+
+## nixos-anywhere installation
+
+To install using nixos-anywhere alongside with required keyfiles, do
+
+    rm -rf ./nixos-anywhere-extra-files
+    install -d \
+      -m 0700 \
+      ./nixos-anywhere-extra-files/var/lib/sops-nix
+
+    install \
+      -m 0600 \
+      "$HOME/.config/sops/age/keys.txt" \
+      ./nixos-anywhere-extra-files/var/lib/sops-nix/key.txt
+
+And then run the installation, e.g. for icarus:
+
+    nix run github:nix-community/nixos-anywhere -- \
+      --flake '.#icarus' \
+      --target-host 'icarus' \
+      --build-on remote \
+      --copy-host-keys \
+      --extra-files ./nixos-anywhere-extra-files
