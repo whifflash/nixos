@@ -10,20 +10,20 @@ verified.
 The following information was collected from the running Arch Linux installation before the NixOS
 reinstall:
 
-| Item | Observed value |
-| --- | --- |
-| Architecture | `x86_64` |
-| System | Lenovo ThinkCentre |
-| Processor | Intel Core i5-6500T, four cores |
-| Memory | 7.6 GiB usable |
-| Installation disk | `SAMSUNG MZ7TY256HDHP-000L7` |
-| Disk serial | `S307NDAHA17537` |
-| Disk capacity | 238.5 GiB |
-| Stable disk path | `/dev/disk/by-id/ata-SAMSUNG_MZ7TY256HDHP-000L7_S307NDAHA17537` |
-| Existing disk layout | 200 MiB EFI partition and an ext4 root partition |
-| Network interface | `eno1` under the previous Arch installation |
-| Previous LAN address | `10.20.31.41` |
-| kexec support | Present; `/sys/kernel/kexec_loaded` reported `0` before installation |
+| Item                 | Observed value                                                       |
+| -------------------- | -------------------------------------------------------------------- |
+| Architecture         | `x86_64`                                                             |
+| System               | Lenovo ThinkCentre                                                   |
+| Processor            | Intel Core i5-6500T, four cores                                      |
+| Memory               | 7.6 GiB usable                                                       |
+| Installation disk    | `SAMSUNG MZ7TY256HDHP-000L7`                                         |
+| Disk serial          | `S307NDAHA17537`                                                     |
+| Disk capacity        | 238.5 GiB                                                            |
+| Stable disk path     | `/dev/disk/by-id/ata-SAMSUNG_MZ7TY256HDHP-000L7_S307NDAHA17537`      |
+| Existing disk layout | 200 MiB EFI partition and an ext4 root partition                     |
+| Network interface    | `eno1` under the previous Arch installation                          |
+| Previous LAN address | `10.20.31.41`                                                        |
+| kexec support        | Present; `/sys/kernel/kexec_loaded` reported `0` before installation |
 
 The Disko configuration destroys and recreates the entire Samsung SSD. It creates a 1 GiB EFI
 System Partition and uses the remaining space for an ext4 root filesystem. Compressed RAM swap is

@@ -5,13 +5,13 @@ a fresh native InfluxDB 2 deployment.
 
 ## Target architecture
 
-| Component | Deployment | Persistent state |
-| --- | --- | --- |
-| Home Assistant 2025.12.3 | Podman OCI container | `/var/lib/home-assistant` |
-| Mosquitto | native NixOS service | `/var/lib/mosquitto` |
-| InfluxDB 2 | native NixOS service | `/var/lib/influxdb2` |
-| TLS | native Nginx and ACME | NixOS-managed |
-| Off-host backup | native Restic job | Vela `rest-server` |
+| Component                | Deployment            | Persistent state          |
+| ------------------------ | --------------------- | ------------------------- |
+| Home Assistant 2025.12.3 | Podman OCI container  | `/var/lib/home-assistant` |
+| Mosquitto                | native NixOS service  | `/var/lib/mosquitto`      |
+| InfluxDB 2               | native NixOS service  | `/var/lib/influxdb2`      |
+| TLS                      | native Nginx and ACME | NixOS-managed             |
+| Off-host backup          | native Restic job     | Vela `rest-server`        |
 
 Home Assistant uses host networking. Nginx proxies
 `https://ha.c4rb0n.cloud` to `127.0.0.1:8123`. InfluxDB listens only on
