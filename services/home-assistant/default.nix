@@ -95,7 +95,11 @@ in {
         devices = [
           "${cfg.zigbeeDevice}:/dev/ttyZIGBEE"
         ];
-        extraOptions = ["--network=host"];
+        extraOptions = [
+          "--network=host"
+          "--cap-add=NET_ADMIN"
+          "--cap-add=NET_RAW"
+        ];
       };
     };
 
