@@ -4,7 +4,15 @@ vars:
   HOST:
     sh: hostname -s
   FLAKE: "{{.ROOT_DIR}}"
-  TOPLEVEL: '{{.FLAKE}}#nixosConfigurations."{{.HOST}}".config.system.build.toplevel'
+  PLATFORM:
+    sh: uname -s
+  TOPLEVEL:
+    sh: |
+      case "{{.PLATFORM}}" in
+        Darwin) printf '%s#darwinConfigurations."%s".system\n' "{{.FLAKE}}" "{{.HOST}}" ;;
+        Linux) printf '%s#nixosConfigurations."%s".config.system.build.toplevel\n' "{{.FLAKE}}" "{{.HOST}}" ;;
+        *) printf 'unsupported platform: %s\n' "{{.PLATFORM}}" >&2; exit 1 ;;
+      esac
 
 tasks:
   default:
@@ -43,7 +51,7 @@ tasks:
         ' -- "{{.FLAKE}}" {{.CLI_ARGS}}
 
   build:
-    desc: Build the selected NixOS configuration without activating it
+    desc: Build the selected system configuration without activating it
     aliases: [b]
     preconditions:
       - sh: command -v nom >/dev/null 2>&1
@@ -72,7 +80,7 @@ tasks:
           ACTION: boot
 
   switch:
-    desc: Build and activate the selected NixOS configuration
+    desc: Build and activate the selected system configuration
     aliases: [s]
     cmds:
       - task: _rebuild
@@ -112,9 +120,34 @@ tasks:
         bash -o pipefail -c '
           action="$1"
           flake="$2"
-          shift 2
-          sudo -H nixos-rebuild "$action" \
-            --flake "$flake" \
-            --show-trace \
-            "$@" 2>&1 | nom
-        ' -- "{{.ACTION}}" "{{.FLAKE}}#{{.HOST}}" {{.CLI_ARGS}}
+          platform="$3"
+          shift 3
+
+          # Authenticate before stdout/stderr are piped through nom so the
+          # password prompt remains visible. -n prevents a hidden second prompt.
+          sudo -v
+
+          case "$platform" in
+            Darwin)
+              if [ "$action" = boot ]; then
+                printf "The boot action is only supported on NixOS.\n" >&2
+                exit 1
+              fi
+
+              sudo -n -H nix run nix-darwin -- "$action" \
+                --flake "$flake" \
+                --show-trace \
+                "$@" 2>&1 | nom
+              ;;
+            Linux)
+              sudo -n -H nixos-rebuild "$action" \
+                --flake "$flake" \
+                --show-trace \
+                "$@" 2>&1 | nom
+              ;;
+            *)
+              printf "Unsupported platform: %s\n" "$platform" >&2
+              exit 1
+              ;;
+          esac
+        ' -- "{{.ACTION}}" "{{.FLAKE}}#{{.HOST}}" "{{.PLATFORM}}" {{.CLI_ARGS}}

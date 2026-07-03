@@ -8,3 +8,4 @@ cliosetup.md
 *.qcow2
 deploy-clio-key.sh
 clio-vm.qcow2
+icarus/*

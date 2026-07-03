@@ -32,6 +32,7 @@ in {
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
     ./../../modules/modules.nix
+    ./../../services
 
     ./../../modules/ui/theme.nix
     ./../../modules/ui/stylix-bridge.nix
@@ -167,10 +168,18 @@ in {
   qt.platformTheme = "qt5ct";
   # (You can use "qt6ct" if you’re mostly on Qt6.)
 
-  networking.hostName = "mia"; # Define your hostname.
+  networking = {
+    hosts = {
+      "10.20.0.20" = [
+        "git.c4rb0n.cloud"
+      ];
+    };
 
-  # Enable networking
-  networking.networkmanager.enable = true;
+    hostName = "mia"; # Define your hostname.
+
+    # Enable networking via networkmanager
+    networkmanager.enable = true;
+  };
 
   hardware.graphics = {
     enable = true;
@@ -212,6 +221,27 @@ in {
   role_hardware-development.enable = false;
   role_tailscale-node.enable = true;
   role_laptop.enable = true;
+
+  infra.services = {
+    # Temporary bootstrap placement. Move this enable flag to Clio after migration.
+    gitea = {
+      enable = true;
+      # Bootstrap only. The restored production database already contains users.
+      disableRegistration = false;
+    };
+
+    mosquitto.enable = true;
+    influxdb.enable = true;
+
+    homeAssistant = {
+      enable = true;
+      # Enable after the cold state copy and Zigbee coordinator move.
+      autoStart = false;
+    };
+
+    # Enable only after the migrated stack passes functional validation.
+    homeAutomationBackup.enable = false;
+  };
 
   # Enable the X11 windowing system.
   services.xserver.enable = true;

@@ -9,15 +9,15 @@
   cfg = config.${id};
 
   # Gitea Sync
-  gitea_base = "git.c4rb0n.cloud";
-  syncUser = "mhr";
-  baseUrl = "https://${gitea_base}";
-  destDir = "/home/${syncUser}/${gitea_base}";
+  # gitea_base = "git.c4rb0n.cloud";
+  # syncUser = "mhr";
+  # baseUrl = "https://${gitea_base}";
+  # destDir = "/home/${syncUser}/${gitea_base}";
 
-  giteaSyncScript =
-    pkgs.writeShellScript "gitea-sync-user-repos.sh"
-    (builtins.readFile ../../scripts/gitea-sync-user-repos.sh);
-  envFile = config.sops.templates."gitea.env".path;
+  # giteaSyncScript =
+  #   pkgs.writeShellScript "gitea-sync-user-repos.sh"
+  #   (builtins.readFile ../../scripts/gitea-sync-user-repos.sh);
+  # envFile = config.sops.templates."gitea.env".path;
 
   # USB-Drive Handling
 
@@ -79,18 +79,18 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    sops.secrets."gitea/token" = {
-      sopsFile = ../../secrets/gitea-token.yaml;
-      format = "yaml";
-      key = "token";
-      owner = syncUser;
-      group = "users";
-      mode = "0440";
-    };
+    # sops.secrets."gitea/token" = {
+    #   sopsFile = ../../secrets/gitea-token.yaml;
+    #   format = "yaml";
+    #   key = "token";
+    #   owner = syncUser;
+    #   group = "users";
+    #   mode = "0440";
+    # };
 
-    sops.templates."gitea.env".content = ''
-      TOKEN=${config.sops.placeholder."gitea/token"}
-    '';
+    # sops.templates."gitea.env".content = ''
+    #   TOKEN=${config.sops.placeholder."gitea/token"}
+    # '';
 
     # Needed for sublime
     nixpkgs.config.permittedInsecurePackages = [
@@ -102,6 +102,7 @@ in {
         alacritty
         blueman
         chromium
+        code-cursor
         # firefox
         gopass-jsonapi
         gsimplecal
@@ -157,64 +158,64 @@ in {
           fi
         '';
       };
-      gitea-sync = {
-        description = "Sync Gitea repos (SSH) visible to PAT";
-        after = ["network-online.target"];
-        wants = ["network-online.target"];
+      # gitea-sync = {
+      #   description = "Sync Gitea repos (SSH) visible to PAT";
+      #   after = ["network-online.target"];
+      #   wants = ["network-online.target"];
 
-        preStart = ''
-          install -m 700 -d %S/gitea-sync
-          ssh-keyscan -T 5 "${gitea_base}" >> %S/gitea-sync/known_hosts 2>/dev/null || true
-        '';
-        environment = {
-          BASE_URL = baseUrl;
-          DEST_DIR = destDir;
-          LOG_LEVEL = "INFO"; # set to DEBUG for verbose
-        };
+      #   preStart = ''
+      #     install -m 700 -d %S/gitea-sync
+      #     ssh-keyscan -T 5 "${gitea_base}" >> %S/gitea-sync/known_hosts 2>/dev/null || true
+      #   '';
+      #   environment = {
+      #     BASE_URL = baseUrl;
+      #     DEST_DIR = destDir;
+      #     LOG_LEVEL = "INFO"; # set to DEBUG for verbose
+      #   };
 
-        serviceConfig = {
-          Type = "oneshot";
-          User = syncUser;
-          Group = "users";
-          SyslogIdentifier = "gitea-sync";
+      #   serviceConfig = {
+      #     Type = "oneshot";
+      #     User = syncUser;
+      #     Group = "users";
+      #     SyslogIdentifier = "gitea-sync";
 
-          # persistent state dir for known_hosts, counters, etc.
-          StateDirectory = "gitea-sync";
-          StateDirectoryMode = "0700";
+      #     # persistent state dir for known_hosts, counters, etc.
+      #     StateDirectory = "gitea-sync";
+      #     StateDirectoryMode = "0700";
 
-          EnvironmentFile = envFile;
-          ExecStart = "${giteaSyncScript}";
-          WorkingDirectory = destDir;
+      #     EnvironmentFile = envFile;
+      #     ExecStart = "${giteaSyncScript}";
+      #     WorkingDirectory = destDir;
 
-          Restart = "on-failure";
-          RestartSec = 30;
+      #     Restart = "on-failure";
+      #     RestartSec = 30;
 
-          # sandboxing
-          PrivateTmp = true;
-          NoNewPrivileges = true;
-          LockPersonality = true;
-          RestrictRealtime = true;
-          RestrictSUIDSGID = true;
-          CapabilityBoundingSet = "";
-          ProtectSystem = "strict";
-          ProtectHome = "read-only";
-          ReadWritePaths = [destDir "/var/lib/gitea-sync"];
-        };
+      #     # sandboxing
+      #     PrivateTmp = true;
+      #     NoNewPrivileges = true;
+      #     LockPersonality = true;
+      #     RestrictRealtime = true;
+      #     RestrictSUIDSGID = true;
+      #     CapabilityBoundingSet = "";
+      #     ProtectSystem = "strict";
+      #     ProtectHome = "read-only";
+      #     ReadWritePaths = [destDir "/var/lib/gitea-sync"];
+      #   };
 
-        # ensure PATH has what we need at unit runtime
-        path = [pkgs.git pkgs.jq pkgs.curl pkgs.openssh pkgs.coreutils pkgs.systemd];
-      };
+      #   # ensure PATH has what we need at unit runtime
+      #   path = [pkgs.git pkgs.jq pkgs.curl pkgs.openssh pkgs.coreutils pkgs.systemd];
+      # };
     };
 
-    systemd.timers.gitea-sync = {
-      wantedBy = ["timers.target"];
-      timerConfig = {
-        OnBootSec = "5m";
-        OnUnitActiveSec = "1h";
-        RandomizedDelaySec = "10m";
-        Persistent = true;
-      };
-    };
+    # systemd.timers.gitea-sync = {
+    #   wantedBy = ["timers.target"];
+    #   timerConfig = {
+    #     OnBootSec = "5m";
+    #     OnUnitActiveSec = "1h";
+    #     RandomizedDelaySec = "10m";
+    #     Persistent = true;
+    #   };
+    # };
 
     networking = {
       wireguard.enable = true;
