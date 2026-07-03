@@ -21,11 +21,76 @@ staging tree to Vela.
 
 ## Vela preparation
 
-Create a private `rest-server` account and repository named
-`restic-home-automation`. Store the HTTP password separately from the Restic
-repository encryption password.
+The current Vela container uses these bind mounts:
 
-The default repository URL is:
+```text
+/config/rest-server      -> /config
+/mnt/user/backups/restic -> /data
+```
+
+The container reads its password file from `/config/.htpasswd`, so the active
+host file is:
+
+```text
+/config/rest-server/.htpasswd
+```
+
+Confirm this before changing credentials:
+
+```bash
+docker inspect rest-server |
+  jq -r '.[0].Mounts[] | "\(.Source) -> \(.Destination) [\(.Mode)]"'
+
+docker inspect rest-server |
+  jq -r '.[0].Config.Env[]' |
+  grep -E 'PASSWORD_FILE|OPTIONS|VIRTUAL_HOST'
+
+ls -la /config/rest-server
+```
+
+Back up the current password file:
+
+```bash
+cp \
+  /config/rest-server/.htpasswd \
+  /config/rest-server/.htpasswd.bak
+```
+
+Append the private `rest-server` account. The `>>` operator is intentional;
+using `>` would overwrite the working `restic-gitea` account:
+
+```bash
+docker run --rm \
+  --entrypoint htpasswd \
+  httpd:2.4-alpine \
+  -Bbn \
+  restic-home-automation \
+  'REST_SERVER_HTTP_PASSWORD' \
+  >> /config/rest-server/.htpasswd
+```
+
+Verify both accounts and retain the existing permissions:
+
+```bash
+cut -d: -f1 /config/rest-server/.htpasswd
+chmod 0640 /config/rest-server/.htpasswd
+docker restart rest-server
+docker logs --tail 100 rest-server
+```
+
+Expected account names include:
+
+```text
+restic-gitea
+restic-home-automation
+```
+
+The repository directory does not need to be created manually. The NixOS
+Restic job uses `initialize = true`, so the first successful run initializes
+the private repository under `/mnt/user/backups/restic`.
+
+Store the HTTP password separately from the Restic repository encryption
+password. The default repository URL is:
 
 ```text
 rest:https://restic.c4rb0n.cloud/restic-home-automation
@@ -88,6 +153,57 @@ Confirm the generated timer and service:
 systemctl status restic-backups-home-automation.timer --no-pager
 systemctl list-timers restic-backups-home-automation.timer --all
 systemctl cat restic-backups-home-automation.service
+```
+
+## Schedule, downtime, and failure behavior
+
+The default timer configuration is:
+
+```text
+OnCalendar=04:30
+RandomizedDelaySec=15m
+Persistent=true
+```
+
+The backup therefore starts once per day between `04:30` and approximately
+`04:45`. `Persistent=true` means that a timer occurrence missed while Icarus
+was powered off runs after the host returns. It does not retry a backup that
+started and failed.
+
+Each invocation follows this order:
+
+1. stop Home Assistant and Mosquitto;
+2. copy their state to the local staging tree;
+3. create the logical InfluxDB backup;
+4. restart Home Assistant and Mosquitto;
+5. upload the completed staging tree to Vela;
+6. apply the retention policy.
+
+The service-stop window therefore covers only local copies and the logical
+InfluxDB backup. Vela availability does not extend the Home Assistant or
+Mosquitto downtime because both services are restarted before Restic begins
+its network upload. An exit trap also starts both services if local staging
+fails.
+
+The generated systemd service has a two-hour `TimeoutStartSec`. If Restic does
+not finish within that period, systemd terminates the invocation and records a
+failure. There is no automatic same-day restart loop; the next scheduled
+attempt is the next timer occurrence. Retry manually after fixing the cause:
+
+```bash
+sudo systemctl reset-failed restic-backups-home-automation.service
+sudo systemctl start restic-backups-home-automation.service
+sudo journalctl -fu restic-backups-home-automation.service
+```
+
+Inspect the effective schedule and timeout with:
+
+```bash
+systemctl list-timers restic-backups-home-automation.timer --all
+systemctl show restic-backups-home-automation.service \
+  --property=TimeoutStartUSec \
+  --property=Result \
+  --property=ExecMainStatus
 ```
 
 ## First manual backup
@@ -316,6 +432,12 @@ The staging command installs an exit trap before stopping Home Assistant and
 Mosquitto. If copying state or creating the InfluxDB backup fails, the trap
 starts both services again. The Restic cleanup command is also idempotent and
 starts both services after the backup attempt.
+
+If Vela is unavailable, local staging has already completed and Home Assistant
+and Mosquitto have already restarted. Restic normally reports the backend error
+and exits. A hung invocation is terminated by systemd after two hours. The
+timer does not retry failed executions automatically; either start the service
+manually after Vela returns or wait for the next daily invocation.
 
 Check failures with:
 

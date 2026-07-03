@@ -37,7 +37,19 @@ authenticates the `restic-home-automation` HTTP user at Vela's `rest-server`.
 Use different random values for these credentials.
 
 Create the matching private repository account on Vela before enabling the
-module. The default repository URL is:
+module. On the current Vela deployment, the running `rest-server` container
+bind-mounts `/config/rest-server` from the host to `/config` in the container,
+and reads `/config/.htpasswd`. Therefore, the active password file is:
+
+```text
+/config/rest-server/.htpasswd
+```
+
+Append the `restic-home-automation` account to that file; do not overwrite the
+existing `restic-gitea` entry. See the runbook for the exact commands and
+verification steps.
+
+The default repository URL is:
 
 ```text
 rest:https://restic.c4rb0n.cloud/restic-home-automation
@@ -46,7 +58,16 @@ rest:https://restic.c4rb0n.cloud/restic-home-automation
 ## Schedule and retention
 
 The default timer runs daily at `04:30`, with a persistent timer and up to 15
-minutes of randomized delay. Retention is:
+minutes of randomized delay. A persistent timer runs a missed invocation after
+the host returns, but it does not automatically retry a failed backup.
+
+A single invocation is limited to two hours. Home Assistant and Mosquitto are
+restarted before the Restic upload starts, so an unavailable Vela server does
+not leave either service stopped while the network operation waits or fails.
+The next automatic attempt is the following timer invocation unless the service
+is started manually.
+
+Retention is:
 
 - 7 daily snapshots
 - 5 weekly snapshots

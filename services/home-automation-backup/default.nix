@@ -30,6 +30,12 @@ in {
       default = "04:30";
       description = "systemd OnCalendar expression for the backup.";
     };
+
+    timeoutStartSec = lib.mkOption {
+      type = lib.types.str;
+      default = "2h";
+      description = "Maximum duration of one backup service invocation.";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -68,9 +74,13 @@ in {
       };
     };
 
-    systemd.tmpfiles.rules = [
-      "d ${cfg.stagingRoot} 0700 root root - -"
-    ];
+    systemd = {
+      services."restic-backups-home-automation".serviceConfig.TimeoutStartSec = cfg.timeoutStartSec;
+
+      tmpfiles.rules = [
+        "d ${cfg.stagingRoot} 0700 root root - -"
+      ];
+    };
 
     services.restic.backups."home-automation" = {
       inherit (cfg) repository;
