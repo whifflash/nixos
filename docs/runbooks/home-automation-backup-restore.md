@@ -1,7 +1,7 @@
 # Home automation backup and restore
 
 This runbook covers the coordinated Restic backup for Home Assistant,
-Mosquitto, and InfluxDB on Icarus.
+Mosquitto, InfluxDB, and UniFi on Icarus.
 
 ## Backup contents
 
@@ -11,10 +11,11 @@ The backup job creates this local staging tree:
 /var/backup/home-automation/current/
 ├── home-assistant/  cold copy of /var/lib/home-assistant
 ├── mosquitto/       cold copy of /var/lib/mosquitto
+├── unifi/           cold copy of /var/lib/unifi
 └── influxdb/        logical backup created by `influx backup`
 ```
 
-Home Assistant and Mosquitto are stopped only while their local state is being
+Home Assistant, Mosquitto, and UniFi are stopped only while their local state is being
 copied. InfluxDB remains online and is captured through its supported logical
 backup command. The stopped services are restarted before Restic uploads the
 staging tree to Vela.
@@ -172,17 +173,17 @@ started and failed.
 
 Each invocation follows this order:
 
-1. stop Home Assistant and Mosquitto;
+1. stop Home Assistant, Mosquitto, and UniFi;
 2. copy their state to the local staging tree;
 3. create the logical InfluxDB backup;
-4. restart Home Assistant and Mosquitto;
+4. restart Home Assistant, Mosquitto, and UniFi;
 5. upload the completed staging tree to Vela;
 6. apply the retention policy.
 
 The service-stop window therefore covers only local copies and the logical
-InfluxDB backup. Vela availability does not extend the Home Assistant or
-Mosquitto downtime because both services are restarted before Restic begins
-its network upload. An exit trap also starts both services if local staging
+InfluxDB backup. Vela availability does not extend the Home Assistant, Mosquitto, or UniFi
+downtime because all three services are restarted before Restic begins its
+network upload. An exit trap also starts all three services if local staging
 fails.
 
 The generated systemd service has a two-hour `TimeoutStartSec`. If Restic does
@@ -215,12 +216,13 @@ sudo systemctl start restic-backups-home-automation.service
 sudo journalctl -fu restic-backups-home-automation.service
 ```
 
-In another terminal, confirm that Home Assistant and Mosquitto return to the
+In another terminal, confirm that Home Assistant, Mosquitto, and UniFi return to the
 running state after local staging completes:
 
 ```bash
 systemctl status \
   podman-home-assistant.service \
+  podman-unifi.service \
   mosquitto.service \
   influxdb2.service \
   --no-pager
@@ -232,6 +234,7 @@ A successful run should leave a populated staging tree:
 sudo du -sh /var/backup/home-automation/current/*
 sudo test -f /var/backup/home-automation/current/home-assistant/.storage/core.config_entries
 sudo test -f /var/backup/home-automation/current/mosquitto/mosquitto.db
+sudo test -d /var/backup/home-automation/current/unifi
 sudo test -d /var/backup/home-automation/current/influxdb
 ```
 
@@ -272,6 +275,7 @@ restore_root=/var/tmp/home-automation-restic-test/var/backup/home-automation/cur
 sudo test -f "$restore_root/home-assistant/.storage/core.config_entries"
 sudo test -f "$restore_root/home-assistant/home-assistant_v2.db"
 sudo test -f "$restore_root/mosquitto/mosquitto.db"
+sudo test -d "$restore_root/unifi"
 sudo test -d "$restore_root/influxdb"
 ```
 
@@ -326,6 +330,7 @@ restore_root=/var/tmp/home-automation-restore/var/backup/home-automation/current
 
 ```bash
 sudo systemctl stop podman-home-assistant.service
+sudo systemctl stop podman-unifi.service
 sudo systemctl stop mosquitto.service
 sudo systemctl stop influxdb2.service
 ```
@@ -337,6 +342,7 @@ stamp="$(date +%F-%H%M%S)"
 
 sudo mv /var/lib/home-assistant "/var/lib/home-assistant.before-restore-$stamp"
 sudo mv /var/lib/mosquitto "/var/lib/mosquitto.before-restore-$stamp"
+sudo mv /var/lib/unifi "/var/lib/unifi.before-restore-$stamp"
 sudo mv /var/lib/influxdb2 "/var/lib/influxdb2.before-restore-$stamp"
 ```
 
@@ -373,7 +379,21 @@ sudo rsync \
 sudo chown -R mosquitto:mosquitto /var/lib/mosquitto
 ```
 
-### 6. Restore InfluxDB
+### 6. Restore UniFi
+
+```bash
+sudo install -d -m 0750 /var/lib/unifi
+sudo rsync \
+  --archive \
+  --hard-links \
+  --acls \
+  --xattrs \
+  --numeric-ids \
+  "$restore_root/unifi/" \
+  /var/lib/unifi/
+```
+
+### 7. Restore InfluxDB
 
 Start a clean InfluxDB service and restore the logical backup:
 
@@ -397,15 +417,17 @@ conflicts, stop and inspect the error before deleting data. Do not combine a
 partial restore with the preserved pre-restore state unless the intended
 organization and bucket mappings are understood.
 
-### 7. Start and validate
+### 8. Start and validate
 
 ```bash
 sudo systemctl start mosquitto.service
+sudo systemctl start podman-unifi.service
 sudo systemctl start podman-home-assistant.service
 
 systemctl status \
   influxdb2.service \
   mosquitto.service \
+  podman-unifi.service \
   podman-home-assistant.service \
   --no-pager
 ```
@@ -418,6 +440,7 @@ curl --fail http://127.0.0.1:8123
 sudo journalctl \
   -u influxdb2 \
   -u mosquitto \
+  -u podman-unifi \
   -u podman-home-assistant \
   --since "10 minutes ago" \
   --no-pager

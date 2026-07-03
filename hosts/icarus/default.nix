@@ -75,7 +75,12 @@
       autoStart = true;
     };
 
-    homeAutomationBackup.enable = true;
+    unifi = {
+      enable = true;
+      autoStart = false;
+    };
+
+    homeAutomationBackup.enable = false;
   };
 
   zramSwap.enable = true;

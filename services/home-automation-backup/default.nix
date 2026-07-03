@@ -6,12 +6,13 @@
 }: let
   cfg = config.infra.services.homeAutomationBackup;
   homeAssistantUnit = "${config.virtualisation.oci-containers.containers."home-assistant".serviceName}.service";
+  unifiUnit = "${config.virtualisation.oci-containers.containers.unifi.serviceName}.service";
   operatorTokenSecret = "influxdb/operator_token";
   resticPasswordSecret = "restic/home_automation/repository_password";
   resticEnvironmentSecret = "restic/home_automation/environment";
 in {
   options.infra.services.homeAutomationBackup = {
-    enable = lib.mkEnableOption "the combined Home Assistant, Mosquitto, and InfluxDB backup";
+    enable = lib.mkEnableOption "the combined Home Assistant, Mosquitto, InfluxDB, and UniFi backup";
 
     repository = lib.mkOption {
       type = lib.types.str;
@@ -56,6 +57,14 @@ in {
         assertion = config.infra.services.influxdb.enable;
         message = "homeAutomationBackup requires infra.services.influxdb.enable";
       }
+      {
+        assertion = config.infra.services.unifi.enable;
+        message = "homeAutomationBackup requires infra.services.unifi.enable";
+      }
+      {
+        assertion = config.infra.services.unifi.autoStart;
+        message = "homeAutomationBackup requires UniFi autoStart after cutover";
+      }
     ];
 
     sops.secrets = {
@@ -94,17 +103,20 @@ in {
 
         restart_services() {
           ${pkgs.systemd}/bin/systemctl start mosquitto.service
+          ${pkgs.systemd}/bin/systemctl start ${unifiUnit}
           ${pkgs.systemd}/bin/systemctl start ${homeAssistantUnit}
         }
 
         trap restart_services EXIT
         ${pkgs.systemd}/bin/systemctl stop ${homeAssistantUnit}
+        ${pkgs.systemd}/bin/systemctl stop ${unifiUnit}
         ${pkgs.systemd}/bin/systemctl stop mosquitto.service
 
         ${pkgs.coreutils}/bin/rm -rf ${cfg.stagingRoot}/current
         ${pkgs.coreutils}/bin/install -d -m 0700 \
           ${cfg.stagingRoot}/current/home-assistant \
-          ${cfg.stagingRoot}/current/mosquitto
+          ${cfg.stagingRoot}/current/mosquitto \
+          ${cfg.stagingRoot}/current/unifi
 
         ${pkgs.rsync}/bin/rsync \
           --archive \
@@ -126,6 +138,16 @@ in {
           /var/lib/mosquitto/ \
           ${cfg.stagingRoot}/current/mosquitto/
 
+        ${pkgs.rsync}/bin/rsync \
+          --archive \
+          --hard-links \
+          --acls \
+          --xattrs \
+          --numeric-ids \
+          --delete \
+          /var/lib/unifi/ \
+          ${cfg.stagingRoot}/current/unifi/
+
         ${pkgs.influxdb2-cli}/bin/influx backup \
           --host http://127.0.0.1:${toString config.infra.services.influxdb.httpPort} \
           --token "$(${pkgs.coreutils}/bin/cat ${config.sops.secrets.${operatorTokenSecret}.path})" \
@@ -138,6 +160,7 @@ in {
       backupCleanupCommand = ''
         set -euo pipefail
         ${pkgs.systemd}/bin/systemctl start mosquitto.service
+        ${pkgs.systemd}/bin/systemctl start ${unifiUnit}
         ${pkgs.systemd}/bin/systemctl start ${homeAssistantUnit}
       '';
 

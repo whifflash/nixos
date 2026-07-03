@@ -5,19 +5,20 @@ This module owns the consistency boundary across the home-automation stack:
 - Home Assistant OCI state
 - native Mosquitto persistence
 - native InfluxDB logical backups
+- UniFi Network Application OCI state
 
 The generated Restic job performs the following sequence:
 
-1. stop Home Assistant and Mosquitto;
+1. stop Home Assistant, Mosquitto, and UniFi;
 2. copy their cold state into `/var/backup/home-automation/current`;
 3. create an InfluxDB logical backup in the same staging tree;
-4. restart Home Assistant and Mosquitto;
+4. restart Home Assistant, Mosquitto, and UniFi;
 5. upload the staging tree to Vela with Restic;
 6. apply the configured retention policy.
 
-Home Assistant and Mosquitto are restarted before the network upload begins, so
-their downtime is limited to local staging time. A shell trap restarts both
-services if staging fails.
+Home Assistant, Mosquitto, and UniFi are restarted before the network upload begins, so
+their downtime is limited to local staging time. A shell trap restarts all
+three stopped services if staging fails.
 
 ## Required SOPS values
 
@@ -61,7 +62,7 @@ The default timer runs daily at `04:30`, with a persistent timer and up to 15
 minutes of randomized delay. A persistent timer runs a missed invocation after
 the host returns, but it does not automatically retry a failed backup.
 
-A single invocation is limited to two hours. Home Assistant and Mosquitto are
+A single invocation is limited to two hours. Home Assistant, Mosquitto, and UniFi are
 restarted before the Restic upload starts, so an unavailable Vela server does
 not leave either service stopped while the network operation waits or fails.
 The next automatic attempt is the following timer invocation unless the service

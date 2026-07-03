@@ -12,6 +12,7 @@
     ./hub
     ./influxdb
     ./mosquitto
+    ./unifi
   ];
 
   options.infra.domain = lib.mkOption {

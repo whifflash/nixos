@@ -43,3 +43,13 @@ services:
       zigbee: Silicon Labs Sonoff Zigbee 3.0 USB Dongle Plus
     backup:
       off_host: restic-to-vela-after-cutover
+
+  unifi:
+    endpoint: https://unifi.c4rb0n.cloud
+    production_host: icarus
+    status: migration-preparation
+    implementation: nixos-managed-oci
+    stateful: true
+    backup:
+      application_backup: /var/backups/unifi-import
+      off_host: restic-to-vela-after-cutover
