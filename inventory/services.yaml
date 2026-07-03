@@ -12,10 +12,11 @@ services:
 
   hub:
     endpoint: https://hub.c4rb0n.cloud
-    current_host: clio
+    production_host: icarus
     status: active
     implementation: nixos-native
     stateful: false
+    backup: not-required
 
   mosquitto:
     endpoint: mqtt.c4rb0n.cloud:1883

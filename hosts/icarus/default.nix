@@ -67,6 +67,7 @@
       disableRegistration = true;
     };
 
+    hub.enable = true;
     mosquitto.enable = true;
     influxdb.enable = true;
 

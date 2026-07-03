@@ -5,10 +5,6 @@
     ./secrets.nix
   ];
 
-  # Clio keeps serving the existing hub. Other services are enabled by their
-  # current host while they are migrated one at a time.
-  infra.services.hub.enable = true;
-
   nix.settings = {
     experimental-features = ["nix-command" "flakes"];
     # builders = "ssh-ng://YOUR_LINUX_USER@icarus x86_64-linux - 4 1 big-parallel,kvm";
