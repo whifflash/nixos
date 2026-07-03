@@ -305,7 +305,9 @@ sudo restic-home-automation check
 ```
 
 The job restarts Mosquitto and Home Assistant before Restic uploads the staged
-data, so service downtime is independent of network transfer time.
+data, so service downtime is independent of network transfer time. See
+`docs/runbooks/home-automation-backup-restore.md` for repository setup, manual
+validation, restore testing, and full recovery instructions.
 
 ## Test a restore
 

@@ -126,6 +126,7 @@ in {
       '';
 
       backupCleanupCommand = ''
+        set -euo pipefail
         ${pkgs.systemd}/bin/systemctl start mosquitto.service
         ${pkgs.systemd}/bin/systemctl start ${homeAssistantUnit}
       '';

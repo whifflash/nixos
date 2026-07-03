@@ -75,7 +75,7 @@
       autoStart = true;
     };
 
-    homeAutomationBackup.enable = false;
+    homeAutomationBackup.enable = true;
   };
 
   zramSwap.enable = true;

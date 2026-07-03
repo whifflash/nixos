@@ -1,21 +1,27 @@
 # Home automation backup
 
-This module remains separate because it coordinates one consistency boundary
-across three services:
+This module owns the consistency boundary across the home-automation stack:
 
 - Home Assistant OCI state
 - native Mosquitto persistence
-- native InfluxDB logical backup
+- native InfluxDB logical backups
 
-The job stops Home Assistant and Mosquitto, stages their cold state, creates an
-InfluxDB logical backup, restarts the services, and then uploads the staging
-directory to Vela with Restic. Network transfer time therefore does not extend
-Home Assistant downtime.
+The generated Restic job performs the following sequence:
 
-Enable it only after migration validation and after Home Assistant automatic
-startup is enabled.
+1. stop Home Assistant and Mosquitto;
+2. copy their cold state into `/var/backup/home-automation/current`;
+3. create an InfluxDB logical backup in the same staging tree;
+4. restart Home Assistant and Mosquitto;
+5. upload the staging tree to Vela with Restic;
+6. apply the configured retention policy.
 
-Expected SOPS keys:
+Home Assistant and Mosquitto are restarted before the network upload begins, so
+their downtime is limited to local staging time. A shell trap restarts both
+services if staging fails.
+
+## Required SOPS values
+
+Add the following values to `secrets/infrastructure.yaml`:
 
 ```yaml
 restic:
@@ -26,5 +32,26 @@ restic:
       RESTIC_REST_PASSWORD=...
 ```
 
-Create the matching `restic-home-automation` account in Vela's `rest-server`
-before enabling the module.
+`repository_password` encrypts the Restic repository. `RESTIC_REST_PASSWORD`
+authenticates the `restic-home-automation` HTTP user at Vela's `rest-server`.
+Use different random values for these credentials.
+
+Create the matching private repository account on Vela before enabling the
+module. The default repository URL is:
+
+```text
+rest:https://restic.c4rb0n.cloud/restic-home-automation
+```
+
+## Schedule and retention
+
+The default timer runs daily at `04:30`, with a persistent timer and up to 15
+minutes of randomized delay. Retention is:
+
+- 7 daily snapshots
+- 5 weekly snapshots
+- 12 monthly snapshots
+- 3 yearly snapshots
+
+See `docs/runbooks/home-automation-backup-restore.md` for setup, validation,
+manual execution, and complete restore procedures.
