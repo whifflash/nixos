@@ -4,8 +4,12 @@ Home Assistant runs as the upstream OCI image managed declaratively by NixOS
 and Podman. Mosquitto, InfluxDB, Nginx, ACME, and Restic remain native NixOS
 services.
 
-The migration image is pinned to `2025.12.3`. After validation, pin the image by
-digest as well as by version.
+The migration started on `2025.12.3` and was upgraded successfully through
+monthly release trains to `2026.7.0`. Keep the configured image pinned to an
+explicit version, and consider adding a digest after validation.
+
+Follow [`docs/runbooks/home-assistant-upgrade.md`](../../docs/runbooks/home-assistant-upgrade.md)
+for version discovery, staged upgrades, validation, and rollback.
 
 ## Persistent state
 
