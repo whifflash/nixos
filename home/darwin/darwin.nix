@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   lib,
   ...
@@ -36,14 +37,19 @@
 
     git = {
       enable = true;
-      userName = "mhr";
-      userEmail = "mhr@c4rb0n.cloud";
-      extraConfig.init.defaultBranch = "main";
-      extraConfig.core.editor = "vim";
+      settings = {
+        core.editor = "vim";
+        init.defaultBranch = "main";
+        user = {
+          email = "mhr@c4rb0n.cloud";
+          name = "mhr";
+        };
+      };
     };
 
     zsh = {
       enable = true;
+      dotDir = config.home.homeDirectory;
       # autosuggestions.enable = true;
       syntaxHighlighting.enable = true;
 
