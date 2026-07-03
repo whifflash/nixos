@@ -11,6 +11,7 @@
     ./home-automation-backup
     ./hub
     ./influxdb
+    ./inverter-data-collector
     ./mosquitto
     ./unifi
   ];

@@ -70,6 +70,7 @@
     hub.enable = true;
     mosquitto.enable = true;
     influxdb.enable = true;
+    inverterDataCollector.enable = true;
 
     homeAssistant = {
       enable = true;

@@ -54,3 +54,14 @@ services:
     backup:
       application_backup: /var/backups/unifi-import
       off_host: restic-to-vela-after-cutover
+
+  inverter-data-collector:
+    endpoint: mqtt://127.0.0.1:1883/house/pv/sma/stp20_50/state
+    production_host: icarus
+    status: active
+    implementation: nixos-native
+    stateful: false
+    backup: not-required
+    hardware:
+      inverter: SMA Tripower X / STP 20-50
+      protocol: SunSpec Modbus TCP

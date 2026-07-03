@@ -1,0 +1,793 @@
+diff --git a/hosts/icarus/default.nix b/hosts/icarus/default.nix
+index 3c7ed2c..1d9240d 100644
+--- a/hosts/icarus/default.nix
++++ b/hosts/icarus/default.nix
+@@ -70,6 +70,7 @@
+     hub.enable = true;
+     mosquitto.enable = true;
+     influxdb.enable = true;
++    inverterDataCollector.enable = true;
+ 
+     homeAssistant = {
+       enable = true;
+diff --git a/inventory/services.yaml b/inventory/services.yaml
+index 4969f88..6ba62f0 100644
+--- a/inventory/services.yaml
++++ b/inventory/services.yaml
+@@ -54,3 +54,14 @@ services:
+     backup:
+       application_backup: /var/backups/unifi-import
+       off_host: restic-to-vela-after-cutover
++
++  inverter-data-collector:
++    endpoint: mqtt://127.0.0.1:1883/house/pv/sma/stp20_50/state
++    production_host: icarus
++    status: active
++    implementation: nixos-native
++    stateful: false
++    backup: not-required
++    hardware:
++      inverter: SMA Tripower X / STP 20-50
++      protocol: SunSpec Modbus TCP
+diff --git a/services/README.md b/services/README.md
+index fa0c721..37545d5 100644
+--- a/services/README.md
++++ b/services/README.md
+@@ -12,7 +12,8 @@ A host imports `../../services` and enables only the services it owns:
+ ```
+ 
+ Current shared infrastructure includes Gitea, the static hub, Mosquitto, InfluxDB,
+-Home Assistant, UniFi Network Application, and the cross-service home-automation backup job.
++Home Assistant, UniFi Network Application, the inverter data collector, and the cross-service
++home-automation backup job.
+ 
+ Service placement belongs in `hosts/` and `inventory/services.yaml`; service implementation
+ belongs here.
+diff --git a/services/default.nix b/services/default.nix
+index bce8f60..2a5f287 100644
+--- a/services/default.nix
++++ b/services/default.nix
+@@ -11,6 +11,7 @@
+     ./home-automation-backup
+     ./hub
+     ./influxdb
++    ./inverter-data-collector
+     ./mosquitto
+     ./unifi
+   ];
+diff --git a/services/inverter-data-collector/README.md b/services/inverter-data-collector/README.md
+new file mode 100644
+index 0000000..de73f36
+--- /dev/null
++++ b/services/inverter-data-collector/README.md
+@@ -0,0 +1,95 @@
++# Inverter data collector
++
++`inverter-data-collector` is a native systemd service that reads the SMA roof inverter over
++SunSpec Modbus TCP and publishes measurements plus Home Assistant MQTT discovery documents.
++
++The service is stateless. Its implementation and configuration live in Git, while MQTT
++credentials are supplied through SOPS. It therefore does not require backup integration.
++
++## Runtime
++
++- Inverter: `10.20.80.101:502`, SunSpec unit ID `126`
++- Poll interval: 5 seconds
++- MQTT broker: local Mosquitto on `127.0.0.1:1883`
++- MQTT user: `inverter-data-collector`
++- State topic: `house/pv/sma/stp20_50/state`
++- Availability topic: `house/pv/sma/stp20_50/availability`
++- Discovery prefix: `homeassistant`
++
++The dedicated MQTT account may only publish the collector state, availability, and Home
++Assistant discovery topics. The Mosquitto user is declared through Nix; no manual broker user
++creation is required.
++
++## Secrets
++
++Two SOPS values represent the same generated password in different forms:
++
++```yaml
++mosquitto:
++  users:
++    inverter-data-collector:
++      password_hash: "$7$..."
++
++inverter-data-collector:
++  mqtt_password: "plaintext password used by the client"
++```
++
++- `password_hash` is consumed by Mosquitto.
++- `mqtt_password` is delivered to the collector through a systemd credential.
++
++Generate a strong password and its Mosquitto hash without adding the password to Git:
++
++```bash
++password_file="$(mktemp)"
++trap 'rm -f "$password_file"' EXIT
++
++nix shell nixpkgs#mosquitto -c \
++  mosquitto_passwd -c "$password_file" inverter-data-collector
++
++cat "$password_file"
++```
++
++Enter the same plaintext password under `inverter-data-collector/mqtt_password` and copy only
++the hash after the username into `mosquitto/users/inverter-data-collector/password_hash`:
++
++```bash
++sops secrets/infrastructure.yaml
++```
++
++Delete the temporary password file after editing SOPS. The collector never receives the
++plaintext password through its command line or ordinary environment.
++
++## Operations
++
++```bash
++systemctl status inverter-data-collector.service --no-pager
++journalctl -fu inverter-data-collector.service
++```
++
++Inspect the retained availability value and live state:
++
++```bash
++nix shell nixpkgs#mosquitto -c \
++  mosquitto_sub \
++  -h 127.0.0.1 \
++  -u inverter-data-collector \
++  -P 'MQTT_PASSWORD' \
++  -t 'house/pv/sma/stp20_50/#' \
++  -v
++```
++
++Prefer reading the Home Assistant entities or service journal over placing the password in shell
++history during routine checks.
++
++## Failure behavior
++
++The process reconnects and republishes Home Assistant discovery after MQTT reconnects. Inverter
++or MQTT failures are logged and retried every 15 seconds. SIGTERM publishes retained `offline`
++availability before shutdown where the broker remains reachable.
++
++## Future extension
++
++The current implementation deliberately targets one SMA SunSpec inverter. When a replacement
++inverter or additional self-built meter is introduced, add a second implementation or generalize
++the collector based on the actual protocol rather than introducing an unused plugin framework
++now.
+diff --git a/services/inverter-data-collector/collector.py b/services/inverter-data-collector/collector.py
+new file mode 100644
+index 0000000..37ef8d2
+--- /dev/null
++++ b/services/inverter-data-collector/collector.py
+@@ -0,0 +1,370 @@
++#!/usr/bin/env python3
++"""Read one SMA SunSpec inverter and publish its measurements over MQTT."""
++
++from __future__ import annotations
++
++import json
++import logging
++import os
++import signal
++import threading
++import time
++from datetime import datetime, timezone
++from pathlib import Path
++from typing import Any
++
++import paho.mqtt.client as mqtt
++import sunspec2.modbus.client as sunspec_client
++
++LOGGER = logging.getLogger("inverter-data-collector")
++STOP_EVENT = threading.Event()
++
++STATUS_MAP = {
++    1: "off",
++    2: "sleeping",
++    3: "starting",
++    4: "producing",
++    5: "throttled",
++    6: "shutting_down",
++    7: "fault",
++    8: "standby",
++}
++
++
++def env_int(name: str, default: int) -> int:
++    return int(os.environ.get(name, str(default)))
++
++
++def read_credential(name: str) -> str:
++    credentials_directory = os.environ.get("CREDENTIALS_DIRECTORY")
++    if credentials_directory is None:
++        raise RuntimeError("systemd did not provide CREDENTIALS_DIRECTORY")
++
++    path = Path(credentials_directory) / name
++    value = path.read_text(encoding="utf-8").strip()
++    if not value:
++        raise RuntimeError(f"credential {name!r} is empty")
++    return value
++
++
++def iso_utc() -> str:
++    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
++
++
++def safe_cvalue(model: Any, point_name: str) -> Any:
++    point = model.points.get(point_name)
++    if point is None:
++        return None
++    return getattr(point, "cvalue", None)
++
++
++def discovery_sensor(
++    client: mqtt.Client,
++    *,
++    discovery_prefix: str,
++    state_topic: str,
++    availability_topic: str,
++    device_id: str,
++    serial: str,
++    manufacturer: str,
++    model: str,
++    firmware: str,
++    name: str,
++    unique_suffix: str,
++    value_template: str,
++    unit: str | None = None,
++    device_class: str | None = None,
++    state_class: str | None = None,
++    icon: str | None = None,
++) -> None:
++    unique_id = f"{device_id}_{unique_suffix}"
++    payload: dict[str, Any] = {
++        "name": name,
++        "unique_id": unique_id,
++        "state_topic": state_topic,
++        "value_template": value_template,
++        "availability_topic": availability_topic,
++        "payload_available": "online",
++        "payload_not_available": "offline",
++        "qos": 0,
++        "device": {
++            "identifiers": [serial],
++            "manufacturer": manufacturer,
++            "model": model,
++            "name": f"SMA {model} ({serial})",
++            "sw_version": firmware,
++        },
++    }
++
++    optional_values = {
++        "unit_of_measurement": unit,
++        "device_class": device_class,
++        "state_class": state_class,
++        "icon": icon,
++    }
++    payload.update({key: value for key, value in optional_values.items() if value is not None})
++
++    topic = f"{discovery_prefix}/sensor/{unique_id}/config"
++    client.publish(topic, json.dumps(payload), qos=1, retain=True)
++
++
++def publish_discovery(
++    client: mqtt.Client,
++    *,
++    discovery_prefix: str,
++    state_topic: str,
++    availability_topic: str,
++    manufacturer: str,
++    model: str,
++    serial: str,
++    firmware: str,
++) -> None:
++    device_id = f"sma_{serial}"
++    common = {
++        "client": client,
++        "discovery_prefix": discovery_prefix,
++        "state_topic": state_topic,
++        "availability_topic": availability_topic,
++        "device_id": device_id,
++        "serial": serial,
++        "manufacturer": manufacturer,
++        "model": model,
++        "firmware": firmware,
++    }
++
++    sensors = [
++        {
++            "name": "PV Power",
++            "unique_suffix": "ac_power_w",
++            "value_template": "{{ value_json.ac_power_w }}",
++            "unit": "W",
++            "device_class": "power",
++            "state_class": "measurement",
++        },
++        {
++            "name": "PV Energy Total",
++            "unique_suffix": "energy_total_kwh",
++            "value_template": "{{ (value_json.ac_energy_total_wh | float / 1000) | round(3) }}",
++            "unit": "kWh",
++            "device_class": "energy",
++            "state_class": "total_increasing",
++        },
++        {
++            "name": "PV Operating State",
++            "unique_suffix": "status_text",
++            "value_template": "{{ value_json.status_text }}",
++            "icon": "mdi:state-machine",
++        },
++        {
++            "name": "Grid Frequency",
++            "unique_suffix": "grid_hz",
++            "value_template": "{{ value_json.grid_hz }}",
++            "unit": "Hz",
++            "device_class": "frequency",
++            "state_class": "measurement",
++        },
++        {
++            "name": "L1 Voltage",
++            "unique_suffix": "vac_l1_v",
++            "value_template": "{{ value_json.vac_l1_v }}",
++            "unit": "V",
++            "device_class": "voltage",
++            "state_class": "measurement",
++        },
++        {
++            "name": "L2 Voltage",
++            "unique_suffix": "vac_l2_v",
++            "value_template": "{{ value_json.vac_l2_v }}",
++            "unit": "V",
++            "device_class": "voltage",
++            "state_class": "measurement",
++        },
++        {
++            "name": "L3 Voltage",
++            "unique_suffix": "vac_l3_v",
++            "value_template": "{{ value_json.vac_l3_v }}",
++            "unit": "V",
++            "device_class": "voltage",
++            "state_class": "measurement",
++        },
++        {
++            "name": "PV Cabinet Temperature",
++            "unique_suffix": "temp_cab_c",
++            "value_template": "{{ value_json.temp_cab_c }}",
++            "unit": "°C",
++            "device_class": "temperature",
++            "state_class": "measurement",
++        },
++    ]
++
++    for sensor in sensors:
++        discovery_sensor(**common, **sensor)
++
++
++def signal_handler(signum: int, _frame: Any) -> None:
++    LOGGER.info("received signal %s; shutting down", signum)
++    STOP_EVENT.set()
++
++
++def run_collector() -> None:
++    sma_host = os.environ["SMA_HOST"]
++    sma_port = env_int("SMA_MODBUS_PORT", 502)
++    sma_slave_id = env_int("SMA_SLAVE_ID", 126)
++    poll_seconds = env_int("POLL_SECONDS", 5)
++
++    mqtt_host = os.environ.get("MQTT_HOST", "127.0.0.1")
++    mqtt_port = env_int("MQTT_PORT", 1883)
++    mqtt_username = os.environ.get("MQTT_USERNAME", "inverter-data-collector")
++    mqtt_password = read_credential("mqtt-password")
++    state_topic = os.environ["MQTT_STATE_TOPIC"]
++    availability_topic = os.environ["MQTT_AVAIL_TOPIC"]
++    discovery_prefix = os.environ.get("HA_DISCOVERY_PREFIX", "homeassistant")
++
++    device = sunspec_client.SunSpecModbusClientDeviceTCP(
++        slave_id=sma_slave_id,
++        ipaddr=sma_host,
++        ipport=sma_port,
++        timeout=3,
++    )
++    device.scan()
++
++    identification = device.models.get(1, [None])[0]
++    if identification is None:
++        raise RuntimeError("SunSpec model 1 was not found")
++    identification.read()
++
++    manufacturer = safe_cvalue(identification, "Mn") or "SMA"
++    model = safe_cvalue(identification, "Md") or "Inverter"
++    serial = str(safe_cvalue(identification, "SN") or "unknown")
++    firmware = safe_cvalue(identification, "Vr") or "unknown"
++
++    measurements = device.models.get(103, [None])[0]
++    if measurements is None:
++        raise RuntimeError("SunSpec model 103 was not found")
++
++    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
++    client.username_pw_set(mqtt_username, mqtt_password)
++    client.will_set(availability_topic, payload="offline", qos=1, retain=True)
++
++    def on_connect(
++        connected_client: mqtt.Client,
++        _userdata: Any,
++        _flags: mqtt.ConnectFlags,
++        reason_code: mqtt.ReasonCode,
++        _properties: mqtt.Properties | None,
++    ) -> None:
++        if reason_code.is_failure:
++            LOGGER.error("MQTT connection failed: %s", reason_code)
++            return
++
++        LOGGER.info("connected to MQTT broker %s:%s", mqtt_host, mqtt_port)
++        publish_discovery(
++            connected_client,
++            discovery_prefix=discovery_prefix,
++            state_topic=state_topic,
++            availability_topic=availability_topic,
++            manufacturer=manufacturer,
++            model=model,
++            serial=serial,
++            firmware=firmware,
++        )
++        connected_client.publish(availability_topic, payload="online", qos=1, retain=True)
++
++    def on_disconnect(
++        _client: mqtt.Client,
++        _userdata: Any,
++        _disconnect_flags: mqtt.DisconnectFlags,
++        reason_code: mqtt.ReasonCode,
++        _properties: mqtt.Properties | None,
++    ) -> None:
++        if not STOP_EVENT.is_set():
++            LOGGER.warning("disconnected from MQTT broker: %s", reason_code)
++
++    client.on_connect = on_connect
++    client.on_disconnect = on_disconnect
++    client.reconnect_delay_set(min_delay=1, max_delay=30)
++    client.connect(mqtt_host, mqtt_port, keepalive=60)
++    client.loop_start()
++
++    LOGGER.info(
++        "connected to inverter %s:%s unit=%s manufacturer=%s model=%s serial=%s firmware=%s",
++        sma_host,
++        sma_port,
++        sma_slave_id,
++        manufacturer,
++        model,
++        serial,
++        firmware,
++    )
++
++    try:
++        while not STOP_EVENT.wait(poll_seconds):
++            measurements.read()
++
++            ac_power = safe_cvalue(measurements, "W")
++            if ac_power is None:
++                ac_power = 0.0
++
++            status = safe_cvalue(measurements, "St")
++            if status is None:
++                status_text = "sleeping" if ac_power == 0.0 else "unknown"
++            else:
++                try:
++                    status_text = STATUS_MAP.get(int(status), f"unknown_{status}")
++                except (TypeError, ValueError):
++                    status_text = f"unknown_{status}"
++
++            payload = {
++                "ts": iso_utc(),
++                "manufacturer": manufacturer,
++                "model": model,
++                "serial": serial,
++                "fw": firmware,
++                "ac_power_w": ac_power,
++                "ac_energy_total_wh": safe_cvalue(measurements, "WH"),
++                "grid_hz": safe_cvalue(measurements, "Hz"),
++                "vac_l1_v": safe_cvalue(measurements, "PhVphA"),
++                "vac_l2_v": safe_cvalue(measurements, "PhVphB"),
++                "vac_l3_v": safe_cvalue(measurements, "PhVphC"),
++                "iac_total_a": safe_cvalue(measurements, "A"),
++                "iac_l1_a": safe_cvalue(measurements, "AphA"),
++                "iac_l2_a": safe_cvalue(measurements, "AphB"),
++                "iac_l3_a": safe_cvalue(measurements, "AphC"),
++                "va": safe_cvalue(measurements, "VA"),
++                "var": safe_cvalue(measurements, "VAr"),
++                "pf": safe_cvalue(measurements, "PF"),
++                "dc_power_w": safe_cvalue(measurements, "DCW"),
++                "temp_cab_c": safe_cvalue(measurements, "TmpCab"),
++                "status": status,
++                "status_text": status_text,
++                "events": safe_cvalue(measurements, "Evt1"),
++            }
++
++            result = client.publish(state_topic, json.dumps(payload, ensure_ascii=False), qos=0)
++            if result.rc != mqtt.MQTT_ERR_SUCCESS:
++                LOGGER.warning("failed to queue MQTT state publication: %s", result.rc)
++    finally:
++        client.publish(availability_topic, payload="offline", qos=1, retain=True).wait_for_publish()
++        client.disconnect()
++        client.loop_stop()
++
++
++def main() -> None:
++    logging.basicConfig(
++        level=os.environ.get("LOG_LEVEL", "INFO"),
++        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
++    )
++    signal.signal(signal.SIGTERM, signal_handler)
++    signal.signal(signal.SIGINT, signal_handler)
++
++    retry_seconds = env_int("RETRY_SECONDS", 15)
++    while not STOP_EVENT.is_set():
++        try:
++            run_collector()
++        except Exception:
++            LOGGER.exception("collector cycle failed; retrying in %s seconds", retry_seconds)
++            STOP_EVENT.wait(retry_seconds)
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/services/inverter-data-collector/default.nix b/services/inverter-data-collector/default.nix
+new file mode 100644
+index 0000000..4076e67
+--- /dev/null
++++ b/services/inverter-data-collector/default.nix
+@@ -0,0 +1,165 @@
++{
++  config,
++  lib,
++  pkgs,
++  ...
++}: let
++  cfg = config.infra.services.inverterDataCollector;
++  mqttPasswordSecret = "inverter-data-collector/mqtt_password";
++  mqttPasswordHashSecret = "mosquitto/users/${cfg.mqtt.username}/password_hash";
++  python = pkgs.python3.withPackages (pythonPackages: [
++    pythonPackages.paho-mqtt
++    pythonPackages.pysunspec2
++  ]);
++in {
++  options.infra.services.inverterDataCollector = {
++    enable = lib.mkEnableOption "the SMA inverter data collector";
++
++    inverter = {
++      host = lib.mkOption {
++        type = lib.types.str;
++        default = "10.20.80.101";
++        description = "Hostname or IP address of the SMA SunSpec Modbus TCP endpoint.";
++      };
++
++      port = lib.mkOption {
++        type = lib.types.port;
++        default = 502;
++        description = "SunSpec Modbus TCP port.";
++      };
++
++      slaveId = lib.mkOption {
++        type = lib.types.ints.unsigned;
++        default = 126;
++        description = "SunSpec Modbus unit identifier.";
++      };
++    };
++
++    mqtt = {
++      host = lib.mkOption {
++        type = lib.types.str;
++        default = "127.0.0.1";
++        description = "MQTT broker hostname or IP address.";
++      };
++
++      port = lib.mkOption {
++        type = lib.types.port;
++        default = 1883;
++        description = "MQTT broker port.";
++      };
++
++      username = lib.mkOption {
++        type = lib.types.str;
++        default = "inverter-data-collector";
++        description = "Dedicated MQTT username provisioned for the collector.";
++      };
++
++      stateTopic = lib.mkOption {
++        type = lib.types.str;
++        default = "house/pv/sma/stp20_50/state";
++        description = "MQTT topic receiving inverter JSON state.";
++      };
++
++      availabilityTopic = lib.mkOption {
++        type = lib.types.str;
++        default = "house/pv/sma/stp20_50/availability";
++        description = "MQTT availability topic for the collector.";
++      };
++
++      discoveryPrefix = lib.mkOption {
++        type = lib.types.str;
++        default = "homeassistant";
++        description = "Home Assistant MQTT discovery prefix.";
++      };
++    };
++
++    pollInterval = lib.mkOption {
++      type = lib.types.ints.positive;
++      default = 5;
++      description = "Seconds between inverter reads.";
++    };
++
++    retryInterval = lib.mkOption {
++      type = lib.types.ints.positive;
++      default = 15;
++      description = "Seconds to wait before reconnecting after an inverter or MQTT failure.";
++    };
++  };
++
++  config = lib.mkIf cfg.enable {
++    assertions = [
++      {
++        assertion = config.infra.services.mosquitto.enable;
++        message = "infra.services.inverterDataCollector requires infra.services.mosquitto.enable.";
++      }
++    ];
++
++    infra.services.mosquitto.additionalUsers.${cfg.mqtt.username} = {
++      passwordSecret = mqttPasswordHashSecret;
++      acl = [
++        "write ${cfg.mqtt.stateTopic}"
++        "write ${cfg.mqtt.availabilityTopic}"
++        "write ${cfg.mqtt.discoveryPrefix}/#"
++      ];
++    };
++
++    sops.secrets.${mqttPasswordSecret} = {
++      sopsFile = ../../secrets/infrastructure.yaml;
++      key = mqttPasswordSecret;
++      format = "yaml";
++      mode = "0400";
++    };
++
++    systemd.services.inverter-data-collector = {
++      description = "SMA inverter data collector";
++      wantedBy = ["multi-user.target"];
++      after = [
++        "network-online.target"
++        "mosquitto.service"
++      ];
++      wants = ["network-online.target"];
++      requires = ["mosquitto.service"];
++
++      environment = {
++        SMA_HOST = cfg.inverter.host;
++        SMA_MODBUS_PORT = toString cfg.inverter.port;
++        SMA_SLAVE_ID = toString cfg.inverter.slaveId;
++        POLL_SECONDS = toString cfg.pollInterval;
++        RETRY_SECONDS = toString cfg.retryInterval;
++        MQTT_HOST = cfg.mqtt.host;
++        MQTT_PORT = toString cfg.mqtt.port;
++        MQTT_USERNAME = cfg.mqtt.username;
++        MQTT_STATE_TOPIC = cfg.mqtt.stateTopic;
++        MQTT_AVAIL_TOPIC = cfg.mqtt.availabilityTopic;
++        HA_DISCOVERY_PREFIX = cfg.mqtt.discoveryPrefix;
++      };
++
++      serviceConfig = {
++        Type = "simple";
++        ExecStart = "${python}/bin/python -u ${./collector.py}";
++        LoadCredential = "mqtt-password:${config.sops.secrets.${mqttPasswordSecret}.path}";
++        Restart = "on-failure";
++        RestartSec = "10s";
++
++        DynamicUser = true;
++        NoNewPrivileges = true;
++        PrivateDevices = true;
++        PrivateTmp = true;
++        ProtectControlGroups = true;
++        ProtectHome = true;
++        ProtectKernelLogs = true;
++        ProtectKernelModules = true;
++        ProtectKernelTunables = true;
++        ProtectSystem = "strict";
++        RestrictAddressFamilies = [
++          "AF_INET"
++          "AF_INET6"
++        ];
++        RestrictNamespaces = true;
++        RestrictRealtime = true;
++        SystemCallArchitectures = "native";
++        UMask = "0077";
++      };
++    };
++  };
++}
+diff --git a/services/mosquitto/default.nix b/services/mosquitto/default.nix
+index 2b601a7..20f45e9 100644
+--- a/services/mosquitto/default.nix
++++ b/services/mosquitto/default.nix
+@@ -4,7 +4,28 @@
+   ...
+ }: let
+   cfg = config.infra.services.mosquitto;
+-  passwordSecret = "mosquitto/users/${cfg.username}/password_hash";
++  primaryPasswordSecret = "mosquitto/users/${cfg.username}/password_hash";
++  allUsers =
++    {
++      ${cfg.username} = {
++        passwordSecret = primaryPasswordSecret;
++        acl = ["readwrite #"];
++      };
++    }
++    // cfg.additionalUsers;
++  userSecrets = lib.mapAttrs' (_username: user:
++    lib.nameValuePair user.passwordSecret {
++      sopsFile = ../../secrets/infrastructure.yaml;
++      key = user.passwordSecret;
++      format = "yaml";
++      mode = "0400";
++    })
++  allUsers;
++  listenerUsers = lib.mapAttrs (_username: user: {
++    hashedPasswordFile = config.sops.secrets.${user.passwordSecret}.path;
++    inherit (user) acl;
++  })
++  allUsers;
+ in {
+   options.infra.services.mosquitto = {
+     enable = lib.mkEnableOption "the shared Mosquitto MQTT broker";
+@@ -12,7 +33,26 @@ in {
+     username = lib.mkOption {
+       type = lib.types.str;
+       default = "mosquitto";
+-      description = "MQTT username provisioned for Home Assistant and LAN clients.";
++      description = "Primary MQTT username provisioned for Home Assistant and LAN clients.";
++    };
++
++    additionalUsers = lib.mkOption {
++      type = lib.types.attrsOf (lib.types.submodule {
++        options = {
++          passwordSecret = lib.mkOption {
++            type = lib.types.str;
++            description = "SOPS key containing the Mosquitto password hash for this user.";
++          };
++
++          acl = lib.mkOption {
++            type = lib.types.listOf lib.types.str;
++            default = [];
++            description = "Mosquitto ACL entries assigned to this user.";
++          };
++        };
++      });
++      default = {};
++      description = "Additional declaratively provisioned MQTT users.";
+     };
+ 
+     port = lib.mkOption {
+@@ -29,12 +69,7 @@ in {
+   };
+ 
+   config = lib.mkIf cfg.enable {
+-    sops.secrets.${passwordSecret} = {
+-      sopsFile = ../../secrets/infrastructure.yaml;
+-      key = passwordSecret;
+-      format = "yaml";
+-      mode = "0400";
+-    };
++    sops.secrets = userSecrets;
+ 
+     services.mosquitto = {
+       enable = true;
+@@ -43,10 +78,7 @@ in {
+         {
+           inherit (cfg) port;
+           address = cfg.listenAddress;
+-          users.${cfg.username} = {
+-            hashedPasswordFile = config.sops.secrets.${passwordSecret}.path;
+-            acl = ["readwrite #"];
+-          };
++          users = listenerUsers;
+         }
+       ];
+     };
