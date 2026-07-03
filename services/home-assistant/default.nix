@@ -22,7 +22,7 @@ in {
 
     image = lib.mkOption {
       type = lib.types.str;
-      default = "ghcr.io/home-assistant/home-assistant:2025.12.3";
+      default = "ghcr.io/home-assistant/home-assistant:2026.1.3";
       description = "Pinned Home Assistant OCI image; add a digest after validating the migration.";
     };
 
