@@ -21,7 +21,7 @@ in {
 
     image = lib.mkOption {
       type = lib.types.str;
-      default = "docker.io/jacobalberty/unifi:v8.6.9";
+      default = "docker.io/jacobalberty/unifi:v9.0.108";
       description = "Pinned UniFi Network Application OCI image.";
     };
 
