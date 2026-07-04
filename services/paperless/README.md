@@ -4,15 +4,19 @@ Paperless-ngx runs natively on Icarus with local PostgreSQL, Redis, OCR, and doc
 
 Backups are intentionally not part of this first deployment. A later change will add Restic backups to Vela for the database, media, data, and document export.
 
-## Initial setup
+## Accounts
 
-After the first deployment, create the administrator account:
+Paperless accounts are reconciled declaratively after the database migrations complete. The service creates or updates these users:
 
-```console
-sudo paperless-manage createsuperuser
-```
+- `paperless-admin`, a dedicated administrator account
+- `hannes`
+- `antonia`
+- `luise`
+- `dietmar`
 
-Create normal accounts for Hannes, Antonia, Luise, and Dietmar. Use a separate administrator account for administration rather than daily document work. Create groups and assign document permissions according to the household's preferred sharing model.
+The four personal accounts are members of the shared `familie` group. Passwords come from SOPS and are reapplied when `paperless-provision-accounts.service` runs. Changing a password in SOPS and redeploying therefore rotates the corresponding Paperless password without a manual web-interface step.
+
+Do not use `paperless-admin` for routine document work. The administrator can see all documents regardless of object-level permissions.
 
 ## Scanner ingestion
 
@@ -61,31 +65,48 @@ Useful commands:
 
 ```console
 systemctl status paperless-web paperless-consumer paperless-task-queue
+systemctl status paperless-provision-accounts.service
 journalctl -u paperless-consumer -f
-sudo paperless-manage createsuperuser
+journalctl -u paperless-provision-accounts.service
 ```
 
-## SOPS secret
+## SOPS secrets
 
-Add the scanner account password hash to `secrets/infrastructure.yaml` with this structure:
+Add the scanner account password hash and the Paperless account passwords to `secrets/infrastructure.yaml` with this structure:
 
 ```yaml
 paperless:
   sftp:
     password_hash: <sha-512-password-hash>
+  users:
+    paperless-admin:
+      password: <administrator-password>
+    hannes:
+      password: <hannes-password>
+    antonia:
+      password: <antonia-password>
+    luise:
+      password: <luise-password>
+    dietmar:
+      password: <dietmar-password>
 ```
 
-Generate the hash interactively and store it without writing the plaintext password to disk or shell history:
+The SFTP value is a Unix SHA-512 password hash because NixOS consumes it through `hashedPasswordFile`. The Paperless user values are plaintext only inside the encrypted SOPS document; Django hashes them for storage in the Paperless database.
+
+Generate the SFTP hash interactively:
 
 ```console
-HASH="$(nix shell nixpkgs#mkpasswd -c mkpasswd -m sha-512)"
-sops set secrets/infrastructure.yaml '["paperless"]["sftp"]["password_hash"]' "\"$HASH\""
-unset HASH
+nix shell nixpkgs#mkpasswd -c mkpasswd -m sha-512
 ```
 
-Verify that the encrypted key exists before deploying:
+Edit the encrypted file without placing credentials in repository documentation or shell arguments:
 
 ```console
-sops --decrypt secrets/infrastructure.yaml \
-  | yq '.paperless.sftp.password_hash'
+sops secrets/infrastructure.yaml
+```
+
+After deployment, account reconciliation can be rerun with:
+
+```console
+sudo systemctl restart paperless-provision-accounts.service
 ```

@@ -17,6 +17,50 @@
     "familie"
     "eingang"
   ];
+  paperlessUsers = {
+    "paperless-admin" = {
+      fullName = "Paperless Administrator";
+      groups = [];
+      isStaff = true;
+      isSuperuser = true;
+    };
+
+    hannes = {
+      fullName = "Hannes";
+      groups = ["familie"];
+      isStaff = false;
+      isSuperuser = false;
+    };
+
+    antonia = {
+      fullName = "Antonia";
+      groups = ["familie"];
+      isStaff = false;
+      isSuperuser = false;
+    };
+
+    luise = {
+      fullName = "Luise";
+      groups = ["familie"];
+      isStaff = false;
+      isSuperuser = false;
+    };
+
+    dietmar = {
+      fullName = "Dietmar";
+      groups = ["familie"];
+      isStaff = false;
+      isSuperuser = false;
+    };
+  };
+  userSecretName = username: "paperless/users/${username}/password";
+  provisionedAccounts =
+    lib.mapAttrsToList (username: account: {
+      inherit username;
+      inherit (account) fullName groups isStaff isSuperuser;
+      passwordFile = config.sops.secrets.${userSecretName username}.path;
+    })
+    paperlessUsers;
 in {
   options.infra.services.paperless = {
     enable = lib.mkEnableOption "the shared Paperless-ngx document archive";
@@ -46,13 +90,27 @@ in {
 
     security.acme.certs.${hostName} = {};
 
-    sops.secrets."paperless/sftp/password_hash" = {
-      sopsFile = ../../secrets/infrastructure.yaml;
-      owner = "root";
-      group = "root";
-      mode = "0400";
-      neededForUsers = true;
-    };
+    sops.secrets =
+      {
+        "paperless/sftp/password_hash" = {
+          sopsFile = ../../secrets/infrastructure.yaml;
+          owner = "root";
+          group = "root";
+          mode = "0400";
+          neededForUsers = true;
+        };
+      }
+      // lib.mapAttrs' (username: _: {
+        name = userSecretName username;
+        value = {
+          sopsFile = ../../secrets/infrastructure.yaml;
+          owner = "paperless";
+          group = "paperless";
+          mode = "0400";
+          restartUnits = ["paperless-provision-accounts.service"];
+        };
+      })
+      paperlessUsers;
 
     services = {
       paperless = {
@@ -131,12 +189,71 @@ in {
       hashedPasswordFile = config.sops.secrets."paperless/sftp/password_hash".path;
     };
 
-    systemd.tmpfiles.rules =
-      [
-        "d /var/lib/paperless-sftp 0755 root root -"
-        "z ${consumptionDir} 2770 paperless paperless -"
-      ]
-      ++ map (directory: "d ${consumptionDir}/${directory} 2770 paperless paperless -") scannerDirectories;
+    systemd = {
+      services.paperless-provision-accounts = {
+        description = "Provision declarative Paperless users and groups";
+        after = ["paperless-scheduler.service"];
+        requires = ["paperless-scheduler.service"];
+        wantedBy = ["multi-user.target"];
+
+        path = [config.services.paperless.manage];
+
+        serviceConfig = {
+          Type = "oneshot";
+          User = "paperless";
+          Group = "paperless";
+          RemainAfterExit = true;
+        };
+
+        script = ''
+          paperless-manage shell <<'PY'
+          import json
+          from pathlib import Path
+
+          from django.contrib.auth import get_user_model
+          from django.contrib.auth.models import Group
+
+          accounts = json.loads(r'''${builtins.toJSON provisionedAccounts}''')
+          User = get_user_model()
+
+          group_names = sorted({
+              group_name
+              for account in accounts
+              for group_name in account["groups"]
+          })
+          groups = {
+              group_name: Group.objects.get_or_create(name=group_name)[0]
+              for group_name in group_names
+          }
+
+          for account in accounts:
+              password = Path(account["passwordFile"]).read_text().strip()
+              if not password:
+                  raise RuntimeError(
+                      f'Password secret for {account["username"]} is empty'
+                  )
+
+              user, _ = User.objects.get_or_create(username=account["username"])
+              user.first_name = account["fullName"]
+              user.last_name = ""
+              user.email = ""
+              user.is_active = True
+              user.is_staff = account["isStaff"]
+              user.is_superuser = account["isSuperuser"]
+              user.set_password(password)
+              user.save()
+              user.groups.set([groups[name] for name in account["groups"]])
+          PY
+        '';
+      };
+
+      tmpfiles.rules =
+        [
+          "d /var/lib/paperless-sftp 0755 root root -"
+          "z ${consumptionDir} 2770 paperless paperless -"
+        ]
+        ++ map (directory: "d ${consumptionDir}/${directory} 2770 paperless paperless -") scannerDirectories;
+    };
 
     networking.firewall.allowedTCPPorts = [80 443];
   };
