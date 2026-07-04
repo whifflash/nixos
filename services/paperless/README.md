@@ -20,14 +20,14 @@ Do not use `paperless-admin` for routine document work. The administrator can se
 
 ## Scanner ingestion
 
-The Brother ADS-1800W connects to Icarus over SFTP. The restricted account cannot open a shell or use SSH forwarding.
+The Brother ADS-1800W connects to a dedicated scanner-only SFTP daemon on Icarus. It is separate from the primary SSH daemon, disables PAM, accepts only the restricted scanner account, and cannot open a shell or use SSH forwarding.
 
 Use the SFTP username configured by the service and the password stored in SOPS. Do not place the plaintext password in this repository or in service documentation.
 
 ```text
 Protocol: SFTP
 Host: icarus
-Port: 22
+Port: 2222
 Username: paperless-ingest
 Remote folders:
   /hannes
@@ -65,8 +65,10 @@ Useful commands:
 
 ```console
 systemctl status paperless-web paperless-consumer paperless-task-queue
+systemctl status paperless-sftp-sshd.service
 systemctl status paperless-provision-accounts.service
 journalctl -u paperless-consumer -f
+journalctl -u paperless-sftp-sshd.service
 journalctl -u paperless-provision-accounts.service
 ```
 

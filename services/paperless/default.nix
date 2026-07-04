@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }: let
   cfg = config.infra.services.paperless;
@@ -65,6 +66,37 @@
     builtins.toFile
     "paperless-provisioned-accounts.json"
     (builtins.toJSON provisionedAccounts);
+  sftpSshdConfig = pkgs.writeText "paperless-sftp-sshd-config" ''
+    Port ${toString cfg.sftpPort}
+    AddressFamily any
+    ListenAddress 0.0.0.0
+    ListenAddress ::
+
+    HostKey /etc/ssh/ssh_host_ed25519_key
+    HostKey /etc/ssh/ssh_host_rsa_key
+    PidFile /run/paperless-sftp-sshd.pid
+
+    UsePAM no
+    PasswordAuthentication yes
+    KbdInteractiveAuthentication no
+    PubkeyAuthentication no
+    AuthenticationMethods password
+    PermitEmptyPasswords no
+    PermitRootLogin no
+    AllowUsers ${cfg.sftpUser}
+    AuthorizedKeysFile none
+
+    AllowAgentForwarding no
+    AllowTcpForwarding no
+    PermitTunnel no
+    PermitTTY no
+    X11Forwarding no
+
+    ChrootDirectory /var/lib/paperless-sftp
+    ForceCommand internal-sftp -d /upload -u 0007
+    Subsystem sftp internal-sftp
+    LogLevel VERBOSE
+  '';
 in {
   options.infra.services.paperless = {
     enable = lib.mkEnableOption "the shared Paperless-ngx document archive";
@@ -86,6 +118,12 @@ in {
       type = lib.types.str;
       default = "paperless-ingest";
       description = "Restricted SFTP user used by the document scanner.";
+    };
+
+    sftpPort = lib.mkOption {
+      type = lib.types.port;
+      default = 2222;
+      description = "Dedicated TCP port for the scanner-only SFTP daemon.";
     };
   };
 
@@ -168,20 +206,6 @@ in {
           };
         };
       };
-
-      openssh.extraConfig = ''
-        Match User ${cfg.sftpUser}
-          PasswordAuthentication yes
-          KbdInteractiveAuthentication no
-          PubkeyAuthentication no
-          AllowAgentForwarding no
-          AllowTcpForwarding no
-          PermitTunnel no
-          PermitTTY no
-          X11Forwarding no
-          ChrootDirectory /var/lib/paperless-sftp
-          ForceCommand internal-sftp -d /upload -u 0007
-      '';
     };
 
     users.users.${cfg.sftpUser} = {
@@ -194,61 +218,77 @@ in {
     };
 
     systemd = {
-      services.paperless-provision-accounts = {
-        description = "Provision declarative Paperless users and groups";
-        after = ["paperless-scheduler.service"];
-        requires = ["paperless-scheduler.service"];
-        wantedBy = ["multi-user.target"];
+      services = {
+        paperless-sftp-sshd = {
+          description = "Dedicated Paperless scanner SFTP daemon";
+          after = ["network.target"];
+          wantedBy = ["multi-user.target"];
 
-        path = [config.services.paperless.manage];
-
-        serviceConfig = {
-          Type = "oneshot";
-          User = "paperless";
-          Group = "paperless";
-          RemainAfterExit = true;
+          serviceConfig = {
+            Type = "simple";
+            ExecStartPre = "${pkgs.openssh}/bin/sshd -t -f ${sftpSshdConfig}";
+            ExecStart = "${pkgs.openssh}/bin/sshd -D -e -f ${sftpSshdConfig}";
+            Restart = "on-failure";
+            RestartSec = "5s";
+          };
         };
 
-        script = ''
-          paperless-manage shell <<'PY'
-          import json
-          from pathlib import Path
+        paperless-provision-accounts = {
+          description = "Provision declarative Paperless users and groups";
+          after = ["paperless-scheduler.service"];
+          requires = ["paperless-scheduler.service"];
+          wantedBy = ["multi-user.target"];
 
-          from django.contrib.auth import get_user_model
-          from django.contrib.auth.models import Group
+          path = [config.services.paperless.manage];
 
-          accounts = json.loads(Path("${provisionedAccountsFile}").read_text())
-          User = get_user_model()
+          serviceConfig = {
+            Type = "oneshot";
+            User = "paperless";
+            Group = "paperless";
+            RemainAfterExit = true;
+          };
 
-          group_names = sorted({
-              group_name
-              for account in accounts
-              for group_name in account["groups"]
-          })
-          groups = {
-              group_name: Group.objects.get_or_create(name=group_name)[0]
-              for group_name in group_names
-          }
+          script = ''
+            paperless-manage shell <<'PY'
+            import json
+            from pathlib import Path
 
-          for account in accounts:
-              password = Path(account["passwordFile"]).read_text().strip()
-              if not password:
-                  raise RuntimeError(
-                      f'Password secret for {account["username"]} is empty'
-                  )
+            from django.contrib.auth import get_user_model
+            from django.contrib.auth.models import Group
 
-              user, _ = User.objects.get_or_create(username=account["username"])
-              user.first_name = account["fullName"]
-              user.last_name = ""
-              user.email = ""
-              user.is_active = True
-              user.is_staff = account["isStaff"]
-              user.is_superuser = account["isSuperuser"]
-              user.set_password(password)
-              user.save()
-              user.groups.set([groups[name] for name in account["groups"]])
-          PY
-        '';
+            accounts = json.loads(Path("${provisionedAccountsFile}").read_text())
+            User = get_user_model()
+
+            group_names = sorted({
+                group_name
+                for account in accounts
+                for group_name in account["groups"]
+            })
+            groups = {
+                group_name: Group.objects.get_or_create(name=group_name)[0]
+                for group_name in group_names
+            }
+
+            for account in accounts:
+                password = Path(account["passwordFile"]).read_text().strip()
+                if not password:
+                    raise RuntimeError(
+                        f'Password secret for {account["username"]} is empty'
+                    )
+
+                user, _ = User.objects.get_or_create(username=account["username"])
+                user.first_name = account["fullName"]
+                user.last_name = ""
+                user.email = ""
+                user.is_active = True
+                user.is_staff = account["isStaff"]
+                user.is_superuser = account["isSuperuser"]
+                user.set_password(password)
+                user.save()
+                user.groups.set([groups[name] for name in account["groups"]])
+            PY
+          '';
+        };
       };
 
       tmpfiles.rules =
@@ -259,6 +299,10 @@ in {
         ++ map (directory: "d ${consumptionDir}/${directory} 2770 paperless paperless -") scannerDirectories;
     };
 
-    networking.firewall.allowedTCPPorts = [80 443];
+    networking.firewall.allowedTCPPorts = [
+      80
+      443
+      cfg.sftpPort
+    ];
   };
 }
