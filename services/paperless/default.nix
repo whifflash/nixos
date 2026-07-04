@@ -18,6 +18,40 @@
     "familie"
     "eingang"
   ];
+  paperlessGroups = {
+    familie.permissions = [
+      "add_correspondent"
+      "change_correspondent"
+      "view_correspondent"
+      "add_customfield"
+      "change_customfield"
+      "view_customfield"
+      "add_document"
+      "change_document"
+      "view_document"
+      "add_documenttype"
+      "change_documenttype"
+      "view_documenttype"
+      "add_note"
+      "change_note"
+      "view_note"
+      "change_paperlesstask"
+      "view_paperlesstask"
+      "add_savedview"
+      "change_savedview"
+      "view_savedview"
+      "add_storagepath"
+      "change_storagepath"
+      "view_storagepath"
+      "add_tag"
+      "change_tag"
+      "view_tag"
+      "add_uisettings"
+      "change_uisettings"
+      "view_uisettings"
+      "view_user"
+    ];
+  };
   paperlessUsers = {
     "paperless-admin" = {
       fullName = "Paperless Administrator";
@@ -66,6 +100,10 @@
     builtins.toFile
     "paperless-provisioned-accounts.json"
     (builtins.toJSON provisionedAccounts);
+  provisionedGroupsFile =
+    builtins.toFile
+    "paperless-provisioned-groups.json"
+    (builtins.toJSON paperlessGroups);
   sftpSshdConfig = pkgs.writeText "paperless-sftp-sshd-config" ''
     Port ${toString cfg.sftpPort}
     AddressFamily any
@@ -258,20 +296,44 @@ in {
             from pathlib import Path
 
             from django.contrib.auth import get_user_model
-            from django.contrib.auth.models import Group
+            from django.contrib.auth.models import Group, Permission
 
             accounts = json.loads(Path("${provisionedAccountsFile}").read_text())
+            declared_groups = json.loads(
+                Path("${provisionedGroupsFile}").read_text()
+            )
             User = get_user_model()
 
-            group_names = sorted({
+            referenced_group_names = {
                 group_name
                 for account in accounts
                 for group_name in account["groups"]
-            })
+            }
+            group_names = sorted(referenced_group_names | declared_groups.keys())
             groups = {
                 group_name: Group.objects.get_or_create(name=group_name)[0]
                 for group_name in group_names
             }
+
+            for group_name, group_config in declared_groups.items():
+                permission_codenames = set(group_config["permissions"])
+                permissions = list(
+                    Permission.objects.filter(codename__in=permission_codenames)
+                )
+                resolved_codenames = {
+                    permission.codename
+                    for permission in permissions
+                }
+                missing_codenames = sorted(
+                    permission_codenames - resolved_codenames
+                )
+                if missing_codenames:
+                    raise RuntimeError(
+                        f"Unknown permissions for group {group_name}: "
+                        f"{', '.join(missing_codenames)}"
+                    )
+
+                groups[group_name].permissions.set(permissions)
 
             for account in accounts:
                 password = Path(account["passwordFile"]).read_text().strip()

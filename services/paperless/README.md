@@ -16,6 +16,8 @@ Paperless accounts are reconciled declaratively after the database migrations co
 
 The four personal accounts are members of the shared `familie` group. Passwords come from SOPS and are reapplied when `paperless-provision-accounts.service` runs. Changing a password in SOPS and redeploying therefore rotates the corresponding Paperless password without a manual web-interface step.
 
+The `familie` group permissions are also reconciled declaratively. They cover the Paperless web UI and routine, non-destructive document management. User and group administration, workflow management, mail configuration, application configuration, and global delete permissions remain administrator-only. Because reconciliation uses the declared permission set as the source of truth, permission changes made manually to the `familie` group are overwritten on the next deployment or service restart.
+
 Do not use `paperless-admin` for routine document work. The administrator can see all documents regardless of object-level permissions.
 
 ## Scanner ingestion
