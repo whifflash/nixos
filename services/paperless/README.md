@@ -20,6 +20,68 @@ The `familie` group permissions are also reconciled declaratively. They cover th
 
 Do not use `paperless-admin` for routine document work. The administrator can see all documents regardless of object-level permissions.
 
+## Declarative metadata
+
+The provisioning service also reconciles the initial document types, nested tags, and storage paths. Declared names, colours, nesting, inbox status, and path templates are authoritative and overwrite manual changes to those objects. Additional metadata objects created later in the Paperless UI are left untouched. Correspondents remain entirely user-managed.
+
+Document types:
+
+```text
+Bescheid
+Bestätigung
+Kontoauszug
+Mahnung
+Nachweis
+Police
+Rechnung
+Schreiben
+Vertrag
+Einladung
+Sonstiges Schreiben
+```
+
+Tags:
+
+```text
+Person
+├── Hannes
+├── Antonia
+├── Luise
+└── Dietmar
+
+Bereich
+├── Arbeit
+├── Auto
+├── Bank
+├── Gesundheit
+├── Haus
+├── Schule
+├── Finanzen
+│   └── Steuer
+└── Versicherung
+
+Status
+├── Eingang
+├── Prüfen
+├── Bezahlen
+└── Erledigt
+```
+
+`Status/Eingang` is the Paperless inbox tag. Year tags are intentionally omitted because document dates already provide reliable year filtering and a static declaration would need annual maintenance.
+
+Storage paths:
+
+| Name      | Template                                                                         |
+| --------- | -------------------------------------------------------------------------------- |
+| `Hannes`  | `hannes/{{ created_year }}/{{ correspondent }}/{{ title }}`                      |
+| `Antonia` | `antonia/{{ created_year }}/{{ correspondent }}/{{ title }}`                     |
+| `Luise`   | `luise/{{ created_year }}/{{ correspondent }}/{{ title }}`                       |
+| `Dietmar` | `dietmar/{{ created_year }}/{{ correspondent }}/{{ title }}`                     |
+| `Familie` | `familie/{{ created_year }}/{{ document_type }}/{{ correspondent }}/{{ title }}` |
+| `Eingang` | `eingang/{{ added_year }}/{{ added_month }}/{{ original_name }}`                 |
+
+Storage paths control the managed on-disk filename layout. They do not create browser-style folders or assign themselves to documents; the scanner workflows should assign the matching storage path.
+
 ## Scanner ingestion
 
 The Brother ADS-1800W connects to a dedicated scanner-only SFTP daemon on Icarus. It is separate from the primary SSH daemon, disables PAM, accepts only the restricted scanner account, and cannot open a shell or use SSH forwarding.

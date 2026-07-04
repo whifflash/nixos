@@ -18,6 +18,134 @@
     "familie"
     "eingang"
   ];
+  paperlessMetadata = {
+    documentTypes = [
+      "Bescheid"
+      "Bestätigung"
+      "Kontoauszug"
+      "Mahnung"
+      "Nachweis"
+      "Police"
+      "Rechnung"
+      "Schreiben"
+      "Vertrag"
+      "Einladung"
+      "Sonstiges Schreiben"
+    ];
+
+    tags = [
+      {
+        name = "Person";
+        parent = null;
+        color = "#1f78b4";
+      }
+      {
+        name = "Hannes";
+        parent = "Person";
+        color = "#a6cee3";
+      }
+      {
+        name = "Antonia";
+        parent = "Person";
+        color = "#a6cee3";
+      }
+      {
+        name = "Luise";
+        parent = "Person";
+        color = "#a6cee3";
+      }
+      {
+        name = "Dietmar";
+        parent = "Person";
+        color = "#a6cee3";
+      }
+      {
+        name = "Bereich";
+        parent = null;
+        color = "#33a02c";
+      }
+      {
+        name = "Arbeit";
+        parent = "Bereich";
+        color = "#b2df8a";
+      }
+      {
+        name = "Auto";
+        parent = "Bereich";
+        color = "#b2df8a";
+      }
+      {
+        name = "Bank";
+        parent = "Bereich";
+        color = "#b2df8a";
+      }
+      {
+        name = "Gesundheit";
+        parent = "Bereich";
+        color = "#b2df8a";
+      }
+      {
+        name = "Haus";
+        parent = "Bereich";
+        color = "#b2df8a";
+      }
+      {
+        name = "Schule";
+        parent = "Bereich";
+        color = "#b2df8a";
+      }
+      {
+        name = "Finanzen";
+        parent = "Bereich";
+        color = "#b2df8a";
+      }
+      {
+        name = "Steuer";
+        parent = "Finanzen";
+        color = "#b2df8a";
+      }
+      {
+        name = "Versicherung";
+        parent = "Bereich";
+        color = "#b2df8a";
+      }
+      {
+        name = "Status";
+        parent = null;
+        color = "#ff7f00";
+      }
+      {
+        name = "Eingang";
+        parent = "Status";
+        color = "#fdbf6f";
+        isInboxTag = true;
+      }
+      {
+        name = "Prüfen";
+        parent = "Status";
+        color = "#fdbf6f";
+      }
+      {
+        name = "Bezahlen";
+        parent = "Status";
+        color = "#fdbf6f";
+      }
+      {
+        name = "Erledigt";
+        parent = "Status";
+        color = "#fdbf6f";
+      }
+    ];
+
+    storagePaths = {
+      Hannes = "hannes/{{ created_year }}/{{ correspondent }}/{{ title }}";
+      Antonia = "antonia/{{ created_year }}/{{ correspondent }}/{{ title }}";
+      Luise = "luise/{{ created_year }}/{{ correspondent }}/{{ title }}";
+      Dietmar = "dietmar/{{ created_year }}/{{ correspondent }}/{{ title }}";
+      Familie = "familie/{{ created_year }}/{{ document_type }}/{{ correspondent }}/{{ title }}";
+      Eingang = "eingang/{{ added_year }}/{{ added_month }}/{{ original_name }}";
+    };
+  };
   paperlessGroups = {
     familie.permissions = [
       "add_correspondent"
@@ -104,6 +232,10 @@
     builtins.toFile
     "paperless-provisioned-groups.json"
     (builtins.toJSON paperlessGroups);
+  provisionedMetadataFile =
+    builtins.toFile
+    "paperless-provisioned-metadata.json"
+    (builtins.toJSON paperlessMetadata);
   sftpSshdConfig = pkgs.writeText "paperless-sftp-sshd-config" ''
     Port ${toString cfg.sftpPort}
     AddressFamily any
@@ -276,7 +408,7 @@ in {
         };
 
         paperless-provision-accounts = {
-          description = "Provision declarative Paperless users and groups";
+          description = "Provision declarative Paperless accounts and metadata";
           after = ["paperless-scheduler.service"];
           requires = ["paperless-scheduler.service"];
           wantedBy = ["multi-user.target"];
@@ -298,10 +430,13 @@ in {
             from django.contrib.auth import get_user_model
             from django.contrib.auth.models import Group, Permission
 
+            from documents.models import DocumentType, StoragePath, Tag
+
             accounts = json.loads(Path("${provisionedAccountsFile}").read_text())
             declared_groups = json.loads(
                 Path("${provisionedGroupsFile}").read_text()
             )
+            metadata = json.loads(Path("${provisionedMetadataFile}").read_text())
             User = get_user_model()
 
             referenced_group_names = {
@@ -334,6 +469,60 @@ in {
                     )
 
                 groups[group_name].permissions.set(permissions)
+
+            for document_type_name in metadata["documentTypes"]:
+                document_type, _ = DocumentType.objects.get_or_create(
+                    name=document_type_name,
+                    owner=None,
+                )
+                document_type.match = ""
+                document_type.matching_algorithm = DocumentType.MATCH_NONE
+                document_type.is_insensitive = True
+                document_type.save()
+
+            tags = {}
+            pending_tags = list(metadata["tags"])
+            while pending_tags:
+                created_in_pass = False
+                for tag_config in pending_tags.copy():
+                    parent_name = tag_config["parent"]
+                    if parent_name is not None and parent_name not in tags:
+                        continue
+
+                    tag, _ = Tag.objects.get_or_create(
+                        name=tag_config["name"],
+                        owner=None,
+                    )
+                    tag.color = tag_config["color"]
+                    tag.match = ""
+                    tag.matching_algorithm = Tag.MATCH_NONE
+                    tag.is_insensitive = True
+                    tag.is_inbox_tag = tag_config.get("isInboxTag", False)
+                    tag.tn_parent = tags.get(parent_name)
+                    tag.full_clean()
+                    tag.save()
+                    tags[tag_config["name"]] = tag
+                    pending_tags.remove(tag_config)
+                    created_in_pass = True
+
+                if not created_in_pass:
+                    unresolved = sorted(tag["name"] for tag in pending_tags)
+                    raise RuntimeError(
+                        "Unresolved or cyclic Paperless tag parents: "
+                        + ", ".join(unresolved)
+                    )
+
+            for storage_path_name, path in metadata["storagePaths"].items():
+                storage_path, _ = StoragePath.objects.get_or_create(
+                    name=storage_path_name,
+                    owner=None,
+                )
+                storage_path.path = path
+                storage_path.match = ""
+                storage_path.matching_algorithm = StoragePath.MATCH_NONE
+                storage_path.is_insensitive = True
+                storage_path.full_clean()
+                storage_path.save()
 
             for account in accounts:
                 password = Path(account["passwordFile"]).read_text().strip()
