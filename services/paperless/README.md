@@ -63,6 +63,7 @@ Bereich
 Status
 ├── Eingang
 ├── Prüfen
+├── Offen
 ├── Bezahlen
 └── Erledigt
 ```

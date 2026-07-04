@@ -131,6 +131,11 @@
         color = "#fdbf6f";
       }
       {
+        name = "Offen";
+        parent = "Status";
+        color = "#fdbf6f";
+      }
+      {
         name = "Erledigt";
         parent = "Status";
         color = "#fdbf6f";
