@@ -49,6 +49,45 @@ task update -- nixpkgs home-manager stylix
 task build -- --print-build-logs
 ```
 
+## Icarus port registry
+
+Check this table before assigning a port to a new service on Icarus. Keep the table in sync with
+service defaults and any host-network containers. Loopback-only ports are reserved locally even
+though they are not exposed through the firewall.
+
+|  Port | Protocol | Bind/exposure | Owner and purpose                               |
+| ----: | :------: | :------------ | :---------------------------------------------- |
+|    22 |   TCP    | LAN           | Primary OpenSSH daemon; key authentication only |
+|    80 |   TCP    | LAN           | Nginx HTTP and ACME redirects                   |
+|   443 |   TCP    | LAN           | Nginx HTTPS virtual hosts                       |
+|  1883 |   TCP    | LAN           | Mosquitto MQTT                                  |
+|  2222 |   TCP    | LAN           | Gitea built-in SSH server                       |
+|  2223 |   TCP    | LAN           | Paperless scanner-only SFTP daemon              |
+|  3000 |   TCP    | loopback      | Gitea HTTP backend                              |
+|  3478 |   UDP    | LAN           | UniFi STUN                                      |
+|  5432 |   TCP    | loopback      | PostgreSQL                                      |
+|  6789 |   TCP    | LAN           | UniFi throughput test                           |
+|  8080 |   TCP    | LAN           | UniFi device inform                             |
+|  8082 |   TCP    | loopback      | Infrastructure hub backend                      |
+|  8086 |   TCP    | loopback      | InfluxDB HTTP API                               |
+|  8123 |   TCP    | LAN           | Home Assistant HTTP backend                     |
+|  8443 |   TCP    | LAN           | UniFi application HTTPS backend                 |
+|  8843 |   TCP    | LAN           | UniFi guest portal HTTPS                        |
+|  8880 |   TCP    | LAN           | UniFi guest portal HTTP                         |
+| 10001 |   UDP    | LAN           | UniFi discovery                                 |
+| 18554 |   TCP    | loopback      | Home Assistant internal service                 |
+| 18555 |   TCP    | LAN           | Home Assistant internal service                 |
+| 27117 |   TCP    | loopback      | UniFi MongoDB                                   |
+| 28981 |   TCP    | loopback      | Paperless-ngx HTTP backend                      |
+
+Ports exposed by host-network containers may change with application upgrades. Confirm the live
+state on Icarus when changing those services:
+
+```sh
+ss -tlpen
+ss -ulpen
+```
+
 ## nixos-anywhere installation
 
 To install using nixos-anywhere alongside with required keyfiles, do

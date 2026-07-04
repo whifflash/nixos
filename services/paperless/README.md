@@ -27,7 +27,7 @@ Use the SFTP username configured by the service and the password stored in SOPS.
 ```text
 Protocol: SFTP
 Host: icarus
-Port: 2222
+Port: 2223
 Username: paperless-ingest
 Remote folders:
   /hannes

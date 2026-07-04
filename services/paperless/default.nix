@@ -122,7 +122,7 @@ in {
 
     sftpPort = lib.mkOption {
       type = lib.types.port;
-      default = 2222;
+      default = 2223;
       description = "Dedicated TCP port for the scanner-only SFTP daemon.";
     };
   };
@@ -226,9 +226,6 @@ in {
 
           serviceConfig = {
             Type = "simple";
-            RuntimeDirectory = "sshd";
-            RuntimeDirectoryMode = "0755";
-            RuntimeDirectoryPreserve = "yes";
             ExecStartPre = "${pkgs.openssh}/bin/sshd -t -f ${sftpSshdConfig}";
             ExecStart = "${pkgs.openssh}/bin/sshd -D -e -f ${sftpSshdConfig}";
             Restart = "on-failure";
