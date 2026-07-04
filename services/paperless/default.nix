@@ -221,11 +221,14 @@ in {
       services = {
         paperless-sftp-sshd = {
           description = "Dedicated Paperless scanner SFTP daemon";
-          after = ["network.target"];
+          after = ["network.target" "sshd.service"];
           wantedBy = ["multi-user.target"];
 
           serviceConfig = {
             Type = "simple";
+            RuntimeDirectory = "sshd";
+            RuntimeDirectoryMode = "0755";
+            RuntimeDirectoryPreserve = "yes";
             ExecStartPre = "${pkgs.openssh}/bin/sshd -t -f ${sftpSshdConfig}";
             ExecStart = "${pkgs.openssh}/bin/sshd -D -e -f ${sftpSshdConfig}";
             Restart = "on-failure";
@@ -293,6 +296,7 @@ in {
 
       tmpfiles.rules =
         [
+          "d /run/sshd 0755 root root -"
           "d /var/lib/paperless-sftp 0755 root root -"
           "z ${consumptionDir} 2770 paperless paperless -"
         ]
