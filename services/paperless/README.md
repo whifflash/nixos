@@ -37,6 +37,7 @@ Rechnung
 Schreiben
 Vertrag
 Einladung
+Zugangsdaten
 Sonstiges Schreiben
 ```
 
