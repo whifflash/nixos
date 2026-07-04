@@ -61,6 +61,10 @@
       passwordFile = config.sops.secrets.${userSecretName username}.path;
     })
     paperlessUsers;
+  provisionedAccountsFile =
+    builtins.toFile
+    "paperless-provisioned-accounts.json"
+    (builtins.toJSON provisionedAccounts);
 in {
   options.infra.services.paperless = {
     enable = lib.mkEnableOption "the shared Paperless-ngx document archive";
@@ -213,7 +217,7 @@ in {
           from django.contrib.auth import get_user_model
           from django.contrib.auth.models import Group
 
-          accounts = json.loads(r'''${builtins.toJSON provisionedAccounts}''')
+          accounts = json.loads(Path("${provisionedAccountsFile}").read_text())
           User = get_user_model()
 
           group_names = sorted({
