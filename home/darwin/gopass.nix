@@ -22,7 +22,11 @@ in {
 
     file = {
       # macOS GUI pinentry
-      ".gnupg/gpg-agent.conf".text = "pinentry-program ${pkgs.pinentry_mac}/bin/pinentry-mac\n";
+      ".gnupg/gpg-agent.conf".text = ''
+        pinentry-program ${pkgs.pinentry_mac}/bin/pinentry-mac
+        default-cache-ttl 21600
+        max-cache-ttl 21600
+      '';
 
       # Install the scripts from the nearby "scripts" folder
       ".local/bin/gopass-switcher" = {
