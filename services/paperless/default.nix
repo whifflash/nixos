@@ -76,7 +76,8 @@
     HostKey /etc/ssh/ssh_host_rsa_key
     PidFile /run/paperless-sftp-sshd.pid
 
-    UsePAM no
+    UsePAM yes
+    PAMServiceName paperless-sftp
     PasswordAuthentication yes
     KbdInteractiveAuthentication no
     PubkeyAuthentication no
@@ -130,7 +131,10 @@ in {
   config = lib.mkIf cfg.enable {
     infra.acme.enable = true;
 
-    security.acme.certs.${hostName} = {};
+    security = {
+      acme.certs.${hostName} = {};
+      pam.services.paperless-sftp.unixAuth = true;
+    };
 
     sops.secrets =
       {
