@@ -558,6 +558,14 @@ in {
           mode = "0400";
         };
       })
+
+      (lib.mkIf cfg.alerting.enable {
+        ${cfg.alerting.ntfyPasswordSecret} = {
+          sopsFile = ../../secrets/infrastructure.yaml;
+          key = cfg.alerting.ntfyPasswordSecret;
+          mode = "0400";
+        };
+      })
     ];
 
     infra.services.mosquitto.additionalUsers = lib.mkIf cfg.mqtt.enable {
