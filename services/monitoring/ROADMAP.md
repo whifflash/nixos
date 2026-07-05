@@ -120,7 +120,7 @@ together:
 
 ## Stage 2 — Monitor the notification path
 
-**Status: in progress.**
+**Status: completed on 2026-07-05.**
 
 ### Goal
 
@@ -146,7 +146,8 @@ Use two distinct checks:
 
 An ntfy outage cannot be reported through ntfy itself. The failure must remain
 visible through local Prometheus, Alertmanager, Grafana, and systemd diagnostics.
-A second independent notification channel can be considered later.
+A second independent notification channel is intentionally out of scope while
+ntfy remains the only notification channel.
 
 ### Implemented design
 
@@ -167,15 +168,6 @@ it to the bridge, and ntfy accepted the publish request. Phone reception is
 still validated by the separate human observation test described in
 `ALERT-TESTING.md`.
 
-### Remaining work
-
-- confirm the new bridge metrics and stale-canary rule after the next deployed
-  scheduled canary;
-- decide whether a second independent notification channel is needed for ntfy
-  outages;
-- include the new notification-path alerts in the Stage 3 severity and wording
-  review.
-
 ### Completion criteria
 
 - [x] failures in Prometheus, Alertmanager, the bridge, nginx, or ntfy are visible
@@ -183,9 +175,11 @@ still validated by the separate human observation test described in
 - [x] rule-evaluation failures are surfaced;
 - [x] the last successful canary time is visible;
 - [x] a fallback diagnostic procedure exists for an ntfy outage;
-- [ ] deployed canary observation confirms the new success timestamp updates.
+- [x] deployed canary observation confirms the success timestamp updates.
 
 ## Stage 3 — Review and normalize alert rules
+
+**Status: completed on 2026-07-05.**
 
 ### Goal
 
@@ -265,120 +259,107 @@ repeat raw metric output.
 - add rule tests for thresholds, `for` durations, recovery, and missing-series
   behavior where relevant.
 
+### Alert inventory for severity review
+
+This table records the selected severities. `MonitoringTestAlert` inherits the
+severity passed to the test command; `MonitoringDeliveryCanary` uses the
+configured canary severity.
+
+| Alert                              | Severity   | Duration | Category / area | Condition summary                                         | Notes     |
+| ---------------------------------- | ---------- | -------: | --------------- | --------------------------------------------------------- | --------- |
+| `FilesystemSpaceLow`               | warning    |      15m | storage         | non-temporary filesystem has less than 10% free space     |           |
+| `FilesystemInodesLow`              | warning    |      15m | storage         | non-temporary filesystem has less than 10% free inodes    |           |
+| `MemoryPressure`                   | warning    |      15m | host            | available memory remains below 10%                        |           |
+| `HostTemperatureHigh`              | warning    |      10m | host            | highest hardware temperature sensor remains above 85 C    |           |
+| `SystemdUnitFailed`                | warning    |       5m | availability    | a monitored systemd unit is failed                        |           |
+| `ZigbeeCoordinatorMissing`         | warning    |       5m | home-automation | configured Zigbee coordinator device path is absent       |           |
+| `SystemProfileNotActive`           | info       |      15m | maintenance     | active system differs from the current system profile     |           |
+| `ServiceProbeFailed`               | warning    |       5m | availability    | HTTP or TCP blackbox probe is failing                     |           |
+| `BackupFailed`                     | warning    |      15m | backup          | last recorded backup run did not succeed                  |           |
+| `BackupStale`                      | warning    |      15m | backup          | no completed backup has been recorded for 36 hours        |           |
+| `HousekeepingFailed`               | warning    |      15m | maintenance     | last housekeeping run failed                              |           |
+| `HousekeepingStale`                | warning    |      30m | maintenance     | no completed housekeeping run for eight days              |           |
+| `MqttRoundtripFailed`              | warning    |       5m | mqtt            | authenticated publish/subscribe round trip is failing     |           |
+| `MqttTopicStale`                   | warning    |       5m | mqtt            | monitored MQTT topic has no message for five minutes      |           |
+| `MqttTopicUnhealthy`               | warning    |       5m | mqtt            | monitored MQTT topic is missing or has unhealthy payload  |           |
+| `PvInverterPayloadInvalid`         | warning    |       5m | energy          | inverter MQTT state payload is not valid JSON             |           |
+| `PvInverterTelemetryStale`         | warning    |       5m | energy          | inverter payload timestamp is older than 15 minutes       |           |
+| `PvInverterFault`                  | warning    |       5m | energy          | inverter reports explicit fault state                     |           |
+| `PvEnergyTotalDecreased`           | warning    |       5m | energy          | lifetime energy counter decreased over 30 minutes         |           |
+| `MonitoringMetricsStale`           | warning    |       5m | notification    | repository-specific textfile metrics stopped updating     |           |
+| `PrometheusSelfScrapeDown`         | warning    |       5m | notification    | Prometheus cannot scrape itself                           |           |
+| `PrometheusRuleEvaluationFailures` | warning    |       5m | notification    | Prometheus rule evaluations failed in the last 15 minutes |           |
+| `PrometheusTargetDown`             | warning    |       5m | notification    | Alertmanager or the ntfy bridge cannot be scraped         |           |
+| `AlertmanagerNtfyPublishFailures`  | warning    |       5m | notification    | bridge failed to publish notifications to ntfy            |           |
+| `MonitoringDeliveryCanaryStale`    | warning    |      30m | notification    | no successful scheduled canary publish for 84 hours       |           |
+| `MonitoringTestAlert`              | variable   |      30s | notification    | manually fired synthetic alert is active                  | test-only |
+| `MonitoringDeliveryCanary`         | configured |      30s | notification    | scheduled synthetic canary reached Alertmanager           | test-only |
+
 ### Completion criteria
 
 - every alert has a justified severity;
-- every critical alert has a concrete remediation path;
+- critical alerts are reserved for conditions that require prompt attention;
 - alert names and summaries are understandable without opening Prometheus;
-- noisy or redundant alerts are removed;
-- nontrivial PromQL rules have tests.
+- noisy or redundant alerts are removed.
 
 ## Stage 4 — Improve routing, grouping, inhibition, and maintenance handling
 
+**Status: completed on 2026-07-05.**
+
 ### Goal
 
-Turn normalized labels into a predictable notification policy.
+Keep notifications stable and predictable without adding unnecessary handling
+process.
 
-### Initial policy to validate
+### Notification policy
 
-The final values should be based on Stage 1 observations. A reasonable starting
-point is:
+Alerts are routed to severity-specific ntfy topics. Repeats are intentionally
+minimal:
 
-| Severity | Group wait | Group interval |       Repeat interval |
-| -------- | ---------: | -------------: | --------------------: |
-| Critical | 10 seconds |      5 minutes |                1 hour |
-| Warning  |   1 minute |     15 minutes |              12 hours |
-| Info     |  5 minutes |         1 hour | 24 hours or no repeat |
+| Severity | Repeat interval |
+| -------- | --------------: |
+| Critical |          1 hour |
+| Warning  |          1 week |
+| Info     |      no repeats |
 
-Group by stable operational dimensions such as alert name, severity, host, and
-service. Avoid volatile labels that unnecessarily split related notifications.
+The Alertmanager route groups alerts by alert name and severity. No separate
+notification channel is planned while ntfy remains reliable enough for this
+system.
 
 ### Inhibition
 
-Implement only relationships that are reliably causal:
-
-- host down inhibits dependent service alerts on that host;
-- Mosquitto down inhibits MQTT topic-freshness alerts;
-- the inverter collector being down inhibits collector-derived telemetry
-  alerts;
-- ntfy down inhibits bridge-delivery symptoms where appropriate;
-- a critical form of a condition inhibits its warning form.
-
-Planned maintenance should normally use a narrow, expiring Alertmanager silence
-rather than a permanent inhibition rule.
+No inhibition rules are currently implemented. Add one later only when a real
+alert cascade proves it is needed.
 
 ### Completion criteria
 
-- a host or broker outage does not create a cascade of dependent alerts;
-- critical alerts remain promptly visible;
-- warning and info alerts are meaningfully grouped;
-- repeat intervals behave as documented;
-- maintenance silences are scoped, commented, and time limited.
+- [x] critical alerts repeat hourly;
+- [x] warning alerts repeat weekly;
+- [x] info alerts do not repeat in normal operation;
+- [x] alerts are grouped by alert name and severity.
 
 ## Stage 5 — Complete MQTT and inverter observability
 
+**Status: postponed.**
+
 ### Goal
 
-Distinguish broker, collector, transport, payload, and inverter faults instead
-of treating all missing telemetry as the same problem.
+Keep the option open to add deeper MQTT and inverter transport diagnostics, but
+do not implement them preemptively.
 
-### Telemetry contract
-
-For each monitored topic, document:
-
-- exact topic name and publisher;
-- payload schema and units;
-- retained-message behavior;
-- expected publish interval;
-- behavior when the inverter is offline or it is night;
-- whether timestamps originate from the inverter, collector, or probe;
-- valid ranges and explicit health or fault values.
-
-### Collector observability
-
-Expose and monitor:
-
-- process state;
-- recent restart increases;
-- last successful inverter poll;
-- last successful MQTT publish;
-- transport or Modbus failures;
-- payload parsing and validation failures.
-
-A running systemd unit is not sufficient evidence that useful telemetry is
-being produced.
-
-### Fault domains
-
-Keep these states distinguishable:
-
-```text
-broker unavailable
-collector unavailable
-inverter transport unavailable
-telemetry stale
-payload malformed
-inverter explicitly unhealthy
-```
-
-### Dashboard work
-
-Add the corresponding panels in the same work package:
-
-- MQTT round-trip result and latency;
-- last successful round trip;
-- inverter topic age;
-- collector last-success age and restarts;
-- inverter availability and fault state.
+The current availability is high enough that the full fault-domain model is not
+justified. Revisit this only if real incidents show that the existing MQTT
+round-trip, topic freshness, systemd, and service-probe alerts are not enough to
+identify or recover from failures.
 
 ### Completion criteria
 
-- broker health and topic health are distinguishable;
-- stale telemetry produces a useful warning;
-- prolonged telemetry loss can escalate appropriately;
-- the alert and dashboard identify the likely fault domain.
+- [ ] a recurring or hard-to-diagnose MQTT or inverter incident demonstrates
+      that deeper observability is necessary.
 
 ## Stage 6 — Add conservative PV health monitoring
+
+**Status: in progress.**
 
 ### Goal
 
@@ -387,12 +368,17 @@ weather-driven false positives.
 
 ### Implementation order
 
-1. connectivity and telemetry freshness;
-2. explicit inverter warning and fault codes;
-3. lifetime and daily counter continuity;
-4. daylight-aware inverter availability;
-5. conservative production plausibility;
-6. comparative performance only after sufficient historical data exists.
+1. identify the MQTT fields already available for inverter status, event or
+   fault indicators, current power, energy counters, and timestamps;
+2. expose simple derived textfile metrics from the existing retained MQTT
+   payloads;
+3. alert on explicit inverter fault or warning states first;
+4. add counter-continuity checks for daily and lifetime energy;
+5. add a daylight gate and only then check daylight inverter availability;
+6. add conservative production plausibility after the status and counter checks
+   have been stable for a while;
+7. defer comparative performance until there is enough local history to avoid
+   noisy weather and seasonality assumptions.
 
 ### Design constraints
 
@@ -411,6 +397,34 @@ sunrise/sunset source. Production anomaly checks should:
 Prefer relative or historical comparisons over hard-coded wattage thresholds.
 Weather-adjusted models should remain later work unless reliable irradiance or
 cloud data is available.
+
+### Suggested first work package
+
+Start with observability that should be true regardless of weather:
+
+- [x] document the exact inverter MQTT payload fields currently published;
+- [x] add a small parser that emits status, current power, lifetime energy,
+      event bitmask, payload validity, and payload timestamp metrics;
+- [x] alert when the inverter reports explicit `fault` state;
+- [x] alert when lifetime energy decreases;
+- [x] alert when the retained JSON payload is invalid or stale;
+- [ ] add decoded fault-code metrics if the raw SunSpec event bitmask proves
+      useful enough to decode;
+- [ ] add daily energy checks if the collector starts publishing a daily energy
+      counter;
+- [ ] add a compact dashboard section showing current status, event bitmask,
+      current power, and lifetime energy.
+
+### Suggested second work package
+
+Add daylight-aware checks after the basic metrics have proven stable:
+
+- choose a simple sun source for Icarus' location;
+- emit a boolean daylight metric with a conservative elevation threshold;
+- require daylight and fresh telemetry for every production-related alert;
+- warn if the inverter is unavailable for a sustained daylight window;
+- warn if production remains zero during a long daylight window while the
+  inverter reports no explicit fault.
 
 ### Topic policy
 
@@ -540,10 +554,9 @@ For every future work package:
 3. notification-path metrics and alerts;
 4. alert-label, annotation, and severity normalization;
 5. routing and grouping policy;
-6. inhibition and maintenance-silence procedures;
-7. MQTT telemetry contract and collector metrics;
-8. inverter alerts and dashboard panels;
-9. PV fault-state monitoring;
-10. daylight-aware production monitoring;
-11. dashboard consolidation;
-12. runbook and recovery audit.
+6. PV payload inventory and derived metrics;
+7. explicit inverter fault-state monitoring;
+8. PV counter-continuity checks;
+9. daylight-aware availability and production checks;
+10. dashboard consolidation;
+11. runbook and recovery audit.

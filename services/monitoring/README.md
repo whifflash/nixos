@@ -187,6 +187,10 @@ The adapter routes alerts to separate topics by severity:
 - `info` -> `icarus-info`, low-priority notification;
 - resolved alerts use the same severity topic with normal priority.
 
+Alertmanager repeats unresolved critical alerts hourly and unresolved warning
+alerts weekly. Info alerts use a long repeat interval so they do not repeat in
+normal operation.
+
 The notification opens the Grafana health dashboard. Credentials are passed
 through a systemd credential and do not enter the Nix store. See
 `services/ntfy/README.md` for user management, ACLs, phone setup, and manual test
@@ -234,6 +238,21 @@ the round-trip topic and the configured read-only health topics. Every minute it
 
 The default topic list follows the enabled inverter collector: its retained availability
 topic must be `online`, and its state topic must continue producing messages.
+For the inverter state topic, the probe also exports PV-specific metrics derived
+from the retained JSON payload:
+
+- `infra_pv_inverter_payload_valid`;
+- `infra_pv_inverter_status` and `infra_pv_inverter_status_code`;
+- `infra_pv_inverter_fault`;
+- `infra_pv_ac_power_w` and `infra_pv_dc_power_w`;
+- `infra_pv_ac_energy_total_wh`;
+- `infra_pv_event_bitmask`;
+- `infra_pv_payload_timestamp_seconds`.
+
+Current PV alerts are deliberately conservative and warning-only. They cover
+invalid payloads, stale payload timestamps, explicit inverter fault state, and a
+decreasing lifetime energy counter. Daylight-aware production checks are a later
+stage.
 
 ```bash
 systemctl start infra-monitoring-mqtt.service

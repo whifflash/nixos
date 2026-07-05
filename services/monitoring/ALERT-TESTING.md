@@ -101,10 +101,9 @@ sudo infra-monitoring-test-alert resolve critical group-b
 
 ## Repeat notifications
 
-The current repeat interval is four hours. A repeat test therefore requires
-leaving one synthetic alert active for at least four hours. Do not shorten the
-production route merely to make this test faster; routing-policy changes belong
-in the later policy stage.
+Critical alerts repeat hourly. Warning alerts repeat weekly. Info alerts use a
+long repeat interval so they do not repeat in normal operation. Do not shorten
+the production routes merely to make repeat tests faster.
 
 ## Cleanup
 

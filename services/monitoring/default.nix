@@ -318,7 +318,7 @@
               alert = "ZigbeeCoordinatorMissing";
               expr = "infra_zigbee_coordinator_present == 0";
               for = "5m";
-              labels.severity = "critical";
+              labels.severity = "warning";
               annotations.summary = "The configured Zigbee coordinator device is missing";
             }
             {
@@ -338,21 +338,21 @@
                 alert = "ServiceProbeFailed";
                 expr = "probe_success == 0";
                 for = "5m";
-                labels.severity = "critical";
+                labels.severity = "warning";
                 annotations.summary = "Health probe failed for {{ $labels.instance }}";
               }
               {
                 alert = "BackupFailed";
                 expr = "infra_backup_last_run_success == 0";
                 for = "15m";
-                labels.severity = "critical";
+                labels.severity = "warning";
                 annotations.summary = "The last {{ $labels.backup }} backup did not succeed";
               }
               {
                 alert = "BackupStale";
                 expr = "time() - infra_backup_last_run_timestamp_seconds > 129600";
                 for = "15m";
-                labels.severity = "critical";
+                labels.severity = "warning";
                 annotations.summary = "No completed {{ $labels.backup }} backup has been recorded for 36 hours";
               }
               {
@@ -373,7 +373,7 @@
                 alert = "MqttRoundtripFailed";
                 expr = "infra_mqtt_roundtrip_success == 0";
                 for = "5m";
-                labels.severity = "critical";
+                labels.severity = "warning";
                 annotations.summary = "Authenticated MQTT publish/subscribe round trip is failing";
               }
               {
@@ -387,8 +387,48 @@
                 alert = "MqttTopicUnhealthy";
                 expr = "infra_mqtt_topic_healthy == 0";
                 for = "5m";
-                labels.severity = "critical";
+                labels.severity = "warning";
                 annotations.summary = "MQTT topic {{ $labels.name }} is missing or reports an unhealthy payload";
+              }
+              {
+                alert = "PvInverterPayloadInvalid";
+                expr = "infra_pv_inverter_payload_valid == 0";
+                for = "5m";
+                labels = {
+                  category = "energy";
+                  severity = "warning";
+                };
+                annotations.summary = "PV inverter MQTT payload is not valid JSON";
+              }
+              {
+                alert = "PvInverterTelemetryStale";
+                expr = "time() - infra_pv_payload_timestamp_seconds > 900";
+                for = "5m";
+                labels = {
+                  category = "energy";
+                  severity = "warning";
+                };
+                annotations.summary = "PV inverter payload timestamp is stale";
+              }
+              {
+                alert = "PvInverterFault";
+                expr = "infra_pv_inverter_fault == 1";
+                for = "5m";
+                labels = {
+                  category = "energy";
+                  severity = "warning";
+                };
+                annotations.summary = "PV inverter reports fault state";
+              }
+              {
+                alert = "PvEnergyTotalDecreased";
+                expr = "delta(infra_pv_ac_energy_total_wh[30m]) < 0";
+                for = "5m";
+                labels = {
+                  category = "energy";
+                  severity = "warning";
+                };
+                annotations.summary = "PV lifetime energy counter decreased";
               }
               {
                 alert = "MonitoringMetricsStale";
@@ -950,14 +990,32 @@ in {
               group_by = ["alertname" "severity"];
               group_wait = "30s";
               group_interval = "5m";
-              repeat_interval = "4h";
-              routes = lib.optionals cfg.alerting.testAlerts.canary.enable [
-                {
-                  receiver = "ntfy-canary";
-                  matchers = [''category="notification-canary"''];
-                  continue = false;
-                }
-              ];
+              repeat_interval = "87600h";
+              routes =
+                lib.optionals cfg.alerting.testAlerts.canary.enable [
+                  {
+                    receiver = "ntfy-canary";
+                    matchers = [''category="notification-canary"''];
+                    continue = false;
+                  }
+                ]
+                ++ [
+                  {
+                    receiver = "ntfy";
+                    matchers = [''severity="critical"''];
+                    repeat_interval = "1h";
+                  }
+                  {
+                    receiver = "ntfy";
+                    matchers = [''severity="warning"''];
+                    repeat_interval = "168h";
+                  }
+                  {
+                    receiver = "ntfy";
+                    matchers = [''severity="info"''];
+                    repeat_interval = "87600h";
+                  }
+                ];
             };
             receivers = [
               {

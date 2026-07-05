@@ -3,13 +3,44 @@ import json
 import os
 import secrets
 import time
+from datetime import datetime
 from pathlib import Path
 
 import paho.mqtt.client as mqtt
 
 
+INVERTER_STATUS_VALUES = {
+    "off": 1,
+    "sleeping": 2,
+    "starting": 3,
+    "producing": 4,
+    "throttled": 5,
+    "shutting_down": 6,
+    "fault": 7,
+    "standby": 8,
+}
+
+
 def metric_label(value: str) -> str:
     return value.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
+
+
+def metric_number(value: object, default: float = 0.0) -> float:
+    if value is None:
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def parse_timestamp(timestamp: object) -> int:
+    if not isinstance(timestamp, str):
+        return 0
+    try:
+        return int(datetime.fromisoformat(timestamp.replace("Z", "+00:00")).timestamp())
+    except ValueError:
+        return 0
 
 
 def main() -> None:
@@ -100,6 +131,33 @@ def main() -> None:
                 f"infra_mqtt_topic_healthy{{{labels}}} {1 if healthy else 0}",
             ]
         )
+
+        if name == "inverter-state" and payload:
+            try:
+                inverter_state = json.loads(payload)
+            except json.JSONDecodeError:
+                lines.append("infra_pv_inverter_payload_valid 0")
+                continue
+
+            status_text = str(inverter_state.get("status_text", "unknown"))
+            status_code = metric_number(
+                inverter_state.get("status"),
+                INVERTER_STATUS_VALUES.get(status_text, 0),
+            )
+            status_labels = f'status="{metric_label(status_text)}"'
+            lines.extend(
+                [
+                    "infra_pv_inverter_payload_valid 1",
+                    f"infra_pv_inverter_status{{{status_labels}}} 1",
+                    f"infra_pv_inverter_status_code {status_code}",
+                    f"infra_pv_inverter_fault {1 if status_text == 'fault' else 0}",
+                    f"infra_pv_ac_power_w {metric_number(inverter_state.get('ac_power_w'))}",
+                    f"infra_pv_dc_power_w {metric_number(inverter_state.get('dc_power_w'))}",
+                    f"infra_pv_ac_energy_total_wh {metric_number(inverter_state.get('ac_energy_total_wh'))}",
+                    f"infra_pv_event_bitmask {metric_number(inverter_state.get('events'))}",
+                    f"infra_pv_payload_timestamp_seconds {parse_timestamp(inverter_state.get('ts'))}",
+                ]
+            )
 
     state_path.write_text(json.dumps(state, sort_keys=True))
     temporary_path = output_path.with_suffix(output_path.suffix + ".tmp")
