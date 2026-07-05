@@ -96,6 +96,9 @@ loopback and are not opened in the firewall.
 
 ## Roadmap
 
+The ordered implementation plan and completion criteria are maintained in
+[`ROADMAP.md`](./ROADMAP.md).
+
 ### Maintenance and growth control
 
 The cleanup policy is implemented by `infra.services.housekeeping` and documented
@@ -195,6 +198,9 @@ Useful checks:
 systemctl status prometheus-alertmanager infra-alertmanager-ntfy ntfy-sh
 journalctl -u prometheus-alertmanager -u infra-alertmanager-ntfy -u ntfy-sh -n 100
 ```
+
+For controlled firing, resolution, severity-routing, and grouping tests, enable
+the optional test facility and follow [ALERT-TESTING.md](./ALERT-TESTING.md).
 
 ## MQTT health
 

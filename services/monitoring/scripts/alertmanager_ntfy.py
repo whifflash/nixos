@@ -44,7 +44,13 @@ class Handler(BaseHTTPRequestHandler):
             priority = "default"
             tags = "white_check_mark"
 
-        topic = NTFY_TOPICS.get(severity, NTFY_TOPICS["info"])
+        requested_topic = payload.get("commonLabels", {}).get("ntfy_topic")
+        allowed_topics = set(NTFY_TOPICS.values())
+        topic = (
+            requested_topic
+            if requested_topic in allowed_topics
+            else NTFY_TOPICS.get(severity, NTFY_TOPICS["info"])
+        )
         request = Request(
             f"{NTFY_BASE_URL}/{topic}",
             data=message.encode(),

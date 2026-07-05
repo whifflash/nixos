@@ -20,6 +20,24 @@
     pythonPackages.paho-mqtt
   ]);
 
+  monitoringTestAlert = pkgs.writeShellApplication {
+    name = "infra-monitoring-test-alert";
+    runtimeInputs = with pkgs; [
+      coreutils
+      findutils
+    ];
+    text = builtins.readFile ./scripts/monitoring-test-alert.sh;
+  };
+
+  monitoringAlertCanary = pkgs.writeShellApplication {
+    name = "infra-monitoring-alert-canary";
+    runtimeInputs = [
+      monitoringTestAlert
+      pkgs.coreutils
+    ];
+    text = builtins.readFile ./scripts/monitoring-alert-canary.sh;
+  };
+
   serviceHostName = service: defaultSubdomain:
     if service.hostName != null
     then service.hostName
@@ -244,142 +262,179 @@
   };
 
   prometheusRules = pkgs.writeText "infra-monitoring-rules.yml" (builtins.toJSON {
-    groups = [
-      {
-        name = "icarus-host";
-        rules = [
-          {
-            alert = "FilesystemSpaceLow";
-            expr = ''
-              (
-                node_filesystem_avail_bytes{fstype!~"tmpfs|ramfs|overlay"}
-                /
-                node_filesystem_size_bytes{fstype!~"tmpfs|ramfs|overlay"}
-              ) < 0.10
-            '';
-            for = "15m";
-            labels.severity = "warning";
-            annotations.summary = "Filesystem space is below 10% on {{ $labels.mountpoint }}";
-          }
-          {
-            alert = "FilesystemInodesLow";
-            expr = ''
-              (
-                node_filesystem_files_free{fstype!~"tmpfs|ramfs|overlay"}
-                /
-                node_filesystem_files{fstype!~"tmpfs|ramfs|overlay"}
-              ) < 0.10
-            '';
-            for = "15m";
-            labels.severity = "warning";
-            annotations.summary = "Filesystem inodes are below 10% on {{ $labels.mountpoint }}";
-          }
-          {
-            alert = "MemoryPressure";
-            expr = "node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.10";
-            for = "15m";
-            labels.severity = "warning";
-            annotations.summary = "Available memory has remained below 10%";
-          }
-          {
-            alert = "HostTemperatureHigh";
-            expr = "max(node_hwmon_temp_celsius) > 85";
-            for = "10m";
-            labels.severity = "warning";
-            annotations.summary = "A hardware temperature sensor has remained above 85 °C";
-          }
-          {
-            alert = "SystemdUnitFailed";
-            expr = ''node_systemd_unit_state{state="failed"} == 1'';
-            for = "5m";
-            labels.severity = "warning";
-            annotations.summary = "systemd unit {{ $labels.name }} is failed";
-          }
-          {
-            alert = "ZigbeeCoordinatorMissing";
-            expr = "infra_zigbee_coordinator_present == 0";
-            for = "5m";
-            labels.severity = "critical";
-            annotations.summary = "The configured Zigbee coordinator device is missing";
-          }
-          {
-            alert = "SystemProfileNotActive";
-            expr = "infra_current_system_profile_active == 0";
-            for = "15m";
-            labels.severity = "info";
-            annotations.summary = "The active NixOS system differs from the current system profile";
-          }
-        ];
-      }
-      {
-        name = "icarus-services";
-        rules = [
-          {
-            alert = "ServiceProbeFailed";
-            expr = "probe_success == 0";
-            for = "5m";
-            labels.severity = "critical";
-            annotations.summary = "Health probe failed for {{ $labels.instance }}";
-          }
-          {
-            alert = "BackupFailed";
-            expr = "infra_backup_last_run_success == 0";
-            for = "15m";
-            labels.severity = "critical";
-            annotations.summary = "The last {{ $labels.backup }} backup did not succeed";
-          }
-          {
-            alert = "BackupStale";
-            expr = "time() - infra_backup_last_run_timestamp_seconds > 129600";
-            for = "15m";
-            labels.severity = "critical";
-            annotations.summary = "No completed {{ $labels.backup }} backup has been recorded for 36 hours";
-          }
-          {
-            alert = "HousekeepingFailed";
-            expr = "infra_housekeeping_last_run_timestamp_seconds > 0 and infra_housekeeping_last_run_success == 0";
-            for = "15m";
-            labels.severity = "warning";
-            annotations.summary = "The last {{ $labels.task }} housekeeping run failed";
-          }
-          {
-            alert = "HousekeepingStale";
-            expr = "infra_housekeeping_last_run_timestamp_seconds > 0 and time() - infra_housekeeping_last_run_timestamp_seconds > 691200";
-            for = "30m";
-            labels.severity = "warning";
-            annotations.summary = "No completed {{ $labels.task }} housekeeping run has been recorded for eight days";
-          }
-          {
-            alert = "MqttRoundtripFailed";
-            expr = "infra_mqtt_roundtrip_success == 0";
-            for = "5m";
-            labels.severity = "critical";
-            annotations.summary = "Authenticated MQTT publish/subscribe round trip is failing";
-          }
-          {
-            alert = "MqttTopicStale";
-            expr = "infra_mqtt_topic_last_message_timestamp_seconds > 0 and time() - infra_mqtt_topic_last_message_timestamp_seconds > 300";
-            for = "5m";
-            labels.severity = "warning";
-            annotations.summary = "MQTT topic {{ $labels.name }} has not produced a message for five minutes";
-          }
-          {
-            alert = "MqttTopicUnhealthy";
-            expr = "infra_mqtt_topic_healthy == 0";
-            for = "5m";
-            labels.severity = "critical";
-            annotations.summary = "MQTT topic {{ $labels.name }} is missing or reports an unhealthy payload";
-          }
-          {
-            alert = "MonitoringMetricsStale";
-            expr = "time() - infra_monitoring_metrics_generated_timestamp_seconds > 900";
-            for = "5m";
-            labels.severity = "warning";
-            annotations.summary = "Repository-specific monitoring metrics have stopped updating";
-          }
-        ];
-      }
-    ];
+    groups =
+      [
+        {
+          name = "icarus-host";
+          rules = [
+            {
+              alert = "FilesystemSpaceLow";
+              expr = ''
+                (
+                  node_filesystem_avail_bytes{fstype!~"tmpfs|ramfs|overlay"}
+                  /
+                  node_filesystem_size_bytes{fstype!~"tmpfs|ramfs|overlay"}
+                ) < 0.10
+              '';
+              for = "15m";
+              labels.severity = "warning";
+              annotations.summary = "Filesystem space is below 10% on {{ $labels.mountpoint }}";
+            }
+            {
+              alert = "FilesystemInodesLow";
+              expr = ''
+                (
+                  node_filesystem_files_free{fstype!~"tmpfs|ramfs|overlay"}
+                  /
+                  node_filesystem_files{fstype!~"tmpfs|ramfs|overlay"}
+                ) < 0.10
+              '';
+              for = "15m";
+              labels.severity = "warning";
+              annotations.summary = "Filesystem inodes are below 10% on {{ $labels.mountpoint }}";
+            }
+            {
+              alert = "MemoryPressure";
+              expr = "node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.10";
+              for = "15m";
+              labels.severity = "warning";
+              annotations.summary = "Available memory has remained below 10%";
+            }
+            {
+              alert = "HostTemperatureHigh";
+              expr = "max(node_hwmon_temp_celsius) > 85";
+              for = "10m";
+              labels.severity = "warning";
+              annotations.summary = "A hardware temperature sensor has remained above 85 °C";
+            }
+            {
+              alert = "SystemdUnitFailed";
+              expr = ''node_systemd_unit_state{state="failed"} == 1'';
+              for = "5m";
+              labels.severity = "warning";
+              annotations.summary = "systemd unit {{ $labels.name }} is failed";
+            }
+            {
+              alert = "ZigbeeCoordinatorMissing";
+              expr = "infra_zigbee_coordinator_present == 0";
+              for = "5m";
+              labels.severity = "critical";
+              annotations.summary = "The configured Zigbee coordinator device is missing";
+            }
+            {
+              alert = "SystemProfileNotActive";
+              expr = "infra_current_system_profile_active == 0";
+              for = "15m";
+              labels.severity = "info";
+              annotations.summary = "The active NixOS system differs from the current system profile";
+            }
+          ];
+        }
+        {
+          name = "icarus-services";
+          rules = [
+            {
+              alert = "ServiceProbeFailed";
+              expr = "probe_success == 0";
+              for = "5m";
+              labels.severity = "critical";
+              annotations.summary = "Health probe failed for {{ $labels.instance }}";
+            }
+            {
+              alert = "BackupFailed";
+              expr = "infra_backup_last_run_success == 0";
+              for = "15m";
+              labels.severity = "critical";
+              annotations.summary = "The last {{ $labels.backup }} backup did not succeed";
+            }
+            {
+              alert = "BackupStale";
+              expr = "time() - infra_backup_last_run_timestamp_seconds > 129600";
+              for = "15m";
+              labels.severity = "critical";
+              annotations.summary = "No completed {{ $labels.backup }} backup has been recorded for 36 hours";
+            }
+            {
+              alert = "HousekeepingFailed";
+              expr = "infra_housekeeping_last_run_timestamp_seconds > 0 and infra_housekeeping_last_run_success == 0";
+              for = "15m";
+              labels.severity = "warning";
+              annotations.summary = "The last {{ $labels.task }} housekeeping run failed";
+            }
+            {
+              alert = "HousekeepingStale";
+              expr = "infra_housekeeping_last_run_timestamp_seconds > 0 and time() - infra_housekeeping_last_run_timestamp_seconds > 691200";
+              for = "30m";
+              labels.severity = "warning";
+              annotations.summary = "No completed {{ $labels.task }} housekeeping run has been recorded for eight days";
+            }
+            {
+              alert = "MqttRoundtripFailed";
+              expr = "infra_mqtt_roundtrip_success == 0";
+              for = "5m";
+              labels.severity = "critical";
+              annotations.summary = "Authenticated MQTT publish/subscribe round trip is failing";
+            }
+            {
+              alert = "MqttTopicStale";
+              expr = "infra_mqtt_topic_last_message_timestamp_seconds > 0 and time() - infra_mqtt_topic_last_message_timestamp_seconds > 300";
+              for = "5m";
+              labels.severity = "warning";
+              annotations.summary = "MQTT topic {{ $labels.name }} has not produced a message for five minutes";
+            }
+            {
+              alert = "MqttTopicUnhealthy";
+              expr = "infra_mqtt_topic_healthy == 0";
+              for = "5m";
+              labels.severity = "critical";
+              annotations.summary = "MQTT topic {{ $labels.name }} is missing or reports an unhealthy payload";
+            }
+            {
+              alert = "MonitoringMetricsStale";
+              expr = "time() - infra_monitoring_metrics_generated_timestamp_seconds > 900";
+              for = "5m";
+              labels.severity = "warning";
+              annotations.summary = "Repository-specific monitoring metrics have stopped updating";
+            }
+          ];
+        }
+      ]
+      ++ lib.optionals cfg.alerting.testAlerts.enable [
+        {
+          name = "icarus-alert-delivery-tests";
+          rules = [
+            {
+              alert = "MonitoringTestAlert";
+              expr = ''infra_monitoring_test_alert{test_id!="scheduled-canary"} == 1'';
+              for = "30s";
+              labels = {
+                category = "notification";
+                service = "monitoring-test";
+                severity = "{{ $labels.severity }}";
+              };
+              annotations = {
+                description = "Controlled end-to-end alert-delivery test {{ $labels.test_id }} is active.";
+                summary = "Monitoring test ({{ $labels.severity }}): {{ $labels.test_id }}";
+              };
+            }
+            {
+              alert = "MonitoringDeliveryCanary";
+              expr = ''infra_monitoring_test_alert{test_id="scheduled-canary"} == 1'';
+              for = "30s";
+              labels = {
+                category = "notification-canary";
+                service = "monitoring-test";
+                severity = "{{ $labels.severity }}";
+                ntfy_topic = cfg.alerting.testAlerts.canary.topic;
+              };
+              annotations = {
+                description = "Scheduled end-to-end notification delivery canary.";
+                summary = "Scheduled notification test reached Alertmanager";
+              };
+            }
+          ];
+        }
+      ];
   });
 
   blackboxConfig = pkgs.writeText "blackbox-exporter.yml" (builtins.toJSON {
@@ -446,6 +501,45 @@ in {
         type = lib.types.port;
         default = 9095;
         description = "Loopback port for the Alertmanager-to-ntfy adapter.";
+      };
+
+      testAlerts = {
+        enable = lib.mkEnableOption "controlled end-to-end alert-delivery tests";
+
+        canary = {
+          enable = lib.mkEnableOption "scheduled end-to-end notification canaries";
+
+          schedule = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [
+              "Wed *-*-* 10:00:00"
+              "Sun *-*-* 10:00:00"
+            ];
+            description = "systemd OnCalendar expressions for notification canaries.";
+          };
+
+          severity = lib.mkOption {
+            type = lib.types.enum [
+              "critical"
+              "warning"
+              "info"
+            ];
+            default = "critical";
+            description = "Severity attached to scheduled notification canaries.";
+          };
+
+          topic = lib.mkOption {
+            type = lib.types.str;
+            default = config.infra.services.ntfy.topics.critical;
+            description = "ntfy topic used for scheduled notification canaries.";
+          };
+
+          activeDuration = lib.mkOption {
+            type = lib.types.str;
+            default = "2m";
+            description = "How long the synthetic metric remains active before automatic cleanup.";
+          };
+        };
       };
     };
 
@@ -528,12 +622,24 @@ in {
         message = "infra.services.monitoring.alerting requires infra.services.ntfy.enable.";
       }
       {
+        assertion = !cfg.alerting.testAlerts.canary.enable || cfg.alerting.testAlerts.enable;
+        message = "infra.services.monitoring.alerting.testAlerts.canary requires testAlerts.enable.";
+      }
+      {
+        assertion = !cfg.alerting.testAlerts.canary.enable || builtins.elem cfg.alerting.testAlerts.canary.topic (builtins.attrValues config.infra.services.ntfy.topics);
+        message = "The alert canary topic must be one of infra.services.ntfy.topics.";
+      }
+      {
         assertion = config.infra.services.hub.enable;
         message = "infra.services.monitoring requires infra.services.hub.enable for the shared wildcard certificate and service link.";
       }
     ];
 
     infra.acme.enable = true;
+
+    environment.systemPackages = lib.optionals cfg.alerting.testAlerts.enable [
+      monitoringTestAlert
+    ];
 
     security.acme.certs.${certificateName} = {
       domain = config.infra.domain;
@@ -611,6 +717,32 @@ in {
           };
         };
 
+        infra-monitoring-alert-canary = lib.mkIf cfg.alerting.testAlerts.canary.enable {
+          description = "Send a scheduled end-to-end monitoring notification canary";
+          after = [
+            "prometheus-node-exporter.service"
+            "prometheus.service"
+            "prometheus-alertmanager.service"
+            "infra-alertmanager-ntfy.service"
+            "ntfy-sh.service"
+          ];
+          wants = [
+            "prometheus-node-exporter.service"
+            "prometheus.service"
+            "prometheus-alertmanager.service"
+            "infra-alertmanager-ntfy.service"
+            "ntfy-sh.service"
+          ];
+          environment = {
+            ALERT_ACTIVE_DURATION = cfg.alerting.testAlerts.canary.activeDuration;
+            ALERT_SEVERITY = cfg.alerting.testAlerts.canary.severity;
+          };
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "${monitoringAlertCanary}/bin/infra-monitoring-alert-canary";
+          };
+        };
+
         infra-alertmanager-ntfy = lib.mkIf cfg.alerting.enable {
           description = "Forward Alertmanager notifications to ntfy";
           wantedBy = ["multi-user.target"];
@@ -639,23 +771,35 @@ in {
         };
       };
 
-      timers.infra-monitoring-metrics = {
-        description = "Refresh repository-specific Prometheus metrics";
-        wantedBy = ["timers.target"];
-        timerConfig = {
-          OnBootSec = "2m";
-          OnUnitActiveSec = "5m";
-          Unit = "infra-monitoring-metrics.service";
+      timers = {
+        infra-monitoring-alert-canary = lib.mkIf cfg.alerting.testAlerts.canary.enable {
+          description = "Schedule end-to-end monitoring notification canaries";
+          wantedBy = ["timers.target"];
+          timerConfig = {
+            OnCalendar = cfg.alerting.testAlerts.canary.schedule;
+            Persistent = true;
+            Unit = "infra-monitoring-alert-canary.service";
+          };
         };
-      };
 
-      timers.infra-monitoring-mqtt = lib.mkIf cfg.mqtt.enable {
-        description = "Refresh MQTT health metrics";
-        wantedBy = ["timers.target"];
-        timerConfig = {
-          OnBootSec = "1m";
-          OnUnitActiveSec = "1m";
-          Unit = "infra-monitoring-mqtt.service";
+        infra-monitoring-metrics = {
+          description = "Refresh repository-specific Prometheus metrics";
+          wantedBy = ["timers.target"];
+          timerConfig = {
+            OnBootSec = "2m";
+            OnUnitActiveSec = "5m";
+            Unit = "infra-monitoring-metrics.service";
+          };
+        };
+
+        infra-monitoring-mqtt = lib.mkIf cfg.mqtt.enable {
+          description = "Refresh MQTT health metrics";
+          wantedBy = ["timers.target"];
+          timerConfig = {
+            OnBootSec = "1m";
+            OnUnitActiveSec = "1m";
+            Unit = "infra-monitoring-mqtt.service";
+          };
         };
       };
 
@@ -752,6 +896,13 @@ in {
               group_wait = "30s";
               group_interval = "5m";
               repeat_interval = "4h";
+              routes = lib.optionals cfg.alerting.testAlerts.canary.enable [
+                {
+                  receiver = "ntfy-canary";
+                  matchers = [''category="notification-canary"''];
+                  continue = false;
+                }
+              ];
             };
             receivers = [
               {
@@ -760,6 +911,15 @@ in {
                   {
                     url = "http://127.0.0.1:${toString cfg.alerting.webhookPort}";
                     send_resolved = true;
+                  }
+                ];
+              }
+              {
+                name = "ntfy-canary";
+                webhook_configs = [
+                  {
+                    url = "http://127.0.0.1:${toString cfg.alerting.webhookPort}";
+                    send_resolved = false;
                   }
                 ];
               }
