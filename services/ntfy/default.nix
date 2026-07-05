@@ -54,7 +54,7 @@
     credentialName = "password-${username}";
     accessCommands =
       lib.concatMapStringsSep "\n" (entry: ''
-        ${pkgs.ntfy-sh}/bin/ntfy --config /etc/ntfy/server.yml access \
+        ${pkgs.ntfy-sh}/bin/ntfy access \
           ${lib.escapeShellArg username} \
           ${lib.escapeShellArg entry.topic} \
           ${lib.escapeShellArg entry.permission}
@@ -63,20 +63,20 @@
   in ''
     password="$(${pkgs.coreutils}/bin/cat "$CREDENTIALS_DIRECTORY/${credentialName}")"
 
-    if ${pkgs.ntfy-sh}/bin/ntfy --config /etc/ntfy/server.yml user list \
+    if ${pkgs.ntfy-sh}/bin/ntfy user list \
       | ${pkgs.gnugrep}/bin/grep -Fq ${lib.escapeShellArg "user ${username} ("}; then
-      NTFY_PASSWORD="$password" ${pkgs.ntfy-sh}/bin/ntfy --config /etc/ntfy/server.yml user change-pass \
+      NTFY_PASSWORD="$password" ${pkgs.ntfy-sh}/bin/ntfy user change-pass \
         ${lib.escapeShellArg username}
-      ${pkgs.ntfy-sh}/bin/ntfy --config /etc/ntfy/server.yml user change-role \
+      ${pkgs.ntfy-sh}/bin/ntfy user change-role \
         ${lib.escapeShellArg username} \
         ${lib.escapeShellArg user.role}
     else
-      NTFY_PASSWORD="$password" ${pkgs.ntfy-sh}/bin/ntfy --config /etc/ntfy/server.yml user add \
+      NTFY_PASSWORD="$password" ${pkgs.ntfy-sh}/bin/ntfy user add \
         --role=${lib.escapeShellArg user.role} \
         ${lib.escapeShellArg username}
     fi
 
-    ${pkgs.ntfy-sh}/bin/ntfy --config /etc/ntfy/server.yml access \
+    ${pkgs.ntfy-sh}/bin/ntfy access \
       --reset \
       ${lib.escapeShellArg username}
 

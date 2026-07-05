@@ -84,8 +84,8 @@ Useful checks:
 ```bash
 systemctl status infra-ntfy-provision.service ntfy-sh.service --no-pager
 journalctl -u infra-ntfy-provision.service -u ntfy-sh.service -n 100 --no-pager
-sudo -u ntfy-sh ntfy --config /etc/ntfy/server.yml user list
-sudo -u ntfy-sh ntfy --config /etc/ntfy/server.yml access
+sudo -u ntfy-sh ntfy user list
+sudo -u ntfy-sh ntfy access
 ```
 
 ## Phone setup
