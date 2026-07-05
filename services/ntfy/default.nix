@@ -50,11 +50,13 @@
     };
   });
 
+  authFile = "/var/lib/ntfy-sh/user.db";
+
   provisionUser = username: user: let
     credentialName = "password-${username}";
     accessCommands =
       lib.concatMapStringsSep "\n" (entry: ''
-        ${pkgs.ntfy-sh}/bin/ntfy access \
+        ${pkgs.ntfy-sh}/bin/ntfy --auth-file ${lib.escapeShellArg authFile} access \
           ${lib.escapeShellArg username} \
           ${lib.escapeShellArg entry.topic} \
           ${lib.escapeShellArg entry.permission}
@@ -63,20 +65,20 @@
   in ''
     password="$(${pkgs.coreutils}/bin/cat "$CREDENTIALS_DIRECTORY/${credentialName}")"
 
-    if ${pkgs.ntfy-sh}/bin/ntfy user list \
+    if ${pkgs.ntfy-sh}/bin/ntfy --auth-file ${lib.escapeShellArg authFile} user list \
       | ${pkgs.gnugrep}/bin/grep -Fq ${lib.escapeShellArg "user ${username} ("}; then
-      NTFY_PASSWORD="$password" ${pkgs.ntfy-sh}/bin/ntfy user change-pass \
+      NTFY_PASSWORD="$password" ${pkgs.ntfy-sh}/bin/ntfy --auth-file ${lib.escapeShellArg authFile} user change-pass \
         ${lib.escapeShellArg username}
-      ${pkgs.ntfy-sh}/bin/ntfy user change-role \
+      ${pkgs.ntfy-sh}/bin/ntfy --auth-file ${lib.escapeShellArg authFile} user change-role \
         ${lib.escapeShellArg username} \
         ${lib.escapeShellArg user.role}
     else
-      NTFY_PASSWORD="$password" ${pkgs.ntfy-sh}/bin/ntfy user add \
+      NTFY_PASSWORD="$password" ${pkgs.ntfy-sh}/bin/ntfy --auth-file ${lib.escapeShellArg authFile} user add \
         --role=${lib.escapeShellArg user.role} \
         ${lib.escapeShellArg username}
     fi
 
-    ${pkgs.ntfy-sh}/bin/ntfy access \
+    ${pkgs.ntfy-sh}/bin/ntfy --auth-file ${lib.escapeShellArg authFile} access \
       --reset \
       ${lib.escapeShellArg username}
 
@@ -92,6 +94,19 @@
     ];
     text = ''
       set -euo pipefail
+
+      for _ in $(${pkgs.coreutils}/bin/seq 1 30); do
+        if [[ -f ${lib.escapeShellArg authFile} ]]; then
+          break
+        fi
+
+        ${pkgs.coreutils}/bin/sleep 1
+      done
+
+      if [[ ! -f ${lib.escapeShellArg authFile} ]]; then
+        echo "ntfy auth database was not created at ${authFile}" >&2
+        exit 1
+      fi
 
       ${lib.concatStringsSep "\n" (lib.mapAttrsToList provisionUser cfg.users)}
     '';
@@ -194,6 +209,7 @@ in {
           base-url = "https://${hostName}";
           listen-http = "127.0.0.1:${toString cfg.port}";
           behind-proxy = true;
+          auth-file = authFile;
           auth-default-access = "deny-all";
           enable-login = true;
           enable-signup = false;
@@ -220,8 +236,9 @@ in {
     systemd.services = {
       infra-ntfy-provision = {
         description = "Provision ntfy users and topic ACLs";
-        before = ["ntfy-sh.service"];
-        requiredBy = ["ntfy-sh.service"];
+        after = ["ntfy-sh.service"];
+        requires = ["ntfy-sh.service"];
+        wantedBy = ["multi-user.target"];
         serviceConfig = {
           Type = "oneshot";
           User = config.services.ntfy-sh.user;
@@ -232,11 +249,6 @@ in {
             lib.mapAttrsToList (username: user: "password-${username}:${config.sops.secrets.${user.passwordSecret}.path}")
             cfg.users;
         };
-      };
-
-      ntfy-sh = {
-        after = ["infra-ntfy-provision.service"];
-        requires = ["infra-ntfy-provision.service"];
       };
     };
   };

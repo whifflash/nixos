@@ -75,17 +75,20 @@ The corresponding SOPS key would be `ntfy/users/luise/password`.
 
 ## Provisioning behavior
 
-`infra-ntfy-provision.service` runs before `ntfy-sh.service`. It creates missing
-users, updates existing passwords and roles, and applies the declared ACLs. This
-makes password rotation and repeated deployments safe.
+ntfy is configured with an explicit auth database at
+`/var/lib/ntfy-sh/user.db`. The server creates and migrates this SQLite database
+when it starts. `infra-ntfy-provision.service` therefore runs after
+`ntfy-sh.service`, waits for the database to appear, then creates missing users,
+updates existing passwords and roles, and applies the declared ACLs. This makes
+password rotation and repeated deployments safe.
 
 Useful checks:
 
 ```bash
 systemctl status infra-ntfy-provision.service ntfy-sh.service --no-pager
 journalctl -u infra-ntfy-provision.service -u ntfy-sh.service -n 100 --no-pager
-sudo -u ntfy-sh ntfy user list
-sudo -u ntfy-sh ntfy access
+sudo -u ntfy-sh ntfy --auth-file /var/lib/ntfy-sh/user.db user list
+sudo -u ntfy-sh ntfy --auth-file /var/lib/ntfy-sh/user.db access
 ```
 
 ## Phone setup

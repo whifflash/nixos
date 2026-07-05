@@ -1,0 +1,124 @@
+diff -ruN a/services/ntfy/README.md b/services/ntfy/README.md
+--- a/services/ntfy/README.md	2026-07-05 15:02:39.000000000 +0000
++++ b/services/ntfy/README.md	2026-07-05 15:07:06.846975781 +0000
+@@ -75,17 +75,20 @@
+ 
+ ## Provisioning behavior
+ 
+-`infra-ntfy-provision.service` runs before `ntfy-sh.service`. It creates missing
+-users, updates existing passwords and roles, and applies the declared ACLs. This
+-makes password rotation and repeated deployments safe.
++ntfy is configured with an explicit auth database at
++`/var/lib/ntfy-sh/user.db`. The server creates and migrates this SQLite database
++when it starts. `infra-ntfy-provision.service` therefore runs after
++`ntfy-sh.service`, waits for the database to appear, then creates missing users,
++updates existing passwords and roles, and applies the declared ACLs. This makes
++password rotation and repeated deployments safe.
+ 
+ Useful checks:
+ 
+ ```bash
+ systemctl status infra-ntfy-provision.service ntfy-sh.service --no-pager
+ journalctl -u infra-ntfy-provision.service -u ntfy-sh.service -n 100 --no-pager
+-sudo -u ntfy-sh ntfy user list
+-sudo -u ntfy-sh ntfy access
++sudo -u ntfy-sh ntfy --auth-file /var/lib/ntfy-sh/user.db user list
++sudo -u ntfy-sh ntfy --auth-file /var/lib/ntfy-sh/user.db access
+ ```
+ 
+ ## Phone setup
+diff -ruN a/services/ntfy/default.nix b/services/ntfy/default.nix
+--- a/services/ntfy/default.nix	2026-07-05 15:02:39.000000000 +0000
++++ b/services/ntfy/default.nix	2026-07-05 15:07:06.846678494 +0000
+@@ -50,11 +50,13 @@
+     };
+   });
+ 
++  authFile = "/var/lib/ntfy-sh/user.db";
++
+   provisionUser = username: user: let
+     credentialName = "password-${username}";
+     accessCommands =
+       lib.concatMapStringsSep "\n" (entry: ''
+-        ${pkgs.ntfy-sh}/bin/ntfy access \
++        ${pkgs.ntfy-sh}/bin/ntfy --auth-file ${lib.escapeShellArg authFile} access \
+           ${lib.escapeShellArg username} \
+           ${lib.escapeShellArg entry.topic} \
+           ${lib.escapeShellArg entry.permission}
+@@ -63,20 +65,20 @@
+   in ''
+     password="$(${pkgs.coreutils}/bin/cat "$CREDENTIALS_DIRECTORY/${credentialName}")"
+ 
+-    if ${pkgs.ntfy-sh}/bin/ntfy user list \
++    if ${pkgs.ntfy-sh}/bin/ntfy --auth-file ${lib.escapeShellArg authFile} user list \
+       | ${pkgs.gnugrep}/bin/grep -Fq ${lib.escapeShellArg "user ${username} ("}; then
+-      NTFY_PASSWORD="$password" ${pkgs.ntfy-sh}/bin/ntfy user change-pass \
++      NTFY_PASSWORD="$password" ${pkgs.ntfy-sh}/bin/ntfy --auth-file ${lib.escapeShellArg authFile} user change-pass \
+         ${lib.escapeShellArg username}
+-      ${pkgs.ntfy-sh}/bin/ntfy user change-role \
++      ${pkgs.ntfy-sh}/bin/ntfy --auth-file ${lib.escapeShellArg authFile} user change-role \
+         ${lib.escapeShellArg username} \
+         ${lib.escapeShellArg user.role}
+     else
+-      NTFY_PASSWORD="$password" ${pkgs.ntfy-sh}/bin/ntfy user add \
++      NTFY_PASSWORD="$password" ${pkgs.ntfy-sh}/bin/ntfy --auth-file ${lib.escapeShellArg authFile} user add \
+         --role=${lib.escapeShellArg user.role} \
+         ${lib.escapeShellArg username}
+     fi
+ 
+-    ${pkgs.ntfy-sh}/bin/ntfy access \
++    ${pkgs.ntfy-sh}/bin/ntfy --auth-file ${lib.escapeShellArg authFile} access \
+       --reset \
+       ${lib.escapeShellArg username}
+ 
+@@ -93,6 +95,19 @@
+     text = ''
+       set -euo pipefail
+ 
++      for _ in $(${pkgs.coreutils}/bin/seq 1 30); do
++        if [[ -f ${lib.escapeShellArg authFile} ]]; then
++          break
++        fi
++
++        ${pkgs.coreutils}/bin/sleep 1
++      done
++
++      if [[ ! -f ${lib.escapeShellArg authFile} ]]; then
++        echo "ntfy auth database was not created at ${authFile}" >&2
++        exit 1
++      fi
++
+       ${lib.concatStringsSep "\n" (lib.mapAttrsToList provisionUser cfg.users)}
+     '';
+   };
+@@ -194,6 +209,7 @@
+           base-url = "https://${hostName}";
+           listen-http = "127.0.0.1:${toString cfg.port}";
+           behind-proxy = true;
++          auth-file = authFile;
+           auth-default-access = "deny-all";
+           enable-login = true;
+           enable-signup = false;
+@@ -220,8 +236,9 @@
+     systemd.services = {
+       infra-ntfy-provision = {
+         description = "Provision ntfy users and topic ACLs";
+-        before = ["ntfy-sh.service"];
+-        requiredBy = ["ntfy-sh.service"];
++        after = ["ntfy-sh.service"];
++        requires = ["ntfy-sh.service"];
++        wantedBy = ["multi-user.target"];
+         serviceConfig = {
+           Type = "oneshot";
+           User = config.services.ntfy-sh.user;
+@@ -234,10 +251,6 @@
+         };
+       };
+ 
+-      ntfy-sh = {
+-        after = ["infra-ntfy-provision.service"];
+-        requires = ["infra-ntfy-provision.service"];
+-      };
+     };
+   };
+ }
