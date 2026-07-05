@@ -125,18 +125,34 @@ The cleanup services use reduced CPU priority and idle I/O scheduling. They are
 not ordered directly after backup units because the backups are daily while
 housekeeping is weekly; the separated calendar times provide the intended order.
 
-## Monitoring roadmap
+## Monitoring integration
 
-The monitoring module should observe this declared policy in the next step. Add:
+Each housekeeping script writes a small state file below
+`/var/lib/infra-housekeeping` after it finishes. The state records:
 
-- Nix store size and path count;
-- system-generation count and oldest retained generation age;
-- timestamp, result, duration, and reclaimed bytes for Nix housekeeping;
-- Podman image count, total size, and reclaimable size;
-- timestamp, result, duration, and reclaimed bytes for Podman housekeeping;
-- alerts for stale or repeatedly failed cleanup jobs;
-- growth alerts based on sustained store or image accumulation rather than a
-  single absolute-size threshold.
+- whether the run succeeded;
+- start and completion timestamps;
+- duration;
+- measured bytes reclaimed.
 
-Metrics should be added only after the cleanup jobs have been deployed and their
-output has been observed on Icarus.
+The monitoring module reads these files and combines them with current Nix store,
+system-generation, and Podman image inventory. Housekeeping does not depend on
+Prometheus and continues to operate when monitoring is disabled.
+
+The Podman script measures reclaimed bytes as the reduction in
+`/var/lib/containers/storage`. This is more representative than summing image
+sizes because images can share layers. The dashboard's reclaimable image size is
+an estimate based on images not referenced by any existing container.
+
+After running either task manually, inspect its state:
+
+```sh
+cat /var/lib/infra-housekeeping/nix.env
+cat /var/lib/infra-housekeeping/podman.env
+sudo systemctl start infra-monitoring-metrics.service
+grep '^infra_housekeeping' /var/lib/prometheus-node-exporter-text-files/infra.prom
+```
+
+Monitoring alerts when the last recorded run failed or when no completed run has
+been recorded for more than eight days. Growth is displayed as a time series
+rather than using an arbitrary absolute-size alert threshold.

@@ -5,6 +5,7 @@
   ...
 }: let
   cfg = config.infra.services.housekeeping;
+  stateDirectory = "/var/lib/infra-housekeeping";
 
   nixHousekeeping = pkgs.writeShellApplication {
     name = "infra-nix-housekeeping";
@@ -15,8 +16,109 @@
     text = ''
       set -euo pipefail
 
+      state_directory=${lib.escapeShellArg stateDirectory}
+      state_file="$state_directory/nix.env"
+      temporary_file="$state_file.tmp"
+      started_at="$(${pkgs.coreutils}/bin/date +%s)"
+      size_before="$(${pkgs.coreutils}/bin/du -sb /nix/store | ${pkgs.coreutils}/bin/cut -f1)"
+      result=failed
+
+      finish() {
+        local exit_status=$?
+        local finished_at
+        local size_after
+        local reclaimed_bytes
+
+        finished_at="$(${pkgs.coreutils}/bin/date +%s)"
+        size_after="$(${pkgs.coreutils}/bin/du -sb /nix/store | ${pkgs.coreutils}/bin/cut -f1)"
+        reclaimed_bytes=$((size_before - size_after))
+        if [ "$reclaimed_bytes" -lt 0 ]; then
+          reclaimed_bytes=0
+        fi
+
+        if [ "$exit_status" -eq 0 ]; then
+          result=success
+        fi
+
+        {
+          printf 'result=%s\n' "$result"
+          printf 'started_at=%s\n' "$started_at"
+          printf 'finished_at=%s\n' "$finished_at"
+          printf 'duration_seconds=%s\n' "$((finished_at - started_at))"
+          printf 'reclaimed_bytes=%s\n' "$reclaimed_bytes"
+        } >"$temporary_file"
+
+        chmod 0644 "$temporary_file"
+        mv "$temporary_file" "$state_file"
+        trap - EXIT
+        exit "$exit_status"
+      }
+
+      trap finish EXIT
+
       nix-collect-garbage --delete-older-than ${lib.escapeShellArg cfg.nix.retentionAge}
       nix-store --optimise
+    '';
+  };
+
+  podmanHousekeeping = pkgs.writeShellApplication {
+    name = "infra-podman-housekeeping";
+    runtimeInputs = with pkgs; [
+      coreutils
+      podman
+    ];
+    text = ''
+      set -euo pipefail
+
+      state_directory=${lib.escapeShellArg stateDirectory}
+      state_file="$state_directory/podman.env"
+      temporary_file="$state_file.tmp"
+      storage_directory=/var/lib/containers/storage
+      started_at="$(${pkgs.coreutils}/bin/date +%s)"
+      size_before=0
+      result=failed
+
+      if [ -d "$storage_directory" ]; then
+        size_before="$(${pkgs.coreutils}/bin/du -sb "$storage_directory" | ${pkgs.coreutils}/bin/cut -f1)"
+      fi
+
+      finish() {
+        local exit_status=$?
+        local finished_at
+        local size_after=0
+        local reclaimed_bytes
+
+        finished_at="$(${pkgs.coreutils}/bin/date +%s)"
+        if [ -d "$storage_directory" ]; then
+          size_after="$(${pkgs.coreutils}/bin/du -sb "$storage_directory" | ${pkgs.coreutils}/bin/cut -f1)"
+        fi
+
+        reclaimed_bytes=$((size_before - size_after))
+        if [ "$reclaimed_bytes" -lt 0 ]; then
+          reclaimed_bytes=0
+        fi
+
+        if [ "$exit_status" -eq 0 ]; then
+          result=success
+        fi
+
+        {
+          printf 'result=%s\n' "$result"
+          printf 'started_at=%s\n' "$started_at"
+          printf 'finished_at=%s\n' "$finished_at"
+          printf 'duration_seconds=%s\n' "$((finished_at - started_at))"
+          printf 'reclaimed_bytes=%s\n' "$reclaimed_bytes"
+        } >"$temporary_file"
+
+        chmod 0644 "$temporary_file"
+        mv "$temporary_file" "$state_file"
+        trap - EXIT
+        exit "$exit_status"
+      }
+
+      trap finish EXIT
+
+      podman image prune --all --force
     '';
   };
 in {
@@ -83,6 +185,7 @@ in {
           ExecStart = lib.getExe nixHousekeeping;
           Nice = 10;
           IOSchedulingClass = "idle";
+          StateDirectory = "infra-housekeeping";
         };
       };
 
@@ -104,9 +207,10 @@ in {
 
         serviceConfig = {
           Type = "oneshot";
-          ExecStart = "${pkgs.podman}/bin/podman image prune --all --force";
+          ExecStart = lib.getExe podmanHousekeeping;
           Nice = 10;
           IOSchedulingClass = "idle";
+          StateDirectory = "infra-housekeeping";
         };
       };
 

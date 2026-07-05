@@ -27,8 +27,9 @@ The first implementation contains:
   metrics;
 - Blackbox Exporter probes for the enabled HTTP services;
 - TCP probes for Mosquitto and the inverter's Modbus endpoint;
-- repository-specific metrics for backup results, the active NixOS profile, and
-  the configured Zigbee coordinator device;
+- repository-specific metrics for backup results, the active NixOS profile,
+  the configured Zigbee coordinator device, Nix store growth, system generations,
+  Podman image growth, and housekeeping results;
 - alert rules for low filesystem space and inodes, memory pressure, high
   temperature, failed systemd units, failed probes, stale or failed backups,
   and missing Zigbee hardware.
@@ -85,6 +86,8 @@ systemctl status prometheus-node-exporter.service prometheus-blackbox-exporter.s
 systemctl status infra-monitoring-metrics.timer --no-pager
 curl --fail --silent --show-error http://127.0.0.1:9090/-/healthy
 curl --fail --silent --show-error --head https://health.c4rb0n.cloud
+sudo systemctl start infra-monitoring-metrics.service
+grep '^infra_\(nix\|nixos\|podman\|housekeeping\)' /var/lib/prometheus-node-exporter-text-files/infra.prom
 ```
 
 Inspect current Prometheus targets at `http://127.0.0.1:9090/targets` through an
@@ -100,18 +103,22 @@ in `services/housekeeping/README.md`. It provides scheduled Nix generation and
 store cleanup, store optimisation, a five-entry systemd-boot limit, and safe
 pruning of Podman images unused by every existing container.
 
-The next monitoring increment should add metrics for its effectiveness:
+Monitoring now records:
 
 - Nix store size and path count;
 - system-generation count and oldest retained generation age;
 - timestamp, result, duration, and reclaimed bytes for Nix housekeeping;
-- Podman image count, total size, and reclaimable size;
+- Podman image count, total image size, and the count and size of images not
+  referenced by any existing container;
 - timestamp, result, duration, and reclaimed bytes for Podman housekeeping;
-- alerts for stale or repeatedly failed cleanup jobs;
-- growth alerts based on sustained accumulation.
+- alerts for failed housekeeping and jobs that have not completed for eight days;
+- dashboard history for Nix store and Podman image growth.
 
-The monitoring layer should observe the declared maintenance policy rather than
-substitute for it.
+The monitoring layer observes the declared maintenance policy rather than
+substituting for it. Reclaimable Podman size is calculated from images that are
+not referenced by any container. Shared image layers mean the space actually
+reclaimed by Podman can be lower than the sum of image sizes; the cleanup result
+therefore records the measured reduction of `/var/lib/containers/storage`.
 
 ### Phase 2: application-aware health
 
