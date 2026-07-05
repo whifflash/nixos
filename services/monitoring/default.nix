@@ -252,7 +252,7 @@ in {
 
     grafanaPort = lib.mkOption {
       type = lib.types.port;
-      default = 3000;
+      default = 3001;
       description = "Loopback port used by Grafana and Nginx.";
     };
 
