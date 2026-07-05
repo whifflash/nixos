@@ -13,10 +13,10 @@
 
   userType = lib.types.submodule ({name, ...}: {
     options = {
-      passwordSecret = lib.mkOption {
+      passwordHashSecret = lib.mkOption {
         type = lib.types.str;
-        default = "ntfy/users/${name}/password";
-        description = "SOPS key containing this ntfy user's plaintext password.";
+        default = "ntfy/users/${name}/password_hash";
+        description = "SOPS key containing this ntfy user's bcrypt password hash.";
       };
 
       role = lib.mkOption {
@@ -51,65 +51,28 @@
   });
 
   authFile = "/var/lib/ntfy-sh/user.db";
-
-  provisionUser = username: user: let
-    credentialName = "password-${username}";
-    accessCommands =
-      lib.concatMapStringsSep "\n" (entry: ''
-        ${pkgs.ntfy-sh}/bin/ntfy --auth-file ${lib.escapeShellArg authFile} access \
-          ${lib.escapeShellArg username} \
-          ${lib.escapeShellArg entry.topic} \
-          ${lib.escapeShellArg entry.permission}
-      '')
-      user.access;
-  in ''
-    password="$(${pkgs.coreutils}/bin/cat "$CREDENTIALS_DIRECTORY/${credentialName}")"
-
-    if ${pkgs.ntfy-sh}/bin/ntfy --auth-file ${lib.escapeShellArg authFile} user list \
-      | ${pkgs.gnugrep}/bin/grep -Fq ${lib.escapeShellArg "user ${username} ("}; then
-      NTFY_PASSWORD="$password" ${pkgs.ntfy-sh}/bin/ntfy --auth-file ${lib.escapeShellArg authFile} user change-pass \
-        ${lib.escapeShellArg username}
-      ${pkgs.ntfy-sh}/bin/ntfy --auth-file ${lib.escapeShellArg authFile} user change-role \
-        ${lib.escapeShellArg username} \
-        ${lib.escapeShellArg user.role}
-    else
-      NTFY_PASSWORD="$password" ${pkgs.ntfy-sh}/bin/ntfy --auth-file ${lib.escapeShellArg authFile} user add \
-        --role=${lib.escapeShellArg user.role} \
-        ${lib.escapeShellArg username}
-    fi
-
-    ${pkgs.ntfy-sh}/bin/ntfy --auth-file ${lib.escapeShellArg authFile} access \
-      --reset \
-      ${lib.escapeShellArg username}
-
-    ${accessCommands}
-  '';
-
-  provisionScript = pkgs.writeShellApplication {
-    name = "infra-ntfy-provision";
-    runtimeInputs = [
-      pkgs.coreutils
-      pkgs.gnugrep
-      pkgs.ntfy-sh
-    ];
-    text = ''
-      set -euo pipefail
-
-      for _ in $(${pkgs.coreutils}/bin/seq 1 30); do
-        if [[ -f ${lib.escapeShellArg authFile} ]]; then
-          break
-        fi
-
-        ${pkgs.coreutils}/bin/sleep 1
-      done
-
-      if [[ ! -f ${lib.escapeShellArg authFile} ]]; then
-        echo "ntfy auth database was not created at ${authFile}" >&2
-        exit 1
-      fi
-
-      ${lib.concatStringsSep "\n" (lib.mapAttrsToList provisionUser cfg.users)}
-    '';
+  serverTemplateName = "ntfy/server.yml";
+  authUsers =
+    lib.mapAttrsToList (
+      username: user: "${username}:${config.sops.placeholder.${user.passwordHashSecret}}:${user.role}"
+    )
+    cfg.users;
+  authAccess = lib.concatLists (lib.mapAttrsToList (
+      username: user:
+        map (entry: "${username}:${entry.topic}:${entry.permission}") user.access
+    )
+    cfg.users);
+  serverConfig = {
+    base-url = "https://${hostName}";
+    listen-http = "127.0.0.1:${toString cfg.port}";
+    behind-proxy = true;
+    auth-file = authFile;
+    auth-default-access = "deny-all";
+    auth-users = authUsers;
+    auth-access = authAccess;
+    enable-login = true;
+    enable-signup = false;
+    upstream-base-url = "https://ntfy.sh";
   };
 in {
   options.infra.services.ntfy = {
@@ -194,28 +157,34 @@ in {
       group = "nginx";
     };
 
-    sops.secrets = lib.mapAttrs' (_username: user:
-      lib.nameValuePair user.passwordSecret {
-        sopsFile = ../../secrets/infrastructure.yaml;
-        key = user.passwordSecret;
+    users = {
+      groups.ntfy-sh = {};
+      users.ntfy-sh = {
+        isSystemUser = true;
+        group = "ntfy-sh";
+        home = "/var/lib/ntfy-sh";
+      };
+    };
+
+    sops = {
+      secrets = lib.mapAttrs' (_username: user:
+        lib.nameValuePair user.passwordHashSecret {
+          sopsFile = ../../secrets/infrastructure.yaml;
+          key = user.passwordHashSecret;
+          mode = "0400";
+        })
+      cfg.users;
+
+      templates.${serverTemplateName} = {
+        content = builtins.toJSON serverConfig;
+        owner = "ntfy-sh";
+        group = "ntfy-sh";
         mode = "0400";
-      })
-    cfg.users;
+      };
+    };
 
     services = {
-      ntfy-sh = {
-        enable = true;
-        settings = {
-          base-url = "https://${hostName}";
-          listen-http = "127.0.0.1:${toString cfg.port}";
-          behind-proxy = true;
-          auth-file = authFile;
-          auth-default-access = "deny-all";
-          enable-login = true;
-          enable-signup = false;
-          upstream-base-url = "https://ntfy.sh";
-        };
-      };
+      ntfy-sh.enable = true;
 
       nginx = {
         enable = true;
@@ -233,22 +202,14 @@ in {
       };
     };
 
-    systemd.services = {
-      infra-ntfy-provision = {
-        description = "Provision ntfy users and topic ACLs";
-        after = ["ntfy-sh.service"];
-        requires = ["ntfy-sh.service"];
-        wantedBy = ["multi-user.target"];
-        serviceConfig = {
-          Type = "oneshot";
-          User = config.services.ntfy-sh.user;
-          Group = config.services.ntfy-sh.group;
-          ExecStart = "${provisionScript}/bin/infra-ntfy-provision";
-          StateDirectory = "ntfy-sh";
-          LoadCredential =
-            lib.mapAttrsToList (username: user: "password-${username}:${config.sops.secrets.${user.passwordSecret}.path}")
-            cfg.users;
-        };
+    systemd.services.ntfy-sh = {
+      after = ["sops-install-secrets.service"];
+      requires = ["sops-install-secrets.service"];
+      serviceConfig = {
+        DynamicUser = lib.mkForce false;
+        User = "ntfy-sh";
+        Group = "ntfy-sh";
+        ExecStart = lib.mkForce "${pkgs.ntfy-sh}/bin/ntfy serve -c ${config.sops.templates.${serverTemplateName}.path}";
       };
     };
   };

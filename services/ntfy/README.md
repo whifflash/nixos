@@ -8,33 +8,52 @@ infra.services.ntfy.enable = true;
 ```
 
 The implementation uses the native NixOS `services.ntfy-sh` module, the shared
-wildcard ACME certificate, and declarative user and topic ACL provisioning.
+wildcard ACME certificate, and ntfy's native declarative user and topic ACL configuration.
 Anonymous access and public account registration are disabled.
 
 ## Required secrets
 
-Create these plaintext password values in `secrets/infrastructure.yaml` before
-building or switching:
+ntfy's declarative `auth-users` setting expects bcrypt password hashes. Create the
+passwords locally, keep the plaintext values for the clients that need them, and
+store these hashes in `secrets/infrastructure.yaml`:
 
 ```yaml
 ntfy:
   users:
     alertmanager:
-      password: ENC[...]
+      password: ENC[...] # Existing plaintext used by Alertmanager
+      password_hash: ENC[...] # Used by the ntfy server
     mhr:
-      password: ENC[...]
+      password_hash: ENC[...] # Used by the ntfy server
 ```
 
-The exact SOPS keys are:
+The exact SOPS keys consumed by this module are:
+
+```text
+ntfy/users/alertmanager/password_hash
+ntfy/users/mhr/password_hash
+```
+
+The monitoring module separately consumes the existing plaintext publisher
+password at:
 
 ```text
 ntfy/users/alertmanager/password
-ntfy/users/mhr/password
 ```
 
-`alertmanager` is a write-only integration account. `mhr` is a read-only phone
-subscriber. Passwords are passed to the provisioning unit through systemd
-credentials and do not enter the Nix store.
+Generate each bcrypt hash interactively without installing ntfy permanently:
+
+```bash
+nix shell nixpkgs#ntfy-sh -c ntfy user hash
+```
+
+Run the command once for the `alertmanager` password and once for the `mhr`
+password, then place the resulting hashes under the corresponding
+`password_hash` keys. The phone app uses the original `mhr` plaintext password;
+it does not use the hash.
+
+The generated runtime server configuration is a SOPS template owned by the
+`ntfy-sh` service user. Password hashes therefore do not enter the Nix store.
 
 ## Topics and ACLs
 
@@ -57,7 +76,7 @@ only PV-related topics without gaining access to unrelated infrastructure alerts
 
 ```nix
 infra.services.ntfy.users.luise = {
-  passwordSecret = "ntfy/users/luise/password";
+  passwordHashSecret = "ntfy/users/luise/password_hash";
   access = [
     {
       topic = "pv-critical";
@@ -71,24 +90,26 @@ infra.services.ntfy.users.luise = {
 };
 ```
 
-The corresponding SOPS key would be `ntfy/users/luise/password`.
+The corresponding SOPS key would be `ntfy/users/luise/password_hash`.
 
-## Provisioning behavior
+## Declarative authentication behavior
 
-ntfy is configured with an explicit auth database at
-`/var/lib/ntfy-sh/user.db`. The server creates and migrates this SQLite database
-when it starts. `infra-ntfy-provision.service` therefore runs after
-`ntfy-sh.service`, waits for the database to appear, then creates missing users,
-updates existing passwords and roles, and applies the declared ACLs. This makes
-password rotation and repeated deployments safe.
+The server configuration contains `auth-users` and `auth-access`. ntfy creates
+or updates those users and ACLs when `ntfy-sh.service` starts, and removes
+previously provisioned entries that are no longer declared. There is no separate
+provisioning unit and no administrative CLI lifecycle to coordinate.
+
+The authentication database remains at `/var/lib/ntfy-sh/user.db`. The service
+uses a static system user so its `StateDirectory` consistently resolves to
+`/var/lib/ntfy-sh` instead of switching between public and `DynamicUser`
+private-state paths.
 
 Useful checks:
 
 ```bash
-systemctl status infra-ntfy-provision.service ntfy-sh.service --no-pager
-journalctl -u infra-ntfy-provision.service -u ntfy-sh.service -n 100 --no-pager
-sudo -u ntfy-sh ntfy --auth-file /var/lib/ntfy-sh/user.db user list
-sudo -u ntfy-sh ntfy --auth-file /var/lib/ntfy-sh/user.db access
+systemctl status ntfy-sh.service --no-pager
+journalctl -u ntfy-sh.service -n 100 --no-pager
+sudo ls -l /var/lib/ntfy-sh/user.db
 ```
 
 ## Phone setup
