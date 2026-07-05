@@ -52,8 +52,9 @@ password, then place the resulting hashes under the corresponding
 `password_hash` keys. The phone app uses the original `mhr` plaintext password;
 it does not use the hash.
 
-The generated runtime server configuration is a SOPS template owned by the
-`ntfy-sh` service user. Password hashes therefore do not enter the Nix store.
+The password hashes are rendered into a root-only SOPS environment file and
+passed through the native `services.ntfy-sh.environmentFile` option. They do
+not enter the Nix store.
 
 ## Topics and ACLs
 
@@ -99,10 +100,10 @@ or updates those users and ACLs when `ntfy-sh.service` starts, and removes
 previously provisioned entries that are no longer declared. There is no separate
 provisioning unit and no administrative CLI lifecycle to coordinate.
 
-The authentication database remains at `/var/lib/ntfy-sh/user.db`. The service
-uses a static system user so its `StateDirectory` consistently resolves to
-`/var/lib/ntfy-sh` instead of switching between public and `DynamicUser`
-private-state paths.
+The authentication database remains configured as `/var/lib/ntfy-sh/user.db`.
+The module otherwise keeps the native NixOS service definition, including its
+`StateDirectory` and `DynamicUser` handling. There is no second service touching
+the same state directory.
 
 Useful checks:
 

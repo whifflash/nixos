@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }: let
   cfg = config.infra.services.ntfy;
@@ -51,7 +50,7 @@
   });
 
   authFile = "/var/lib/ntfy-sh/user.db";
-  serverTemplateName = "ntfy/server.yml";
+  environmentTemplateName = "ntfy/environment";
   authUsers =
     lib.mapAttrsToList (
       username: user: "${username}:${config.sops.placeholder.${user.passwordHashSecret}}:${user.role}"
@@ -62,18 +61,9 @@
         map (entry: "${username}:${entry.topic}:${entry.permission}") user.access
     )
     cfg.users);
-  serverConfig = {
-    base-url = "https://${hostName}";
-    listen-http = "127.0.0.1:${toString cfg.port}";
-    behind-proxy = true;
-    auth-file = authFile;
-    auth-default-access = "deny-all";
-    auth-users = authUsers;
-    auth-access = authAccess;
-    enable-login = true;
-    enable-signup = false;
-    upstream-base-url = "https://ntfy.sh";
-  };
+  authUsersValue = lib.concatStringsSep "," authUsers;
+  authAccessValue = lib.concatStringsSep "," authAccess;
+  environmentFile = config.sops.templates.${environmentTemplateName}.path;
 in {
   options.infra.services.ntfy = {
     enable = lib.mkEnableOption "the self-hosted ntfy notification service";
@@ -157,15 +147,6 @@ in {
       group = "nginx";
     };
 
-    users = {
-      groups.ntfy-sh = {};
-      users.ntfy-sh = {
-        isSystemUser = true;
-        group = "ntfy-sh";
-        home = "/var/lib/ntfy-sh";
-      };
-    };
-
     sops = {
       secrets = lib.mapAttrs' (_username: user:
         lib.nameValuePair user.passwordHashSecret {
@@ -175,16 +156,30 @@ in {
         })
       cfg.users;
 
-      templates.${serverTemplateName} = {
-        content = builtins.toJSON serverConfig;
-        owner = "ntfy-sh";
-        group = "ntfy-sh";
+      templates.${environmentTemplateName} = {
+        content = ''
+          NTFY_AUTH_USERS='${authUsersValue}'
+          NTFY_AUTH_ACCESS='${authAccessValue}'
+        '';
         mode = "0400";
       };
     };
 
     services = {
-      ntfy-sh.enable = true;
+      ntfy-sh = {
+        enable = true;
+        inherit environmentFile;
+        settings = {
+          base-url = "https://${hostName}";
+          listen-http = "127.0.0.1:${toString cfg.port}";
+          behind-proxy = true;
+          auth-file = authFile;
+          auth-default-access = "deny-all";
+          enable-login = true;
+          enable-signup = false;
+          upstream-base-url = "https://ntfy.sh";
+        };
+      };
 
       nginx = {
         enable = true;
@@ -205,12 +200,6 @@ in {
     systemd.services.ntfy-sh = {
       after = ["sops-install-secrets.service"];
       requires = ["sops-install-secrets.service"];
-      serviceConfig = {
-        DynamicUser = lib.mkForce false;
-        User = "ntfy-sh";
-        Group = "ntfy-sh";
-        ExecStart = lib.mkForce "${pkgs.ntfy-sh}/bin/ntfy serve -c ${config.sops.templates.${serverTemplateName}.path}";
-      };
     };
   };
 }
