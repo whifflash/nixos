@@ -120,6 +120,8 @@ together:
 
 ## Stage 2 — Monitor the notification path
 
+**Status: in progress.**
+
 ### Goal
 
 Prevent the monitoring and notification system from failing silently.
@@ -128,12 +130,13 @@ Prevent the monitoring and notification system from failing silently.
 
 Monitor:
 
-- Prometheus self-scrape and rule-evaluation failures;
-- Alertmanager availability and exposed delivery failures;
-- the Alertmanager-to-ntfy bridge service and restart behavior;
-- the ntfy systemd service and HTTP endpoint;
-- nginx and the ntfy TLS certificate;
-- the age of the last successful automated alert-path canary.
+- [x] Prometheus self-scrape and rule-evaluation failures;
+- [x] Alertmanager availability;
+- [x] Alertmanager-to-ntfy bridge scrape health and ntfy publish failures;
+- [x] the Alertmanager-to-ntfy bridge service and restart behavior;
+- [x] the ntfy systemd service and HTTP endpoint;
+- [x] nginx service health and the ntfy HTTPS endpoint;
+- [x] the age of the last successful automated alert-path canary.
 
 Use two distinct checks:
 
@@ -145,13 +148,42 @@ An ntfy outage cannot be reported through ntfy itself. The failure must remain
 visible through local Prometheus, Alertmanager, Grafana, and systemd diagnostics.
 A second independent notification channel can be considered later.
 
+### Implemented design
+
+Prometheus now scrapes itself, Alertmanager, and the local
+Alertmanager-to-ntfy bridge. The bridge exposes a small Prometheus endpoint with
+notification counters, failed ntfy publish attempts, the last successful publish
+timestamp, and the last successful scheduled canary publish timestamp.
+
+The node exporter systemd collector includes the monitoring and notification
+units, so existing failed-unit alerting covers Prometheus, Alertmanager, the
+bridge, ntfy, nginx, exporters, and the monitoring timers. Blackbox probing
+continues to cover the public ntfy HTTPS endpoint and therefore exercises nginx,
+TLS, and the ntfy HTTP service from the host.
+
+The scheduled canary remains the automated server-path check. A successful
+canary timestamp means Prometheus fired the canary alert, Alertmanager delivered
+it to the bridge, and ntfy accepted the publish request. Phone reception is
+still validated by the separate human observation test described in
+`ALERT-TESTING.md`.
+
+### Remaining work
+
+- confirm the new bridge metrics and stale-canary rule after the next deployed
+  scheduled canary;
+- decide whether a second independent notification channel is needed for ntfy
+  outages;
+- include the new notification-path alerts in the Stage 3 severity and wording
+  review.
+
 ### Completion criteria
 
-- failures in Prometheus, Alertmanager, the bridge, nginx, or ntfy are visible
-  locally;
-- rule-evaluation failures are surfaced;
-- the last successful canary time is visible;
-- a fallback diagnostic procedure exists for an ntfy outage.
+- [x] failures in Prometheus, Alertmanager, the bridge, nginx, or ntfy are visible
+      locally;
+- [x] rule-evaluation failures are surfaced;
+- [x] the last successful canary time is visible;
+- [x] a fallback diagnostic procedure exists for an ntfy outage;
+- [ ] deployed canary observation confirms the new success timestamp updates.
 
 ## Stage 3 — Review and normalize alert rules
 

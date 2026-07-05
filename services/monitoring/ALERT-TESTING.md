@@ -151,4 +151,10 @@ Inspect the schedule and recent execution with:
 systemctl list-timers infra-monitoring-alert-canary.timer
 systemctl status infra-monitoring-alert-canary.timer
 journalctl -u infra-monitoring-alert-canary.service -n 50 --no-pager
+curl --fail --silent --show-error http://127.0.0.1:9095/metrics
 ```
+
+The `infra_alertmanager_ntfy_last_canary_success_timestamp_seconds` metric is
+updated only after the bridge receives a canary notification from Alertmanager
+and ntfy accepts the publish request. Prometheus alerts if that timestamp is
+older than 84 hours.

@@ -332,71 +332,126 @@
         }
         {
           name = "icarus-services";
-          rules = [
-            {
-              alert = "ServiceProbeFailed";
-              expr = "probe_success == 0";
-              for = "5m";
-              labels.severity = "critical";
-              annotations.summary = "Health probe failed for {{ $labels.instance }}";
-            }
-            {
-              alert = "BackupFailed";
-              expr = "infra_backup_last_run_success == 0";
-              for = "15m";
-              labels.severity = "critical";
-              annotations.summary = "The last {{ $labels.backup }} backup did not succeed";
-            }
-            {
-              alert = "BackupStale";
-              expr = "time() - infra_backup_last_run_timestamp_seconds > 129600";
-              for = "15m";
-              labels.severity = "critical";
-              annotations.summary = "No completed {{ $labels.backup }} backup has been recorded for 36 hours";
-            }
-            {
-              alert = "HousekeepingFailed";
-              expr = "infra_housekeeping_last_run_timestamp_seconds > 0 and infra_housekeeping_last_run_success == 0";
-              for = "15m";
-              labels.severity = "warning";
-              annotations.summary = "The last {{ $labels.task }} housekeeping run failed";
-            }
-            {
-              alert = "HousekeepingStale";
-              expr = "infra_housekeeping_last_run_timestamp_seconds > 0 and time() - infra_housekeeping_last_run_timestamp_seconds > 691200";
-              for = "30m";
-              labels.severity = "warning";
-              annotations.summary = "No completed {{ $labels.task }} housekeeping run has been recorded for eight days";
-            }
-            {
-              alert = "MqttRoundtripFailed";
-              expr = "infra_mqtt_roundtrip_success == 0";
-              for = "5m";
-              labels.severity = "critical";
-              annotations.summary = "Authenticated MQTT publish/subscribe round trip is failing";
-            }
-            {
-              alert = "MqttTopicStale";
-              expr = "infra_mqtt_topic_last_message_timestamp_seconds > 0 and time() - infra_mqtt_topic_last_message_timestamp_seconds > 300";
-              for = "5m";
-              labels.severity = "warning";
-              annotations.summary = "MQTT topic {{ $labels.name }} has not produced a message for five minutes";
-            }
-            {
-              alert = "MqttTopicUnhealthy";
-              expr = "infra_mqtt_topic_healthy == 0";
-              for = "5m";
-              labels.severity = "critical";
-              annotations.summary = "MQTT topic {{ $labels.name }} is missing or reports an unhealthy payload";
-            }
-            {
-              alert = "MonitoringMetricsStale";
-              expr = "time() - infra_monitoring_metrics_generated_timestamp_seconds > 900";
-              for = "5m";
-              labels.severity = "warning";
-              annotations.summary = "Repository-specific monitoring metrics have stopped updating";
-            }
-          ];
+          rules =
+            [
+              {
+                alert = "ServiceProbeFailed";
+                expr = "probe_success == 0";
+                for = "5m";
+                labels.severity = "critical";
+                annotations.summary = "Health probe failed for {{ $labels.instance }}";
+              }
+              {
+                alert = "BackupFailed";
+                expr = "infra_backup_last_run_success == 0";
+                for = "15m";
+                labels.severity = "critical";
+                annotations.summary = "The last {{ $labels.backup }} backup did not succeed";
+              }
+              {
+                alert = "BackupStale";
+                expr = "time() - infra_backup_last_run_timestamp_seconds > 129600";
+                for = "15m";
+                labels.severity = "critical";
+                annotations.summary = "No completed {{ $labels.backup }} backup has been recorded for 36 hours";
+              }
+              {
+                alert = "HousekeepingFailed";
+                expr = "infra_housekeeping_last_run_timestamp_seconds > 0 and infra_housekeeping_last_run_success == 0";
+                for = "15m";
+                labels.severity = "warning";
+                annotations.summary = "The last {{ $labels.task }} housekeeping run failed";
+              }
+              {
+                alert = "HousekeepingStale";
+                expr = "infra_housekeeping_last_run_timestamp_seconds > 0 and time() - infra_housekeeping_last_run_timestamp_seconds > 691200";
+                for = "30m";
+                labels.severity = "warning";
+                annotations.summary = "No completed {{ $labels.task }} housekeeping run has been recorded for eight days";
+              }
+              {
+                alert = "MqttRoundtripFailed";
+                expr = "infra_mqtt_roundtrip_success == 0";
+                for = "5m";
+                labels.severity = "critical";
+                annotations.summary = "Authenticated MQTT publish/subscribe round trip is failing";
+              }
+              {
+                alert = "MqttTopicStale";
+                expr = "infra_mqtt_topic_last_message_timestamp_seconds > 0 and time() - infra_mqtt_topic_last_message_timestamp_seconds > 300";
+                for = "5m";
+                labels.severity = "warning";
+                annotations.summary = "MQTT topic {{ $labels.name }} has not produced a message for five minutes";
+              }
+              {
+                alert = "MqttTopicUnhealthy";
+                expr = "infra_mqtt_topic_healthy == 0";
+                for = "5m";
+                labels.severity = "critical";
+                annotations.summary = "MQTT topic {{ $labels.name }} is missing or reports an unhealthy payload";
+              }
+              {
+                alert = "MonitoringMetricsStale";
+                expr = "time() - infra_monitoring_metrics_generated_timestamp_seconds > 900";
+                for = "5m";
+                labels.severity = "warning";
+                annotations.summary = "Repository-specific monitoring metrics have stopped updating";
+              }
+              {
+                alert = "PrometheusSelfScrapeDown";
+                expr = ''up{job="prometheus"} == 0'';
+                for = "5m";
+                labels = {
+                  category = "notification";
+                  severity = "warning";
+                };
+                annotations.summary = "Prometheus self-scrape is down";
+              }
+              {
+                alert = "PrometheusRuleEvaluationFailures";
+                expr = "increase(prometheus_rule_evaluation_failures_total[15m]) > 0";
+                for = "5m";
+                labels = {
+                  category = "notification";
+                  severity = "warning";
+                };
+                annotations.summary = "Prometheus rule evaluation failures have occurred";
+              }
+            ]
+            ++ lib.optionals cfg.alerting.enable [
+              {
+                alert = "PrometheusTargetDown";
+                expr = ''up{job=~"alertmanager|alertmanager-ntfy"} == 0'';
+                for = "5m";
+                labels = {
+                  category = "notification";
+                  severity = "warning";
+                };
+                annotations.summary = "Monitoring target {{ $labels.job }} is down";
+              }
+              {
+                alert = "AlertmanagerNtfyPublishFailures";
+                expr = "increase(infra_alertmanager_ntfy_notification_failures_total[15m]) > 0";
+                for = "5m";
+                labels = {
+                  category = "notification";
+                  severity = "warning";
+                };
+                annotations.summary = "Alertmanager-to-ntfy publish attempts are failing";
+              }
+            ]
+            ++ lib.optionals cfg.alerting.testAlerts.canary.enable [
+              {
+                alert = "MonitoringDeliveryCanaryStale";
+                expr = "infra_alertmanager_ntfy_last_canary_success_timestamp_seconds > 0 and time() - infra_alertmanager_ntfy_last_canary_success_timestamp_seconds > 302400";
+                for = "30m";
+                labels = {
+                  category = "notification";
+                  severity = "warning";
+                };
+                annotations.summary = "No successful scheduled notification canary has reached ntfy for 84 hours";
+              }
+            ];
         }
       ]
       ++ lib.optionals cfg.alerting.testAlerts.enable [
@@ -952,7 +1007,7 @@ in {
             ];
             extraFlags = [
               "--collector.textfile.directory=${textfileDirectory}"
-              "--collector.systemd.unit-include=(gitea|influxdb2|mosquitto|nginx|paperless.*|podman-home-assistant|podman-unifi|inverter-data-collector|restic-backups-.*)\\.service"
+              "--collector.systemd.unit-include=(gitea|influxdb2|mosquitto|nginx|ntfy-sh|paperless.*|podman-home-assistant|podman-unifi|prometheus|prometheus-alertmanager|prometheus-blackbox-exporter|prometheus-node-exporter|infra-alertmanager-ntfy|infra-monitoring-alert-canary|infra-monitoring-metrics|infra-monitoring-mqtt|inverter-data-collector|restic-backups-.*)\\.service"
             ];
           };
 
@@ -962,67 +1017,99 @@ in {
           };
         };
 
-        scrapeConfigs = [
-          {
-            job_name = "node";
-            static_configs = [
-              {
-                targets = ["127.0.0.1:${toString config.services.prometheus.exporters.node.port}"];
-                labels.host = config.networking.hostName;
-              }
-            ];
-          }
-          {
-            job_name = "http-probes";
-            metrics_path = "/probe";
-            params.module = ["http_2xx"];
-            static_configs =
-              lib.mapAttrsToList (name: target: {
-                targets = [target];
-                labels.service = name;
-              })
-              httpTargets;
-            relabel_configs = [
-              {
-                source_labels = ["__address__"];
-                target_label = "__param_target";
-              }
-              {
-                source_labels = ["__param_target"];
-                target_label = "instance";
-              }
-              {
-                target_label = "__address__";
-                replacement = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
-              }
-            ];
-          }
-          {
-            job_name = "tcp-probes";
-            metrics_path = "/probe";
-            params.module = ["tcp_connect"];
-            static_configs =
-              lib.mapAttrsToList (name: target: {
-                targets = [target];
-                labels.service = name;
-              })
-              tcpTargets;
-            relabel_configs = [
-              {
-                source_labels = ["__address__"];
-                target_label = "__param_target";
-              }
-              {
-                source_labels = ["__param_target"];
-                target_label = "instance";
-              }
-              {
-                target_label = "__address__";
-                replacement = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
-              }
-            ];
-          }
-        ];
+        scrapeConfigs =
+          [
+            {
+              job_name = "prometheus";
+              static_configs = [
+                {
+                  targets = ["127.0.0.1:${toString cfg.prometheusPort}"];
+                  labels.service = "prometheus";
+                }
+              ];
+            }
+          ]
+          ++ lib.optionals cfg.alerting.enable [
+            {
+              job_name = "alertmanager";
+              static_configs = [
+                {
+                  targets = ["127.0.0.1:9093"];
+                  labels.service = "alertmanager";
+                }
+              ];
+            }
+            {
+              job_name = "alertmanager-ntfy";
+              static_configs = [
+                {
+                  targets = ["127.0.0.1:${toString cfg.alerting.webhookPort}"];
+                  labels.service = "alertmanager-ntfy";
+                }
+              ];
+            }
+          ]
+          ++ [
+            {
+              job_name = "node";
+              static_configs = [
+                {
+                  targets = ["127.0.0.1:${toString config.services.prometheus.exporters.node.port}"];
+                  labels.host = config.networking.hostName;
+                }
+              ];
+            }
+            {
+              job_name = "http-probes";
+              metrics_path = "/probe";
+              params.module = ["http_2xx"];
+              static_configs =
+                lib.mapAttrsToList (name: target: {
+                  targets = [target];
+                  labels.service = name;
+                })
+                httpTargets;
+              relabel_configs = [
+                {
+                  source_labels = ["__address__"];
+                  target_label = "__param_target";
+                }
+                {
+                  source_labels = ["__param_target"];
+                  target_label = "instance";
+                }
+                {
+                  target_label = "__address__";
+                  replacement = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
+                }
+              ];
+            }
+            {
+              job_name = "tcp-probes";
+              metrics_path = "/probe";
+              params.module = ["tcp_connect"];
+              static_configs =
+                lib.mapAttrsToList (name: target: {
+                  targets = [target];
+                  labels.service = name;
+                })
+                tcpTargets;
+              relabel_configs = [
+                {
+                  source_labels = ["__address__"];
+                  target_label = "__param_target";
+                }
+                {
+                  source_labels = ["__param_target"];
+                  target_label = "instance";
+                }
+                {
+                  target_label = "__address__";
+                  replacement = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
+                }
+              ];
+            }
+          ];
       };
     };
   };

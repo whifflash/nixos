@@ -197,6 +197,26 @@ Useful checks:
 ```bash
 systemctl status prometheus-alertmanager infra-alertmanager-ntfy ntfy-sh
 journalctl -u prometheus-alertmanager -u infra-alertmanager-ntfy -u ntfy-sh -n 100
+curl --fail --silent --show-error http://127.0.0.1:9095/-/healthy
+curl --fail --silent --show-error http://127.0.0.1:9095/metrics
+```
+
+The bridge exports Prometheus metrics for notification attempts, failed ntfy
+publishes, the last successful publish, and the last scheduled canary publish.
+Prometheus scrapes these metrics locally and alerts when the bridge cannot be
+scraped, ntfy publishing fails, rule evaluation fails, or the scheduled canary
+has not reached ntfy for 84 hours.
+
+If ntfy is unavailable, do not expect a phone notification for the outage.
+Use local diagnostics instead:
+
+```bash
+systemctl status prometheus prometheus-alertmanager infra-alertmanager-ntfy ntfy-sh nginx --no-pager
+journalctl -u prometheus -u prometheus-alertmanager -u infra-alertmanager-ntfy -u ntfy-sh -u nginx -n 200 --no-pager
+curl --fail --silent --show-error http://127.0.0.1:9090/-/healthy
+curl --fail --silent --show-error http://127.0.0.1:9093/-/healthy
+curl --fail --silent --show-error http://127.0.0.1:9095/metrics
+curl --fail --silent --show-error --head https://ntfy.c4rb0n.cloud
 ```
 
 For controlled firing, resolution, severity-routing, and grouping tests, enable
