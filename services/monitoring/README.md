@@ -122,13 +122,20 @@ therefore records the measured reduction of `/var/lib/containers/storage`.
 
 ### Phase 2: application-aware health
 
-- Home Assistant API integration as a distinct second-stage implementation;
+Implemented in this stage:
+
+- authenticated MQTT publish/subscribe round-trip latency;
+- important MQTT topic freshness and expected-payload checks;
+- inverter MQTT availability and state-topic freshness;
+- Alertmanager with severity-based ntfy phone notifications.
+
+Backlog:
+
+- Home Assistant API integration;
 - unavailable Home Assistant entities;
 - Zigbee device freshness using device-specific thresholds;
 - Zigbee battery levels and sustained link-quality degradation;
-- authenticated MQTT publish/subscribe round-trip latency;
-- Mosquitto `$SYS` metrics and important topic freshness;
-- inverter MQTT availability and state-topic freshness;
+- Mosquitto `$SYS` metrics;
 - InfluxDB-specific write and storage metrics;
 - service-specific health endpoints and expected-content checks.
 
@@ -144,7 +151,6 @@ stored through sops-nix. It is intentionally not part of phase 1.
 - Restic repository integrity checks;
 - scheduled test restores;
 - explicit monitoring of Paperless off-host backup coverage;
-- Alertmanager and a selected external notification channel;
 - an external Icarus reachability probe hosted on another device.
 
 ## Persistent state
@@ -157,3 +163,56 @@ Prometheus data is operational telemetry and is not included in the current
 backup set. Grafana's provisioned configuration can be reconstructed from this
 repository. Any manually created Grafana dashboards or users are mutable state
 and should not be relied upon until a backup policy is declared.
+
+## Alert delivery with ntfy
+
+Alertmanager groups Prometheus alerts by alert name and severity and forwards them
+through a local adapter to a private ntfy topic. Install the ntfy app on the phone
+and subscribe to the private topic URL stored in SOPS.
+
+Before switching this configuration, create the notification URL and the dedicated
+MQTT monitoring credentials:
+
+```bash
+mqtt_password="$(openssl rand -base64 32)"
+mqtt_hash="$(mosquitto_passwd -b -c /dev/stdout monitoring "$mqtt_password" | cut -d: -f2-)"
+sops set secrets/infrastructure.yaml '["monitoring"]["mqtt_password"]' "\"$mqtt_password\""
+sops set secrets/infrastructure.yaml '["mosquitto"]["users"]["monitoring"]["password_hash"]' "\"$mqtt_hash\""
+sops set secrets/infrastructure.yaml '["monitoring"]["ntfy_url"]' '"https://ntfy.sh/REPLACE-WITH-A-LONG-RANDOM-TOPIC"'
+```
+
+Severity mapping is intentionally simple:
+
+- `critical`: urgent phone notification;
+- `warning`: high-priority phone notification;
+- `info`: low-priority notification;
+- resolved alerts: normal-priority recovery notification.
+
+The notification opens the Grafana health dashboard. The ntfy URL is consumed through
+a systemd credential and does not enter the Nix store.
+
+Useful checks:
+
+```bash
+systemctl status prometheus-alertmanager infra-alertmanager-ntfy
+journalctl -u prometheus-alertmanager -u infra-alertmanager-ntfy -n 100
+```
+
+## MQTT health
+
+The monitoring service provisions a dedicated Mosquitto account with access only to
+the round-trip topic and the configured read-only health topics. Every minute it:
+
+1. subscribes to the round-trip topic;
+2. publishes a unique value and verifies that it is received;
+3. samples configured important topics;
+4. records topic presence, last observation time, and optional expected-payload health.
+
+The default topic list follows the enabled inverter collector: its retained availability
+topic must be `online`, and its state topic must continue producing messages.
+
+```bash
+systemctl start infra-monitoring-mqtt.service
+systemctl status infra-monitoring-mqtt.service
+cat /var/lib/prometheus-node-exporter-text-files/mqtt.prom
+```

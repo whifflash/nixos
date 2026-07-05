@@ -7,11 +7,18 @@
   cfg = config.infra.services.monitoring;
   certificateName = "wildcard-${config.infra.domain}";
   grafanaSecretKeySecret = "grafana/secret_key";
+  mqttPasswordSecret = "monitoring/mqtt_password";
+  mqttPasswordHashSecret = "mosquitto/users/monitoring/password_hash";
+  ntfyUrlSecret = "monitoring/ntfy_url";
   hostName =
     if cfg.hostName != null
     then cfg.hostName
     else "health.${config.infra.domain}";
   textfileDirectory = "/var/lib/prometheus-node-exporter-text-files";
+
+  monitoringPython = pkgs.python3.withPackages (pythonPackages: [
+    pythonPackages.paho-mqtt
+  ]);
 
   serviceHostName = service: defaultSubdomain:
     if service.hostName != null
@@ -340,6 +347,27 @@
             annotations.summary = "No completed {{ $labels.task }} housekeeping run has been recorded for eight days";
           }
           {
+            alert = "MqttRoundtripFailed";
+            expr = "infra_mqtt_roundtrip_success == 0";
+            for = "5m";
+            labels.severity = "critical";
+            annotations.summary = "Authenticated MQTT publish/subscribe round trip is failing";
+          }
+          {
+            alert = "MqttTopicStale";
+            expr = "infra_mqtt_topic_last_message_timestamp_seconds > 0 and time() - infra_mqtt_topic_last_message_timestamp_seconds > 300";
+            for = "5m";
+            labels.severity = "warning";
+            annotations.summary = "MQTT topic {{ $labels.name }} has not produced a message for five minutes";
+          }
+          {
+            alert = "MqttTopicUnhealthy";
+            expr = "infra_mqtt_topic_healthy == 0";
+            for = "5m";
+            labels.severity = "critical";
+            annotations.summary = "MQTT topic {{ $labels.name }} is missing or reports an unhealthy payload";
+          }
+          {
             alert = "MonitoringMetricsStale";
             expr = "time() - infra_monitoring_metrics_generated_timestamp_seconds > 900";
             for = "5m";
@@ -396,6 +424,75 @@ in {
       description = "Prometheus metric retention period.";
     };
 
+    alerting = {
+      enable = lib.mkEnableOption "Alertmanager notifications through ntfy" // {default = true;};
+
+      ntfyUrlSecret = lib.mkOption {
+        type = lib.types.str;
+        default = ntfyUrlSecret;
+        description = "SOPS key containing the full private ntfy topic URL.";
+      };
+
+      webhookPort = lib.mkOption {
+        type = lib.types.port;
+        default = 9095;
+        description = "Loopback port for the Alertmanager-to-ntfy adapter.";
+      };
+    };
+
+    mqtt = {
+      enable = lib.mkEnableOption "authenticated MQTT health and topic freshness checks" // {default = true;};
+
+      username = lib.mkOption {
+        type = lib.types.str;
+        default = "monitoring";
+        description = "Dedicated Mosquitto username used by the monitoring probe.";
+      };
+
+      passwordSecret = lib.mkOption {
+        type = lib.types.str;
+        default = mqttPasswordSecret;
+        description = "SOPS key containing the MQTT monitoring user's plaintext password.";
+      };
+
+      passwordHashSecret = lib.mkOption {
+        type = lib.types.str;
+        default = mqttPasswordHashSecret;
+        description = "SOPS key containing the Mosquitto password hash for the monitoring user.";
+      };
+
+      roundtripTopic = lib.mkOption {
+        type = lib.types.str;
+        default = "infra/monitoring/roundtrip";
+        description = "MQTT topic used for the publish/subscribe round-trip probe.";
+      };
+
+      topics = lib.mkOption {
+        type = lib.types.listOf (lib.types.submodule {
+          options = {
+            name = lib.mkOption {type = lib.types.str;};
+            topic = lib.mkOption {type = lib.types.str;};
+            expectedPayload = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+            };
+          };
+        });
+        default = lib.optionals config.infra.services.inverterDataCollector.enable [
+          {
+            name = "inverter-availability";
+            topic = config.infra.services.inverterDataCollector.mqtt.availabilityTopic;
+            expectedPayload = "online";
+          }
+          {
+            name = "inverter-state";
+            topic = config.infra.services.inverterDataCollector.mqtt.stateTopic;
+          }
+        ];
+        description = "Important MQTT topics whose presence, freshness, and optional payload are monitored.";
+      };
+    };
+
     additionalHttpTargets = lib.mkOption {
       type = lib.types.attrsOf lib.types.str;
       default = {};
@@ -413,6 +510,10 @@ in {
 
   config = lib.mkIf cfg.enable {
     assertions = [
+      {
+        assertion = !cfg.mqtt.enable || config.infra.services.mosquitto.enable;
+        message = "infra.services.monitoring.mqtt requires infra.services.mosquitto.enable.";
+      }
       {
         assertion = config.infra.services.hub.enable;
         message = "infra.services.monitoring requires infra.services.hub.enable for the shared wildcard certificate and service link.";
@@ -434,13 +535,86 @@ in {
       mode = "0400";
     };
 
+    sops.secrets = lib.mkMerge [
+      (lib.mkIf cfg.mqtt.enable {
+        ${cfg.mqtt.passwordSecret} = {
+          sopsFile = ../../secrets/infrastructure.yaml;
+          key = cfg.mqtt.passwordSecret;
+          mode = "0400";
+        };
+      })
+      (lib.mkIf cfg.alerting.enable {
+        ${cfg.alerting.ntfyUrlSecret} = {
+          sopsFile = ../../secrets/infrastructure.yaml;
+          key = cfg.alerting.ntfyUrlSecret;
+          mode = "0400";
+        };
+      })
+    ];
+
+    infra.services.mosquitto.additionalUsers = lib.mkIf cfg.mqtt.enable {
+      ${cfg.mqtt.username} = {
+        passwordSecret = cfg.mqtt.passwordHashSecret;
+        acl =
+          [
+            "readwrite ${cfg.mqtt.roundtripTopic}"
+          ]
+          ++ map (topic: "read ${topic.topic}") cfg.mqtt.topics;
+      };
+    };
+
     systemd = {
-      services.infra-monitoring-metrics = {
-        description = "Generate repository-specific Prometheus metrics";
-        after = ["multi-user.target"];
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = "${monitoringMetrics}/bin/infra-monitoring-metrics";
+      services = {
+        infra-monitoring-metrics = {
+          description = "Generate repository-specific Prometheus metrics";
+          after = ["multi-user.target"];
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "${monitoringMetrics}/bin/infra-monitoring-metrics";
+          };
+        };
+
+        infra-monitoring-mqtt = lib.mkIf cfg.mqtt.enable {
+          description = "Probe MQTT round-trip and important topic freshness";
+          after = ["mosquitto.service"];
+          requires = ["mosquitto.service"];
+          environment = {
+            MQTT_HOST = "127.0.0.1";
+            MQTT_PORT = toString config.infra.services.mosquitto.port;
+            MQTT_USERNAME = cfg.mqtt.username;
+            MQTT_ROUNDTRIP_TOPIC = cfg.mqtt.roundtripTopic;
+            MQTT_TOPICS_JSON = builtins.toJSON cfg.mqtt.topics;
+            MQTT_TIMEOUT_SECONDS = "15";
+            MQTT_METRICS_FILE = "${textfileDirectory}/mqtt.prom";
+          };
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "${monitoringPython}/bin/python ${./scripts/mqtt_probe.py}";
+            LoadCredential = "mqtt-password:${config.sops.secrets.${cfg.mqtt.passwordSecret}.path}";
+            StateDirectory = "infra-monitoring-mqtt";
+          };
+        };
+
+        infra-alertmanager-ntfy = lib.mkIf cfg.alerting.enable {
+          description = "Forward Alertmanager notifications to ntfy";
+          wantedBy = ["multi-user.target"];
+          environment = {
+            LISTEN_PORT = toString cfg.alerting.webhookPort;
+            GRAFANA_URL = "https://${hostName}";
+          };
+          serviceConfig = {
+            Type = "simple";
+            ExecStart = "${pkgs.python3}/bin/python ${./scripts/alertmanager_ntfy.py}";
+            LoadCredential = "ntfy-url:${config.sops.secrets.${cfg.alerting.ntfyUrlSecret}.path}";
+            Restart = "on-failure";
+            RestartSec = "10s";
+            DynamicUser = true;
+            NoNewPrivileges = true;
+            PrivateTmp = true;
+            ProtectHome = true;
+            ProtectSystem = "strict";
+            RestrictAddressFamilies = ["AF_INET" "AF_INET6"];
+          };
         };
       };
 
@@ -451,6 +625,16 @@ in {
           OnBootSec = "2m";
           OnUnitActiveSec = "5m";
           Unit = "infra-monitoring-metrics.service";
+        };
+      };
+
+      timers.infra-monitoring-mqtt = lib.mkIf cfg.mqtt.enable {
+        description = "Refresh MQTT health metrics";
+        wantedBy = ["timers.target"];
+        timerConfig = {
+          OnBootSec = "1m";
+          OnUnitActiveSec = "1m";
+          Unit = "infra-monitoring-mqtt.service";
         };
       };
 
@@ -536,11 +720,46 @@ in {
       };
 
       prometheus = {
+        alertmanager = lib.mkIf cfg.alerting.enable {
+          enable = true;
+          listenAddress = "127.0.0.1";
+          port = 9093;
+          configuration = {
+            route = {
+              receiver = "ntfy";
+              group_by = ["alertname" "severity"];
+              group_wait = "30s";
+              group_interval = "5m";
+              repeat_interval = "4h";
+            };
+            receivers = [
+              {
+                name = "ntfy";
+                webhook_configs = [
+                  {
+                    url = "http://127.0.0.1:${toString cfg.alerting.webhookPort}";
+                    send_resolved = true;
+                  }
+                ];
+              }
+            ];
+          };
+        };
+
         enable = true;
         listenAddress = "127.0.0.1";
         port = cfg.prometheusPort;
         inherit (cfg) retentionTime;
         ruleFiles = [prometheusRules];
+        alertmanagers = lib.optionals cfg.alerting.enable [
+          {
+            static_configs = [
+              {
+                targets = ["127.0.0.1:9093"];
+              }
+            ];
+          }
+        ];
 
         exporters = {
           node = {

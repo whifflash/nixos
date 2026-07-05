@@ -1,0 +1,49 @@
+#!/usr/bin/env python3
+import json
+import os
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from urllib.request import Request, urlopen
+
+NTFY_URL = Path(os.environ["CREDENTIALS_DIRECTORY"], "ntfy-url").read_text().strip()
+GRAFANA_URL = os.environ["GRAFANA_URL"]
+
+
+class Handler(BaseHTTPRequestHandler):
+    def do_POST(self) -> None:
+        length = int(self.headers.get("Content-Length", "0"))
+        payload = json.loads(self.rfile.read(length))
+        alerts = payload.get("alerts", [])
+        status = payload.get("status", "firing")
+        severity = payload.get("commonLabels", {}).get("severity", "info")
+        summaries = [alert.get("annotations", {}).get("summary", alert.get("labels", {}).get("alertname", "Alert")) for alert in alerts]
+        title = f"Icarus {severity}: {status}"
+        message = "\n".join(f"• {summary}" for summary in summaries) or "Alertmanager notification"
+        priority = {"critical": "urgent", "warning": "high", "info": "low"}.get(severity, "default")
+        tags = {"critical": "rotating_light", "warning": "warning", "info": "information_source"}.get(severity, "bell")
+        if status == "resolved":
+            priority = "default"
+            tags = "white_check_mark"
+
+        request = Request(
+            NTFY_URL,
+            data=message.encode(),
+            method="POST",
+            headers={
+                "Title": title,
+                "Priority": priority,
+                "Tags": tags,
+                "Click": GRAFANA_URL,
+            },
+        )
+        with urlopen(request, timeout=15) as response:
+            response.read()
+        self.send_response(204)
+        self.end_headers()
+
+    def log_message(self, format: str, *args: object) -> None:
+        print(format % args, flush=True)
+
+
+server = ThreadingHTTPServer(("127.0.0.1", int(os.environ["LISTEN_PORT"])), Handler)
+server.serve_forever()
