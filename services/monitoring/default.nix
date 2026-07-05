@@ -541,14 +541,16 @@ in {
       group = "nginx";
     };
 
-    sops.secrets.${grafanaSecretKeySecret} = {
-      sopsFile = ../../secrets/infrastructure.yaml;
-      owner = config.users.users.grafana.name;
-      group = config.users.users.grafana.group;
-      mode = "0400";
-    };
-
     sops.secrets = lib.mkMerge [
+      {
+        ${grafanaSecretKeySecret} = {
+          sopsFile = ../../secrets/infrastructure.yaml;
+          owner = config.users.users.grafana.name;
+          group = config.users.users.grafana.group;
+          mode = "0400";
+        };
+      }
+
       (lib.mkIf cfg.mqtt.enable {
         ${cfg.mqtt.passwordSecret} = {
           sopsFile = ../../secrets/infrastructure.yaml;
