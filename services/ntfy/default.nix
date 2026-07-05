@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }: let
   cfg = config.infra.services.ntfy;
@@ -64,6 +65,70 @@
   authUsersValue = lib.concatStringsSep "," authUsers;
   authAccessValue = lib.concatStringsSep "," authAccess;
   environmentFile = config.sops.templates.${environmentTemplateName}.path;
+  topicCatalogEntries = [
+    {
+      name = cfg.topics.critical;
+      severity = "critical";
+      description = "Critical infrastructure alerts requiring immediate attention.";
+    }
+    {
+      name = cfg.topics.warning;
+      severity = "warning";
+      description = "Infrastructure warnings that may require intervention.";
+    }
+    {
+      name = cfg.topics.info;
+      severity = "info";
+      description = "Informational alerts and low-priority notices.";
+    }
+  ];
+  topicCatalogJson = builtins.toJSON {
+    server = "https://${hostName}";
+    topics = topicCatalogEntries;
+  };
+  topicCatalogHtml = ''
+    <!doctype html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Icarus notification topics</title>
+        <style>
+          :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+          body { max-width: 48rem; margin: 0 auto; padding: 2rem 1rem; line-height: 1.5; }
+          h1 { margin-bottom: .25rem; }
+          .subtitle { margin-top: 0; opacity: .75; }
+          ul { list-style: none; padding: 0; display: grid; gap: 1rem; }
+          li { border: 1px solid color-mix(in srgb, currentColor 25%, transparent); border-radius: .75rem; padding: 1rem; }
+          a { font-weight: 700; overflow-wrap: anywhere; }
+          code { font-size: .95em; }
+          .severity { text-transform: uppercase; font-size: .75rem; letter-spacing: .08em; opacity: .7; }
+        </style>
+      </head>
+      <body>
+        <h1>Icarus notification topics</h1>
+        <p class="subtitle">Sign in to <code>${lib.escapeXML hostName}</code> before subscribing.</p>
+        <ul>
+          ${lib.concatMapStringsSep "\n" (topic: ''
+        <li>
+          <div class="severity">${lib.escapeXML topic.severity}</div>
+          <a href="https://${lib.escapeXML hostName}/${lib.escapeXML topic.name}">${lib.escapeXML topic.name}</a>
+          <p>${lib.escapeXML topic.description}</p>
+        </li>
+      '')
+      topicCatalogEntries}
+        </ul>
+        <p><a href="/topics.json">Machine-readable topic catalog</a></p>
+      </body>
+    </html>
+  '';
+  topicCatalog = pkgs.symlinkJoin {
+    name = "ntfy-topic-catalog";
+    paths = [
+      (pkgs.writeTextDir "index.html" topicCatalogHtml)
+      (pkgs.writeTextDir "topics.json" topicCatalogJson)
+    ];
+  };
 in {
   options.infra.services.ntfy = {
     enable = lib.mkEnableOption "the self-hosted ntfy notification service";
@@ -189,9 +254,29 @@ in {
         virtualHosts.${hostName} = {
           useACMEHost = certificateName;
           forceSSL = true;
-          locations."/" = {
-            proxyPass = "http://127.0.0.1:${toString cfg.port}";
-            proxyWebsockets = true;
+          locations = {
+            "= /topics".return = "302 /topics/";
+
+            "/topics/" = {
+              alias = "${topicCatalog}/";
+              index = "index.html";
+              extraConfig = ''
+                add_header Cache-Control "public, max-age=300" always;
+              '';
+            };
+
+            "= /topics.json" = {
+              alias = "${topicCatalog}/topics.json";
+              extraConfig = ''
+                default_type application/json;
+                add_header Cache-Control "public, max-age=300" always;
+              '';
+            };
+
+            "/" = {
+              proxyPass = "http://127.0.0.1:${toString cfg.port}";
+              proxyWebsockets = true;
+            };
           };
         };
       };

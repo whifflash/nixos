@@ -68,6 +68,16 @@ The default topics are:
 | `icarus-warning`  | Warning-level infrastructure alerts           |
 | `icarus-info`     | Informational alerts and low-priority notices |
 
+A public catalog generated from these same option values is available at:
+
+```text
+https://ntfy.c4rb0n.cloud/topics/
+```
+
+The catalog links to each topic in the ntfy web application. A machine-readable
+JSON representation is available at `https://ntfy.c4rb0n.cloud/topics.json`.
+The catalog is informational; ntfy authentication and ACLs remain authoritative.
+
 The default ACLs are:
 
 - `alertmanager`: write-only access to all three topics;
