@@ -301,8 +301,8 @@ in {
 
     sops.secrets.${grafanaSecretKeySecret} = {
       sopsFile = ../../secrets/infrastructure.yaml;
-      owner = config.services.grafana.user;
-      group = "grafana";
+      owner = config.users.users.grafana.name;
+      group = config.users.users.grafana.group;
       mode = "0400";
     };
 
