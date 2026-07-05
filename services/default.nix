@@ -12,6 +12,7 @@
     ./hub
     ./influxdb
     ./inverter-data-collector
+    ./monitoring
     ./mosquitto
     ./paperless
     ./unifi

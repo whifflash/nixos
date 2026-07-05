@@ -68,6 +68,7 @@
     };
 
     hub.enable = true;
+    monitoring.enable = true;
     mosquitto.enable = true;
     paperless.enable = true;
     influxdb.enable = true;
