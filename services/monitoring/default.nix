@@ -513,7 +513,7 @@ in {
             type = lib.types.listOf lib.types.str;
             default = [
               "Wed *-*-* 10:00:00"
-              "Sun *-*-* 19:15:00"
+              "Sun *-*-* 19:10:00"
             ];
             description = "systemd OnCalendar expressions for notification canaries.";
           };
