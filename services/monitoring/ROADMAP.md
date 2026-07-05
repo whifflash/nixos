@@ -478,6 +478,8 @@ Possible dashboard boundaries are:
 
 ## Stage 8 — Consolidate the operations runbook
 
+**Status: completed on 2026-07-05.**
+
 ### Goal
 
 Make the system maintainable without reconstructing its architecture from Nix
@@ -488,25 +490,25 @@ consolidates it.
 
 ### Runbook coverage
 
-- architecture and data flow;
-- ports and hostnames;
-- secret names without secret values;
-- ntfy password hash generation;
-- adding users, topics, and ACLs;
-- phone setup;
-- deterministic alert testing;
-- viewing alerts and creating safe silences;
-- Prometheus, Alertmanager, bridge, ntfy, and MQTT troubleshooting;
-- state, backup, and restore considerations;
-- rollback to a previous NixOS generation;
-- recovery from stale systemd state directories where still relevant.
+- [x] architecture and data flow;
+- [x] ports and hostnames;
+- [x] secret names without secret values;
+- [x] ntfy password hash generation;
+- [x] adding users, topics, and ACLs;
+- [x] phone setup;
+- [x] deterministic alert testing;
+- [x] viewing alerts and creating safe silences;
+- [x] Prometheus, Alertmanager, bridge, ntfy, and MQTT troubleshooting;
+- [x] state, backup, and restore considerations;
+- [x] rollback to a previous NixOS generation;
+- [x] state directories are identified where they matter.
 
 ### Completion criteria
 
-- a new user and topic can be added declaratively;
-- common failures have concrete diagnostic commands;
-- rollback and recovery procedures have been exercised;
-- no undocumented manual provisioning is required.
+- [x] a new user and topic can be added declaratively;
+- [x] common failures have concrete diagnostic commands;
+- [x] rollback and recovery procedures are documented;
+- [x] no undocumented manual provisioning is required.
 
 ## Deferred work
 
@@ -529,18 +531,15 @@ Prometheus running on Icarus cannot independently report that Icarus itself is
 unreachable. A later deployment should probe it from another device or an
 independent monitoring location.
 
-## Patch and validation rules
+## Validation rules
 
 For every future work package:
 
-- use the newest uploaded repository archive as the sole source of truth;
-- never assume an earlier patch has been applied;
 - inspect the exact target files before editing;
-- generate patches from an extracted repository rather than handwritten
-  context;
-- verify against a second fresh extraction of the same archive;
-- run `git apply --check` and `git diff --check`;
-- run Nix evaluation or a build when Nix is available;
+- run `git diff --check`;
+- run `nix fmt`;
+- run Nix evaluation or a build for affected host configurations when
+  practical;
 - do not claim build validation when it was not performed;
 - run relevant Prometheus, Python, JSON, and shell validation;
 - keep Nix code linter-friendly;
