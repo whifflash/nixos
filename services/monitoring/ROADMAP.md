@@ -22,9 +22,11 @@ The repository already provides:
 - an Alertmanager-to-ntfy bridge;
 - severity-specific ntfy topics and phone notifications.
 
-Alert delivery has been deployed successfully, but the behavior of firing,
-resolution, grouping, repeats, and failure handling still needs deterministic
-validation.
+Alert delivery is deployed and has been validated end to end. Manual and
+scheduled synthetic critical alerts reached the `icarus-critical` topic and the
+phone client, including while the phone was away from the home network. The
+remaining work starts with baseline inventory and monitoring the notification
+path itself.
 
 ## Stage 0 — Capture and validate the baseline
 
@@ -54,47 +56,67 @@ semantics.
 
 ## Stage 1 — Validate end-to-end alert delivery
 
+**Status: completed on 2026-07-05.**
+
 ### Goal
 
 Prove that alerts travel reliably from Prometheus through Alertmanager and the
 bridge to the correct ntfy topic and phone client.
 
-### Design
+### Implemented design
 
-Use a deterministic, disabled-by-default test facility. Prefer controlled
-Prometheus metrics and rules over deliberately breaking production services.
-A textfile-collector metric is suitable because it can be raised and cleared
-without rebuilding Icarus for each test.
+The repository provides a controlled textfile-collector test metric and matching
+Prometheus alert rule. Tests can be fired and resolved without disrupting a
+production service or rebuilding Icarus.
+
+The scheduled canary runs at 10:00 local time on Wednesday and Sunday. It sends
+a passive critical notification and requires no acknowledgement or response.
+The schedule deliberately covers a time when the phone is commonly away from
+the home network.
 
 A direct Alertmanager webhook payload remains useful for isolating the bridge,
-but it does not test Prometheus rule evaluation and therefore is not sufficient
-as the end-to-end test.
+but it does not test Prometheus rule evaluation and is not the primary
+end-to-end test.
 
-### Work
+### Validation completed
 
-- add a controlled test alert for each severity;
-- make the test facility disabled or inactive by default;
-- verify firing notifications for:
-  - critical -> `icarus-critical`;
-  - warning -> `icarus-warning`;
-  - info -> `icarus-info`;
-- verify resolved notifications;
-- verify ntfy title, tags, priority, body, and dashboard link;
-- verify Alertmanager grouping with multiple simultaneous test alerts;
-- verify `group_wait`, `group_interval`, and `repeat_interval` behavior;
-- verify the behavior of missing or unknown severities;
-- verify bridge restart and recovery;
-- verify that credentials do not appear in logs or the Nix store;
-- document phone setup, test commands, expected output, and cleanup.
+- the synthetic metric was exposed by node exporter;
+- Prometheus scraped the metric and evaluated `MonitoringTestAlert`;
+- Alertmanager received the firing alert and selected the ntfy receiver;
+- the bridge published the alert to `icarus-critical`;
+- manual critical alerts reached the phone;
+- scheduled critical alerts reached the phone;
+- scheduled alerts reached the phone while it was away from the home network;
+- test state could be inspected and removed with the supplied command.
+
+During validation, a mismatch between the bridge's plaintext ntfy password and
+ntfy's stored bcrypt hash caused `401 Unauthorized` responses. Alertmanager
+retries then triggered ntfy's authentication-failure rate limit and produced
+`429 Too Many Requests`. Regenerating the hash from the same password and
+redeploying restored delivery. This failure mode should be covered by the
+notification-path monitoring and runbook work.
+
+### Remaining policy checks
+
+The delivery path itself is proven. The following policy details are deferred to
+Stages 3 and 4, where the complete alert set and routing model will be reviewed
+together:
+
+- warning and info topic routing;
+- resolved-notification policy;
+- grouping readability;
+- repeat intervals;
+- missing or unknown severity behavior;
+- bridge error handling and concise logging for upstream HTTP failures.
 
 ### Completion criteria
 
-- all three severities reach the intended topics;
-- resolved notifications are delivered;
-- grouped alerts remain readable;
-- repeat behavior matches the configured policy;
-- tests do not require breaking a production service;
-- the test state can be cleanly removed or disabled.
+- [x] tests do not require breaking a production service;
+- [x] a manual synthetic critical alert reaches `icarus-critical`;
+- [x] a scheduled synthetic critical alert reaches `icarus-critical`;
+- [x] the phone receives the scheduled alert outside the home network;
+- [x] test state can be inspected and cleanly removed;
+- [x] the principal credential failure mode is understood and documented.
 
 ## Stage 2 — Monitor the notification path
 
