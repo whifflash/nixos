@@ -6,6 +6,7 @@
 }: let
   cfg = config.infra.services.monitoring;
   certificateName = "wildcard-${config.infra.domain}";
+  grafanaSecretKeySecret = "grafana/secret_key";
   hostName =
     if cfg.hostName != null
     then cfg.hostName
@@ -298,6 +299,13 @@ in {
       group = "nginx";
     };
 
+    sops.secrets.${grafanaSecretKeySecret} = {
+      sopsFile = ../../secrets/infrastructure.yaml;
+      owner = config.services.grafana.user;
+      group = config.services.grafana.group;
+      mode = "0400";
+    };
+
     systemd = {
       services.infra-monitoring-metrics = {
         description = "Generate repository-specific Prometheus metrics";
@@ -354,7 +362,10 @@ in {
             check_for_updates = false;
           };
 
-          security.cookie_secure = true;
+          security = {
+            cookie_secure = true;
+            secret_key = "$__file{${config.sops.secrets.${grafanaSecretKeySecret}.path}}";
+          };
 
           users = {
             allow_sign_up = false;
