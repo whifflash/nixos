@@ -67,6 +67,7 @@
       disableRegistration = true;
     };
 
+    housekeeping.enable = true;
     hub.enable = true;
     monitoring.enable = true;
     mosquitto.enable = true;

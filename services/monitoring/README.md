@@ -95,24 +95,23 @@ loopback and are not opened in the firewall.
 
 ### Maintenance and growth control
 
-This is the next implementation step after phase 1. It should add declarative,
-conservative cleanup jobs on Icarus and metrics for their effectiveness:
+The cleanup policy is implemented by `infra.services.housekeeping` and documented
+in `services/housekeeping/README.md`. It provides scheduled Nix generation and
+store cleanup, store optimisation, a five-entry systemd-boot limit, and safe
+pruning of Podman images unused by every existing container.
 
-- Nix store size;
-- age and result of the last Nix garbage collection;
-- reclaimable and total Nix store paths where practical;
-- Podman image count and total image size;
-- dangling and unused Podman image count and size;
-- age and result of the last container-image prune;
-- filesystem space recovered by each cleanup operation;
-- configurable retention for old NixOS generations;
-- scheduled Nix garbage collection and store optimisation;
-- scheduled pruning of container images that are not used by current
-  containers.
+The next monitoring increment should add metrics for its effectiveness:
 
-Cleanup must be implemented before alerts are added for stale Nix and container
-artifacts. The monitoring layer should observe a declared maintenance policy,
-not substitute for one.
+- Nix store size and path count;
+- system-generation count and oldest retained generation age;
+- timestamp, result, duration, and reclaimed bytes for Nix housekeeping;
+- Podman image count, total size, and reclaimable size;
+- timestamp, result, duration, and reclaimed bytes for Podman housekeeping;
+- alerts for stale or repeatedly failed cleanup jobs;
+- growth alerts based on sustained accumulation.
+
+The monitoring layer should observe the declared maintenance policy rather than
+substitute for it.
 
 ### Phase 2: application-aware health
 
