@@ -54,7 +54,9 @@ it does not use the hash.
 
 The password hashes are rendered into a root-only SOPS environment file and
 passed through the native `services.ntfy-sh.environmentFile` option. They do
-not enter the Nix store.
+not enter the Nix store. The service does not depend on a separately named
+SOPS installation unit; `sops-nix` materializes the template through its normal
+activation integration before the system reaches the service startup phase.
 
 ## Topics and ACLs
 

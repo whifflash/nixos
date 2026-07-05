@@ -196,10 +196,5 @@ in {
         };
       };
     };
-
-    systemd.services.ntfy-sh = {
-      after = ["sops-install-secrets.service"];
-      requires = ["sops-install-secrets.service"];
-    };
   };
 }
