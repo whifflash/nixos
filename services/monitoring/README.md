@@ -164,38 +164,36 @@ backup set. Grafana's provisioned configuration can be reconstructed from this
 repository. Any manually created Grafana dashboards or users are mutable state
 and should not be relied upon until a backup policy is declared.
 
-## Alert delivery with ntfy
+## Alert delivery with self-hosted ntfy
 
 Alertmanager groups Prometheus alerts by alert name and severity and forwards them
-through a local adapter to a private ntfy topic. Install the ntfy app on the phone
-and subscribe to the private topic URL stored in SOPS.
+through a local adapter to the self-hosted ntfy service at
+`https://ntfy.c4rb0n.cloud`.
 
-Before switching this configuration, create the notification URL and the dedicated
-MQTT monitoring credentials:
+The ntfy service owns user and ACL provisioning. Monitoring uses the dedicated
+`alertmanager` account and reads its password from this SOPS key:
 
-```bash
-mqtt_password="$(openssl rand -base64 32)"
-mqtt_hash="$(mosquitto_passwd -b -c /dev/stdout monitoring "$mqtt_password" | cut -d: -f2-)"
-sops set secrets/infrastructure.yaml '["monitoring"]["mqtt_password"]' "\"$mqtt_password\""
-sops set secrets/infrastructure.yaml '["mosquitto"]["users"]["monitoring"]["password_hash"]' "\"$mqtt_hash\""
-sops set secrets/infrastructure.yaml '["monitoring"]["ntfy_url"]' '"https://ntfy.sh/REPLACE-WITH-A-LONG-RANDOM-TOPIC"'
+```text
+ntfy/users/alertmanager/password
 ```
 
-Severity mapping is intentionally simple:
+The adapter routes alerts to separate topics by severity:
 
-- `critical`: urgent phone notification;
-- `warning`: high-priority phone notification;
-- `info`: low-priority notification;
-- resolved alerts: normal-priority recovery notification.
+- `critical` -> `icarus-critical`, urgent phone notification;
+- `warning` -> `icarus-warning`, high-priority phone notification;
+- `info` -> `icarus-info`, low-priority notification;
+- resolved alerts use the same severity topic with normal priority.
 
-The notification opens the Grafana health dashboard. The ntfy URL is consumed through
-a systemd credential and does not enter the Nix store.
+The notification opens the Grafana health dashboard. Credentials are passed
+through a systemd credential and do not enter the Nix store. See
+`services/ntfy/README.md` for user management, ACLs, phone setup, and manual test
+commands.
 
 Useful checks:
 
 ```bash
-systemctl status prometheus-alertmanager infra-alertmanager-ntfy
-journalctl -u prometheus-alertmanager -u infra-alertmanager-ntfy -n 100
+systemctl status prometheus-alertmanager infra-alertmanager-ntfy ntfy-sh
+journalctl -u prometheus-alertmanager -u infra-alertmanager-ntfy -u ntfy-sh -n 100
 ```
 
 ## MQTT health

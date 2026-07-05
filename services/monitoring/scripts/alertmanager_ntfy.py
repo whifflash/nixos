@@ -1,12 +1,20 @@
 #!/usr/bin/env python3
+import base64
 import json
 import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-NTFY_URL = Path(os.environ["CREDENTIALS_DIRECTORY"], "ntfy-url").read_text().strip()
+CREDENTIALS_DIRECTORY = Path(os.environ["CREDENTIALS_DIRECTORY"])
+NTFY_PASSWORD = (CREDENTIALS_DIRECTORY / "ntfy-password").read_text().strip()
+NTFY_BASE_URL = os.environ["NTFY_BASE_URL"].rstrip("/")
+NTFY_USERNAME = os.environ["NTFY_USERNAME"]
+NTFY_TOPICS = json.loads(os.environ["NTFY_TOPICS_JSON"])
 GRAFANA_URL = os.environ["GRAFANA_URL"]
+AUTHORIZATION = "Basic " + base64.b64encode(
+    f"{NTFY_USERNAME}:{NTFY_PASSWORD}".encode()
+).decode()
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -16,20 +24,33 @@ class Handler(BaseHTTPRequestHandler):
         alerts = payload.get("alerts", [])
         status = payload.get("status", "firing")
         severity = payload.get("commonLabels", {}).get("severity", "info")
-        summaries = [alert.get("annotations", {}).get("summary", alert.get("labels", {}).get("alertname", "Alert")) for alert in alerts]
+        summaries = [
+            alert.get("annotations", {}).get(
+                "summary", alert.get("labels", {}).get("alertname", "Alert")
+            )
+            for alert in alerts
+        ]
         title = f"Icarus {severity}: {status}"
         message = "\n".join(f"• {summary}" for summary in summaries) or "Alertmanager notification"
-        priority = {"critical": "urgent", "warning": "high", "info": "low"}.get(severity, "default")
-        tags = {"critical": "rotating_light", "warning": "warning", "info": "information_source"}.get(severity, "bell")
+        priority = {"critical": "urgent", "warning": "high", "info": "low"}.get(
+            severity, "default"
+        )
+        tags = {
+            "critical": "rotating_light",
+            "warning": "warning",
+            "info": "information_source",
+        }.get(severity, "bell")
         if status == "resolved":
             priority = "default"
             tags = "white_check_mark"
 
+        topic = NTFY_TOPICS.get(severity, NTFY_TOPICS["info"])
         request = Request(
-            NTFY_URL,
+            f"{NTFY_BASE_URL}/{topic}",
             data=message.encode(),
             method="POST",
             headers={
+                "Authorization": AUTHORIZATION,
                 "Title": title,
                 "Priority": priority,
                 "Tags": tags,

@@ -64,6 +64,7 @@ though they are not exposed through the firewall.
 |  2222 |   TCP    | LAN           | Gitea built-in SSH server                       |
 |  2223 |   TCP    | LAN           | Paperless scanner-only SFTP daemon              |
 |  3000 |   TCP    | loopback      | Gitea HTTP backend                              |
+|  2586 |   TCP    | loopback      | ntfy HTTP backend                               |
 |  3001 |   TCP    | loopback      | Grafana HTTP backend                            |
 |  3478 |   UDP    | LAN           | UniFi STUN                                      |
 |  5432 |   TCP    | loopback      | PostgreSQL                                      |

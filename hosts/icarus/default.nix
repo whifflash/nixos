@@ -71,6 +71,7 @@
     hub.enable = true;
     monitoring.enable = true;
     mosquitto.enable = true;
+    ntfy.enable = true;
     paperless.enable = true;
     influxdb.enable = true;
     inverterDataCollector.enable = true;

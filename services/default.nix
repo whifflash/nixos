@@ -15,6 +15,7 @@
     ./inverter-data-collector
     ./monitoring
     ./mosquitto
+    ./ntfy
     ./paperless
     ./unifi
   ];

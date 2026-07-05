@@ -9,7 +9,7 @@
   grafanaSecretKeySecret = "grafana/secret_key";
   mqttPasswordSecret = "monitoring/mqtt_password";
   mqttPasswordHashSecret = "mosquitto/users/monitoring/password_hash";
-  ntfyUrlSecret = "monitoring/ntfy_url";
+  ntfyPasswordSecret = "ntfy/users/alertmanager/password";
   hostName =
     if cfg.hostName != null
     then cfg.hostName
@@ -37,6 +37,9 @@
     }
     // lib.optionalAttrs config.infra.services.influxdb.enable {
       influxdb = "https://${serviceHostName config.infra.services.influxdb "influx"}";
+    }
+    // lib.optionalAttrs config.infra.services.ntfy.enable {
+      ntfy = "https://${serviceHostName config.infra.services.ntfy "ntfy"}";
     }
     // lib.optionalAttrs config.infra.services.paperless.enable {
       paperless = "https://${serviceHostName config.infra.services.paperless "paperless"}";
@@ -427,10 +430,16 @@ in {
     alerting = {
       enable = lib.mkEnableOption "Alertmanager notifications through ntfy" // {default = true;};
 
-      ntfyUrlSecret = lib.mkOption {
+      ntfyUsername = lib.mkOption {
         type = lib.types.str;
-        default = ntfyUrlSecret;
-        description = "SOPS key containing the full private ntfy topic URL.";
+        default = "alertmanager";
+        description = "ntfy user used by the Alertmanager adapter.";
+      };
+
+      ntfyPasswordSecret = lib.mkOption {
+        type = lib.types.str;
+        default = ntfyPasswordSecret;
+        description = "SOPS key containing the ntfy publisher password.";
       };
 
       webhookPort = lib.mkOption {
@@ -515,6 +524,10 @@ in {
         message = "infra.services.monitoring.mqtt requires infra.services.mosquitto.enable.";
       }
       {
+        assertion = !cfg.alerting.enable || config.infra.services.ntfy.enable;
+        message = "infra.services.monitoring.alerting requires infra.services.ntfy.enable.";
+      }
+      {
         assertion = config.infra.services.hub.enable;
         message = "infra.services.monitoring requires infra.services.hub.enable for the shared wildcard certificate and service link.";
       }
@@ -540,13 +553,6 @@ in {
         ${cfg.mqtt.passwordSecret} = {
           sopsFile = ../../secrets/infrastructure.yaml;
           key = cfg.mqtt.passwordSecret;
-          mode = "0400";
-        };
-      })
-      (lib.mkIf cfg.alerting.enable {
-        ${cfg.alerting.ntfyUrlSecret} = {
-          sopsFile = ../../secrets/infrastructure.yaml;
-          key = cfg.alerting.ntfyUrlSecret;
           mode = "0400";
         };
       })
@@ -598,14 +604,19 @@ in {
         infra-alertmanager-ntfy = lib.mkIf cfg.alerting.enable {
           description = "Forward Alertmanager notifications to ntfy";
           wantedBy = ["multi-user.target"];
+          after = ["ntfy-sh.service"];
+          requires = ["ntfy-sh.service"];
           environment = {
             LISTEN_PORT = toString cfg.alerting.webhookPort;
             GRAFANA_URL = "https://${hostName}";
+            NTFY_BASE_URL = "https://${serviceHostName config.infra.services.ntfy "ntfy"}";
+            NTFY_USERNAME = cfg.alerting.ntfyUsername;
+            NTFY_TOPICS_JSON = builtins.toJSON config.infra.services.ntfy.topics;
           };
           serviceConfig = {
             Type = "simple";
             ExecStart = "${pkgs.python3}/bin/python ${./scripts/alertmanager_ntfy.py}";
-            LoadCredential = "ntfy-url:${config.sops.secrets.${cfg.alerting.ntfyUrlSecret}.path}";
+            LoadCredential = "ntfy-password:${config.sops.secrets.${cfg.alerting.ntfyPasswordSecret}.path}";
             Restart = "on-failure";
             RestartSec = "10s";
             DynamicUser = true;
