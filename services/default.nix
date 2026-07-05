@@ -13,6 +13,7 @@
     ./influxdb
     ./inverter-data-collector
     ./mosquitto
+    ./paperless
     ./unifi
   ];
 

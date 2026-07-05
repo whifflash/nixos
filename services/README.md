@@ -12,7 +12,7 @@ A host imports `../../services` and enables only the services it owns:
 ```
 
 Current shared infrastructure includes Gitea, the static hub, Mosquitto, InfluxDB,
-Home Assistant, UniFi Network Application, the inverter data collector, and the cross-service
+Paperless-ngx, Home Assistant, UniFi Network Application, the inverter data collector, and the cross-service
 home-automation backup job.
 
 Service placement belongs in `hosts/` and `inventory/services.yaml`; service implementation

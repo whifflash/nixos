@@ -45,6 +45,15 @@ services:
     backup:
       off_host: restic-to-vela-after-cutover
 
+  paperless:
+    endpoint: https://paperless.c4rb0n.cloud
+    production_host: icarus
+    status: initial-deployment
+    implementation: nixos-native
+    stateful: true
+    ingestion: brother-ads-1800w-over-sftp
+    backup: planned-restic-to-vela
+
   unifi:
     endpoint: https://unifi.c4rb0n.cloud
     production_host: icarus
