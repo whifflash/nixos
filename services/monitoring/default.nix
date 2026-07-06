@@ -900,6 +900,8 @@ in {
 
       tmpfiles.rules = [
         "d ${textfileDirectory} 0755 root root - -"
+        "r ${textfileDirectory}/test-alert-critical-phone.prom"
+        "r ${textfileDirectory}/test-alert-critical-phone.prom.tmp"
       ];
     };
 

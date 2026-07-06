@@ -28,7 +28,7 @@ Commands must run as root because they write to the Node Exporter textfile
 collector directory.
 
 ```bash
-sudo infra-monitoring-test-alert fire critical phone
+sudo infra-monitoring-test-alert fire critical manual
 ```
 
 The metric is visible on the next Node Exporter scrape. The
@@ -39,7 +39,7 @@ wait before expecting the notification.
 Resolve the alert by removing its metric:
 
 ```bash
-sudo infra-monitoring-test-alert resolve critical phone
+sudo infra-monitoring-test-alert resolve critical manual
 ```
 
 Alertmanager has `send_resolved` enabled, so a resolved notification should
@@ -49,10 +49,10 @@ Use the same procedure for the other severity routes after subscribing to their
 ntfy topics:
 
 ```bash
-sudo infra-monitoring-test-alert fire warning phone
-sudo infra-monitoring-test-alert resolve warning phone
-sudo infra-monitoring-test-alert fire info phone
-sudo infra-monitoring-test-alert resolve info phone
+sudo infra-monitoring-test-alert fire warning manual
+sudo infra-monitoring-test-alert resolve warning manual
+sudo infra-monitoring-test-alert fire info manual
+sudo infra-monitoring-test-alert resolve info manual
 ```
 
 Current routing is:
