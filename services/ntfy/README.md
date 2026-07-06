@@ -85,10 +85,12 @@ The default ACLs are:
 
 - `alertmanager`: write-only access to all Icarus and property topics;
 - `mhr`: read-only access to all Icarus and property topics;
+- `luise`: read-only access to all property topics;
 - anonymous clients: no access.
 
-Users and ACLs are extensible. For example, a future `luise` account can receive
-only property alerts without gaining access to Icarus host alerts:
+The `luise` account receives `property-critical`, `property-warning`, and
+`property-info` without gaining access to Icarus host alerts. Its declarative
+ACL is equivalent to:
 
 ```nix
 infra.services.ntfy.users.luise.access = [
@@ -98,6 +100,10 @@ infra.services.ntfy.users.luise.access = [
   }
   {
     topic = config.infra.services.ntfy.topics.propertyWarning;
+    permission = "read-only";
+  }
+  {
+    topic = config.infra.services.ntfy.topics.propertyInfo;
     permission = "read-only";
   }
 ];

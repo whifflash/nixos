@@ -255,6 +255,21 @@ in {
             permission = "read-only";
           }
         ];
+
+        luise.access = [
+          {
+            topic = cfg.topics.propertyCritical;
+            permission = "read-only";
+          }
+          {
+            topic = cfg.topics.propertyWarning;
+            permission = "read-only";
+          }
+          {
+            topic = cfg.topics.propertyInfo;
+            permission = "read-only";
+          }
+        ];
       };
       description = "ntfy users and their topic ACLs.";
     };
