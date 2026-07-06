@@ -265,35 +265,38 @@ This table records the selected severities. `MonitoringTestAlert` inherits the
 severity passed to the test command; `MonitoringDeliveryCanary` uses the
 configured canary severity.
 
-| Alert                              | Severity   | Duration | Category / area | Condition summary                                         | Notes     |
-| ---------------------------------- | ---------- | -------: | --------------- | --------------------------------------------------------- | --------- |
-| `FilesystemSpaceLow`               | warning    |      15m | storage         | non-temporary filesystem has less than 10% free space     |           |
-| `FilesystemInodesLow`              | warning    |      15m | storage         | non-temporary filesystem has less than 10% free inodes    |           |
-| `MemoryPressure`                   | warning    |      15m | host            | available memory remains below 10%                        |           |
-| `HostTemperatureHigh`              | warning    |      10m | host            | highest hardware temperature sensor remains above 85 C    |           |
-| `SystemdUnitFailed`                | warning    |       5m | availability    | a monitored systemd unit is failed                        |           |
-| `ZigbeeCoordinatorMissing`         | warning    |       5m | home-automation | configured Zigbee coordinator device path is absent       |           |
-| `SystemProfileNotActive`           | info       |      15m | maintenance     | active system differs from the current system profile     |           |
-| `ServiceProbeFailed`               | warning    |       5m | availability    | HTTP or TCP blackbox probe is failing                     |           |
-| `BackupFailed`                     | warning    |      15m | backup          | last recorded backup run did not succeed                  |           |
-| `BackupStale`                      | warning    |      15m | backup          | no completed backup has been recorded for 36 hours        |           |
-| `HousekeepingFailed`               | warning    |      15m | maintenance     | last housekeeping run failed                              |           |
-| `HousekeepingStale`                | warning    |      30m | maintenance     | no completed housekeeping run for eight days              |           |
-| `MqttRoundtripFailed`              | warning    |       5m | mqtt            | authenticated publish/subscribe round trip is failing     |           |
-| `MqttTopicStale`                   | warning    |       5m | mqtt            | monitored MQTT topic has no message for five minutes      |           |
-| `MqttTopicUnhealthy`               | warning    |       5m | mqtt            | monitored MQTT topic is missing or has unhealthy payload  |           |
-| `PvInverterPayloadInvalid`         | warning    |       5m | energy          | inverter MQTT state payload is not valid JSON             |           |
-| `PvInverterTelemetryStale`         | warning    |       5m | energy          | inverter payload timestamp is older than 15 minutes       |           |
-| `PvInverterFault`                  | warning    |       5m | energy          | inverter reports explicit fault state                     |           |
-| `PvEnergyTotalDecreased`           | warning    |       5m | energy          | lifetime energy counter decreased over 30 minutes         |           |
-| `MonitoringMetricsStale`           | warning    |       5m | notification    | repository-specific textfile metrics stopped updating     |           |
-| `PrometheusSelfScrapeDown`         | warning    |       5m | notification    | Prometheus cannot scrape itself                           |           |
-| `PrometheusRuleEvaluationFailures` | warning    |       5m | notification    | Prometheus rule evaluations failed in the last 15 minutes |           |
-| `PrometheusTargetDown`             | warning    |       5m | notification    | Alertmanager or the ntfy bridge cannot be scraped         |           |
-| `AlertmanagerNtfyPublishFailures`  | warning    |       5m | notification    | bridge failed to publish notifications to ntfy            |           |
-| `MonitoringDeliveryCanaryStale`    | warning    |      30m | notification    | no successful scheduled canary publish for 84 hours       |           |
-| `MonitoringTestAlert`              | variable   |      30s | notification    | manually fired synthetic alert is active                  | test-only |
-| `MonitoringDeliveryCanary`         | configured |      30s | notification    | scheduled synthetic canary reached Alertmanager           | test-only |
+| Alert                              | Severity   | Duration | Category / area | Condition summary                                                 | Notes     |
+| ---------------------------------- | ---------- | -------: | --------------- | ----------------------------------------------------------------- | --------- |
+| `FilesystemSpaceLow`               | warning    |      15m | storage         | non-temporary filesystem has less than 10% free space             |           |
+| `FilesystemInodesLow`              | warning    |      15m | storage         | non-temporary filesystem has less than 10% free inodes            |           |
+| `MemoryPressure`                   | warning    |      15m | host            | available memory remains below 10%                                |           |
+| `HostTemperatureHigh`              | warning    |      10m | host            | highest hardware temperature sensor remains above 85 C            |           |
+| `SystemdUnitFailed`                | warning    |       5m | availability    | a monitored systemd unit is failed                                |           |
+| `ZigbeeCoordinatorMissing`         | warning    |       5m | home-automation | configured Zigbee coordinator device path is absent               |           |
+| `SystemProfileNotActive`           | info       |      15m | maintenance     | active system differs from the current system profile             |           |
+| `ServiceProbeFailed`               | warning    |       5m | availability    | HTTP or TCP blackbox probe is failing                             |           |
+| `BackupFailed`                     | warning    |      15m | backup          | last recorded backup run did not succeed                          |           |
+| `BackupStale`                      | warning    |      15m | backup          | no completed backup has been recorded for 36 hours                |           |
+| `HousekeepingFailed`               | warning    |      15m | maintenance     | last housekeeping run failed                                      |           |
+| `HousekeepingStale`                | warning    |      30m | maintenance     | no completed housekeeping run for eight days                      |           |
+| `MqttRoundtripFailed`              | warning    |       5m | mqtt            | authenticated publish/subscribe round trip is failing             |           |
+| `MqttTopicStale`                   | warning    |       5m | mqtt            | non-inverter monitored MQTT topic has no message for five minutes |           |
+| `MqttTopicUnhealthy`               | warning    |       5m | mqtt            | non-inverter MQTT topic is missing or has unhealthy payload       |           |
+| `PvInverterMqttStale`              | critical   |       5m | property        | inverter availability or state MQTT messages stopped              |           |
+| `PvInverterMqttUnhealthy`          | warning    |       5m | property        | inverter MQTT availability payload is unhealthy                   |           |
+| `PvInverterPayloadInvalid`         | warning    |       5m | property        | inverter MQTT state payload is not valid JSON                     |           |
+| `PvInverterTelemetryStale`         | warning    |       5m | property        | inverter payload timestamp is older than 15 minutes               |           |
+| `PvInverterFault`                  | warning    |       5m | property        | inverter reports explicit fault state                             |           |
+| `PvEnergyTotalDecreased`           | warning    |       5m | property        | lifetime energy counter decreased over 30 minutes                 |           |
+| `PvEnergyProductionStalled`        | critical   |       1h | property        | lifetime energy counter did not increase for 36 hours             |           |
+| `MonitoringMetricsStale`           | warning    |       5m | notification    | repository-specific textfile metrics stopped updating             |           |
+| `PrometheusSelfScrapeDown`         | warning    |       5m | notification    | Prometheus cannot scrape itself                                   |           |
+| `PrometheusRuleEvaluationFailures` | warning    |       5m | notification    | Prometheus rule evaluations failed in the last 15 minutes         |           |
+| `PrometheusTargetDown`             | warning    |       5m | notification    | Alertmanager or the ntfy bridge cannot be scraped                 |           |
+| `AlertmanagerNtfyPublishFailures`  | warning    |       5m | notification    | bridge failed to publish notifications to ntfy                    |           |
+| `MonitoringDeliveryCanaryStale`    | warning    |      30m | notification    | no successful scheduled canary publish for 84 hours               |           |
+| `MonitoringTestAlert`              | variable   |      30s | notification    | manually fired synthetic alert is active                          | test-only |
+| `MonitoringDeliveryCanary`         | configured |      30s | notification    | scheduled synthetic canary reached Alertmanager                   | test-only |
 
 ### Completion criteria
 
@@ -428,9 +431,10 @@ Add daylight-aware checks after the basic metrics have proven stable:
 
 ### Topic policy
 
-Reuse the main severity topics while the same user receives all infrastructure
-alerts. Add PV-specific topics only when a separate audience needs PV alerts
-without access to unrelated infrastructure notifications.
+Property infrastructure alerts use `property-critical`, `property-warning`, and
+`property-info`, separate from alerts concerning the Icarus host. The category
+covers PV, wastewater pumps, heat pumps, gates, leak detection, sump pumps,
+unsafe indoor or freezer temperatures, and mains-power failures.
 
 ### Completion criteria
 

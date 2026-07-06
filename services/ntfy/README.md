@@ -62,11 +62,14 @@ activation integration before the system reaches the service startup phase.
 
 The default topics are:
 
-| Topic             | Purpose                                       |
-| ----------------- | --------------------------------------------- |
-| `icarus-critical` | Critical infrastructure alerts                |
-| `icarus-warning`  | Warning-level infrastructure alerts           |
-| `icarus-info`     | Informational alerts and low-priority notices |
+| Topic               | Purpose                                                 |
+| ------------------- | ------------------------------------------------------- |
+| `icarus-critical`   | Critical alerts concerning the Icarus host              |
+| `icarus-warning`    | Warning-level alerts concerning the Icarus host         |
+| `icarus-info`       | Informational alerts concerning the Icarus host         |
+| `property-critical` | Critical alerts concerning property infrastructure      |
+| `property-warning`  | Warning-level alerts concerning property infrastructure |
+| `property-info`     | Informational alerts concerning property infrastructure |
 
 A public catalog generated from these same option values is available at:
 
@@ -80,28 +83,38 @@ The catalog is informational; ntfy authentication and ACLs remain authoritative.
 
 The default ACLs are:
 
-- `alertmanager`: write-only access to all three topics;
-- `mhr`: read-only access to all three topics;
+- `alertmanager`: write-only access to all Icarus and property topics;
+- `mhr`: read-only access to all Icarus and property topics;
 - anonymous clients: no access.
 
 Users and ACLs are extensible. For example, a future `luise` account can receive
-only PV-related topics without gaining access to unrelated infrastructure alerts:
+only property alerts without gaining access to Icarus host alerts:
 
 ```nix
-infra.services.ntfy.users.luise = {
-  passwordHashSecret = "ntfy/users/luise/password_hash";
-  access = [
-    {
-      topic = "pv-critical";
-      permission = "read-only";
-    }
-    {
-      topic = "pv-warning";
-      permission = "read-only";
-    }
-  ];
-};
+infra.services.ntfy.users.luise.access = [
+  {
+    topic = config.infra.services.ntfy.topics.propertyCritical;
+    permission = "read-only";
+  }
+  {
+    topic = config.infra.services.ntfy.topics.propertyWarning;
+    permission = "read-only";
+  }
+];
 ```
+
+The `property-*` category is intended for vital physical systems around the
+house and grounds. Reasonable future alerts include:
+
+- `WastewaterPumpUnavailable`;
+- `HeatPumpTelemetryStale`;
+- `HeatPumpFault`;
+- `GateOpenTooLong`;
+- `WaterLeakDetected`;
+- `SumpPumpFailure`;
+- `IndoorTemperatureTooLow`;
+- `FreezerTemperatureHigh`;
+- `MainsPowerFailure`.
 
 The corresponding SOPS key would be `ntfy/users/luise/password_hash`.
 
@@ -131,8 +144,8 @@ In the ntfy app:
 
 1. Add `https://ntfy.c4rb0n.cloud` as a custom server.
 2. Configure the username `mhr` and the password stored in SOPS.
-3. Subscribe to `icarus-critical`, `icarus-warning`, and optionally
-   `icarus-info`.
+3. Subscribe to `icarus-critical`, `icarus-warning`, `property-critical`,
+   `property-warning`, and optionally the corresponding `*-info` topics.
 4. Configure notification behavior per topic in the app.
 
 The server sets `upstream-base-url` to `https://ntfy.sh` for iOS instant push

@@ -285,12 +285,14 @@ The ntfy service owns user and ACL provisioning. Monitoring uses the dedicated
 ntfy/users/alertmanager/password
 ```
 
-The adapter routes alerts to separate topics by severity:
+The adapter routes alerts to Icarus host topics by severity unless a rule sets an
+explicit `ntfy_topic` label:
 
 - `critical` -> `icarus-critical`, urgent phone notification;
 - `warning` -> `icarus-warning`, high-priority phone notification;
 - `info` -> `icarus-info`, low-priority notification;
-- resolved alerts use the same severity topic with normal priority.
+- property alerts -> `property-critical`, `property-warning`, or `property-info`;
+- resolved alerts use the same topic with normal priority.
 
 Alertmanager repeats unresolved critical alerts hourly and unresolved warning
 alerts weekly. Info alerts use a long repeat interval so they do not repeat in
@@ -354,10 +356,16 @@ from the retained JSON payload:
 - `infra_pv_event_bitmask`;
 - `infra_pv_payload_timestamp_seconds`.
 
-Current PV alerts are deliberately conservative and warning-only. They cover
-invalid payloads, stale payload timestamps, explicit inverter fault state, and a
-decreasing lifetime energy counter. Daylight-aware production checks are a later
-stage.
+PV alerts are routed to the `property-*` topics. Missing inverter MQTT messages
+and a lifetime energy counter that does not increase for 36 hours are critical
+property alerts. An unhealthy availability payload, invalid state payloads,
+stale embedded timestamps, explicit inverter fault state, and a decreasing
+lifetime counter remain property warnings.
+
+The production-stall rule also requires fresh telemetry and no explicit inverter
+fault, then persists for another hour before firing. Its 36-hour observation
+window deliberately spans a normal daylight period without depending on a
+separate solar-elevation source.
 
 ```bash
 systemctl start infra-monitoring-mqtt.service

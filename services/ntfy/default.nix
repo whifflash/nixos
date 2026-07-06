@@ -81,6 +81,21 @@
       severity = "info";
       description = "Informational alerts and low-priority notices.";
     }
+    {
+      name = cfg.topics.propertyCritical;
+      severity = "critical";
+      description = "Critical property infrastructure alerts requiring immediate attention.";
+    }
+    {
+      name = cfg.topics.propertyWarning;
+      severity = "warning";
+      description = "Property infrastructure warnings that may require intervention.";
+    }
+    {
+      name = cfg.topics.propertyInfo;
+      severity = "info";
+      description = "Informational property infrastructure alerts and notices.";
+    }
   ];
   topicCatalogJson = builtins.toJSON {
     server = "https://${hostName}";
@@ -150,19 +165,37 @@ in {
       critical = lib.mkOption {
         type = lib.types.str;
         default = "icarus-critical";
-        description = "Topic used for critical infrastructure alerts.";
+        description = "Topic used for critical Icarus host alerts.";
       };
 
       warning = lib.mkOption {
         type = lib.types.str;
         default = "icarus-warning";
-        description = "Topic used for warning infrastructure alerts.";
+        description = "Topic used for warning-level Icarus host alerts.";
       };
 
       info = lib.mkOption {
         type = lib.types.str;
         default = "icarus-info";
-        description = "Topic used for informational infrastructure alerts.";
+        description = "Topic used for informational Icarus host alerts.";
+      };
+
+      propertyCritical = lib.mkOption {
+        type = lib.types.str;
+        default = "property-critical";
+        description = "Topic used for critical property infrastructure alerts.";
+      };
+
+      propertyWarning = lib.mkOption {
+        type = lib.types.str;
+        default = "property-warning";
+        description = "Topic used for warning-level property infrastructure alerts.";
+      };
+
+      propertyInfo = lib.mkOption {
+        type = lib.types.str;
+        default = "property-info";
+        description = "Topic used for informational property infrastructure alerts.";
       };
     };
 
@@ -182,6 +215,18 @@ in {
             topic = cfg.topics.info;
             permission = "write-only";
           }
+          {
+            topic = cfg.topics.propertyCritical;
+            permission = "write-only";
+          }
+          {
+            topic = cfg.topics.propertyWarning;
+            permission = "write-only";
+          }
+          {
+            topic = cfg.topics.propertyInfo;
+            permission = "write-only";
+          }
         ];
 
         mhr.access = [
@@ -195,6 +240,18 @@ in {
           }
           {
             topic = cfg.topics.info;
+            permission = "read-only";
+          }
+          {
+            topic = cfg.topics.propertyCritical;
+            permission = "read-only";
+          }
+          {
+            topic = cfg.topics.propertyWarning;
+            permission = "read-only";
+          }
+          {
+            topic = cfg.topics.propertyInfo;
             permission = "read-only";
           }
         ];

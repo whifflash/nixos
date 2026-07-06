@@ -378,24 +378,47 @@
               }
               {
                 alert = "MqttTopicStale";
-                expr = "infra_mqtt_topic_last_message_timestamp_seconds > 0 and time() - infra_mqtt_topic_last_message_timestamp_seconds > 300";
+                expr = ''infra_mqtt_topic_last_message_timestamp_seconds{name!~"inverter-(availability|state)"} > 0 and time() - infra_mqtt_topic_last_message_timestamp_seconds{name!~"inverter-(availability|state)"} > 300'';
                 for = "5m";
                 labels.severity = "warning";
                 annotations.summary = "MQTT topic {{ $labels.name }} has not produced a message for five minutes";
               }
               {
+                alert = "PvInverterMqttStale";
+                expr = ''infra_mqtt_topic_last_message_timestamp_seconds{name=~"inverter-(availability|state)"} > 0 and time() - infra_mqtt_topic_last_message_timestamp_seconds{name=~"inverter-(availability|state)"} > 300'';
+                for = "5m";
+                labels = {
+                  category = "property";
+                  ntfy_topic = config.infra.services.ntfy.topics.propertyCritical;
+                  severity = "critical";
+                };
+                annotations.summary = "PV inverter MQTT topic {{ $labels.name }} has not produced a message for five minutes";
+              }
+              {
                 alert = "MqttTopicUnhealthy";
-                expr = "infra_mqtt_topic_healthy == 0";
+                expr = ''infra_mqtt_topic_healthy{name!~"inverter-(availability|state)"} == 0'';
                 for = "5m";
                 labels.severity = "warning";
                 annotations.summary = "MQTT topic {{ $labels.name }} is missing or reports an unhealthy payload";
+              }
+              {
+                alert = "PvInverterMqttUnhealthy";
+                expr = ''infra_mqtt_topic_healthy{name=~"inverter-(availability|state)"} == 0'';
+                for = "5m";
+                labels = {
+                  category = "property";
+                  ntfy_topic = config.infra.services.ntfy.topics.propertyWarning;
+                  severity = "warning";
+                };
+                annotations.summary = "PV inverter MQTT topic {{ $labels.name }} is missing or reports an unhealthy payload";
               }
               {
                 alert = "PvInverterPayloadInvalid";
                 expr = "infra_pv_inverter_payload_valid == 0";
                 for = "5m";
                 labels = {
-                  category = "energy";
+                  category = "property";
+                  ntfy_topic = config.infra.services.ntfy.topics.propertyWarning;
                   severity = "warning";
                 };
                 annotations.summary = "PV inverter MQTT payload is not valid JSON";
@@ -405,7 +428,8 @@
                 expr = "time() - infra_pv_payload_timestamp_seconds > 900";
                 for = "5m";
                 labels = {
-                  category = "energy";
+                  category = "property";
+                  ntfy_topic = config.infra.services.ntfy.topics.propertyWarning;
                   severity = "warning";
                 };
                 annotations.summary = "PV inverter payload timestamp is stale";
@@ -415,7 +439,8 @@
                 expr = "infra_pv_inverter_fault == 1";
                 for = "5m";
                 labels = {
-                  category = "energy";
+                  category = "property";
+                  ntfy_topic = config.infra.services.ntfy.topics.propertyWarning;
                   severity = "warning";
                 };
                 annotations.summary = "PV inverter reports fault state";
@@ -425,10 +450,22 @@
                 expr = "delta(infra_pv_ac_energy_total_wh[30m]) < 0";
                 for = "5m";
                 labels = {
-                  category = "energy";
+                  category = "property";
+                  ntfy_topic = config.infra.services.ntfy.topics.propertyWarning;
                   severity = "warning";
                 };
                 annotations.summary = "PV lifetime energy counter decreased";
+              }
+              {
+                alert = "PvEnergyProductionStalled";
+                expr = "increase(infra_pv_ac_energy_total_wh[36h]) <= 0 and time() - infra_pv_payload_timestamp_seconds < 900 and infra_pv_inverter_fault == 0";
+                for = "1h";
+                labels = {
+                  category = "property";
+                  ntfy_topic = config.infra.services.ntfy.topics.propertyCritical;
+                  severity = "critical";
+                };
+                annotations.summary = "PV lifetime energy counter has not increased for 36 hours";
               }
               {
                 alert = "MonitoringMetricsStale";
