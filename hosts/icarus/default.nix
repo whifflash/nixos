@@ -67,8 +67,17 @@
       disableRegistration = true;
     };
 
+    housekeeping.enable = true;
     hub.enable = true;
+    monitoring = {
+      enable = true;
+      alerting.testAlerts = {
+        enable = true;
+        canary.enable = true;
+      };
+    };
     mosquitto.enable = true;
+    ntfy.enable = true;
     paperless.enable = true;
     influxdb.enable = true;
     inverterDataCollector.enable = true;

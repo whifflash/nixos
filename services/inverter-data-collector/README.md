@@ -81,6 +81,25 @@ nix shell nixpkgs#mosquitto -c \
 Prefer reading the Home Assistant entities or service journal over placing the password in shell
 history during routine checks.
 
+## State payload
+
+The retained state topic publishes one JSON object per inverter poll. Fields
+currently used by monitoring are:
+
+| Field                | Meaning                                    |
+| -------------------- | ------------------------------------------ |
+| `ts`                 | collector timestamp in UTC                 |
+| `ac_power_w`         | current AC power in watts                  |
+| `dc_power_w`         | current DC power in watts when available   |
+| `ac_energy_total_wh` | lifetime AC energy counter in watt-hours   |
+| `status`             | raw SunSpec operating-state code           |
+| `status_text`        | mapped operating state such as `producing` |
+| `events`             | raw SunSpec event bitmask when available   |
+
+The collector does not currently publish a daily energy counter or a decoded
+fault code. Monitoring therefore starts with explicit `fault` status, payload
+freshness, and lifetime-counter sanity checks.
+
 ## Failure behavior
 
 The process reconnects and republishes Home Assistant discovery after MQTT reconnects. Inverter

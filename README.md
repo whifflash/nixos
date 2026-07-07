@@ -15,6 +15,29 @@ NixOS and nix-darwin configurations for workstations, laptops, and self-hosted i
 
 See `AGENTS.md` for repository conventions.
 
+## Automatic development shell
+
+The repository contains a `.envrc` that loads `devShells.default` from
+`flake.nix` through `nix-direnv`. Direnv and nix-direnv are managed by Home
+Manager on both NixOS and macOS.
+
+After cloning the repository, approve it once from the repository root:
+
+```sh
+direnv allow
+```
+
+After that, entering the repository automatically loads the development shell,
+and leaving it restores the previous environment. Changes to the flake cause
+nix-direnv to refresh the environment. Generated state is stored in `.direnv/`,
+which is ignored by Git.
+
+To force a reload after changing `.envrc` or the shell definition:
+
+```sh
+direnv reload
+```
+
 ## Common workflow
 
 The flake provides a project-local [Task](https://taskfile.dev/) runner with
@@ -64,6 +87,8 @@ though they are not exposed through the firewall.
 |  2222 |   TCP    | LAN           | Gitea built-in SSH server                       |
 |  2223 |   TCP    | LAN           | Paperless scanner-only SFTP daemon              |
 |  3000 |   TCP    | loopback      | Gitea HTTP backend                              |
+|  2586 |   TCP    | loopback      | ntfy HTTP backend                               |
+|  3001 |   TCP    | loopback      | Grafana HTTP backend                            |
 |  3478 |   UDP    | LAN           | UniFi STUN                                      |
 |  5432 |   TCP    | loopback      | PostgreSQL                                      |
 |  6789 |   TCP    | LAN           | UniFi throughput test                           |

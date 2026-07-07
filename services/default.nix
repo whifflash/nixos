@@ -9,10 +9,13 @@
     ./gitea
     ./home-assistant
     ./home-automation-backup
+    ./housekeeping
     ./hub
     ./influxdb
     ./inverter-data-collector
+    ./monitoring
     ./mosquitto
+    ./ntfy
     ./paperless
     ./unifi
   ];
