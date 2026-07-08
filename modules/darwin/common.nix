@@ -9,7 +9,10 @@
         tilesize = 48; # host can override
       };
       spaces = {
-        spans-displays = true; # true  = OFF (“Displays have separate Spaces”) → one Space spans all displays
+        # Required for sane AeroSpace multi-monitor behavior. This disables
+        # “Displays have separate Spaces” so one macOS Space spans all displays.
+        # macOS requires logging out and back in before this takes full effect.
+        spans-displays = true;
       };
 
       finder = {
