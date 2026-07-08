@@ -5,8 +5,21 @@
   ...
 }: let
   herdr = inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  zsh = lib.getExe pkgs.zsh;
+  zDotDir =
+    if pkgs.stdenv.hostPlatform.isDarwin
+    then "$HOME"
+    else "$HOME/.config/zsh";
+  herdrZsh = pkgs.writeShellScriptBin "herdr-zsh" ''
+    export ZDOTDIR="${zDotDir}"
+    export SHELL="${zsh}"
+    exec "${zsh}" -i "$@"
+  '';
 in {
-  home.packages = [herdr];
+  home.packages = [
+    herdr
+    herdrZsh
+  ];
 
   xdg = {
     enable = true;
@@ -15,8 +28,8 @@ in {
       onboarding = false
 
       [terminal]
-      default_shell = "${pkgs.zsh}/bin/zsh"
-      shell_mode = "auto"
+      default_shell = "${lib.getExe herdrZsh}"
+      shell_mode = "non_login"
       new_cwd = "follow"
 
       [keys]

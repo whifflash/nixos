@@ -113,6 +113,7 @@
             ripgrep
             go-task
             nix-output-monitor
+            direnv
             zsh
             oh-my-zsh
             zsh-autosuggestions
@@ -141,15 +142,29 @@
             DISABLE_UPDATE_PROMPT="true"
 
             source "$ZSH/oh-my-zsh.sh"
+
+            # Automatically load and unload project environments inside
+            # interactive dev-shell zsh sessions, including Herdr panes.
+            if command -v direnv >/dev/null 2>&1; then
+              eval "$(direnv hook zsh)"
+            fi
             # ---- end generated ----
             EOF_ZSHRC
 
                   # Point zsh to our isolated config
                   export ZDOTDIR="$NIX_DEV_ZDOTDIR"
 
-                  # If we're interactive and not already in zsh, hop into it
-                  if [ -t 1 ] && [ -z "$IN_NIX_DEV_ZSH" ] ; then
+                  # If this shell was entered through `nix develop`, hop into the
+                  # managed zsh. Do not use a TTY/interactivity check here: Herdr
+                  # panes do not always expose stdout as a traditional TTY to this
+                  # hook, and nix runs shellHook through bash before handing over to
+                  # the final interactive shell.
+                  #
+                  # nix-direnv evaluates dev shells from .envrc; in that path we
+                  # must not replace the evaluator with zsh.
+                  if [ -z "''${DIRENV_IN_ENVRC:-}" ] && [ -z "''${IN_NIX_DEV_ZSH:-}" ]; then
                     export IN_NIX_DEV_ZSH=1
+                    export SHELL=${pkgs.zsh}/bin/zsh
                     exec ${pkgs.zsh}/bin/zsh -i
                   fi
           '';

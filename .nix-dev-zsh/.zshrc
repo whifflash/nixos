@@ -12,4 +12,10 @@ DISABLE_AUTO_UPDATE="true"
 DISABLE_UPDATE_PROMPT="true"
 
 source "$ZSH/oh-my-zsh.sh"
+
+# Automatically load and unload project environments inside
+# interactive dev-shell zsh sessions, including Herdr panes.
+if command -v direnv >/dev/null 2>&1; then
+  eval "$(direnv hook zsh)"
+fi
 # ---- end generated ----
