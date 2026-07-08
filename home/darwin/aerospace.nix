@@ -1,6 +1,7 @@
 # home/darwin/aerospace.nix
 {
   inputs,
+  lib,
   pkgs,
   config,
   ...
@@ -8,7 +9,6 @@
   home.packages = [
     inputs.aerospace-scratchpad.packages.${pkgs.stdenv.hostPlatform.system}.default
     pkgs.alacritty
-    pkgs.tmux
     pkgs.jq
   ];
 
@@ -23,9 +23,8 @@
 
           export PATH="$HOME/.nix-profile/bin:/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 
-          TITLE="TMuxScratchpad"
-          APP_NAME="Alacritty"
-          BUNDLE_PATTERN="alacritty"
+          HERDR="${lib.getExe inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.default}"
+          TITLE="HerdrScratchpad"
           SCRATCH_WORKSPACE=".scratchpad"
           STATE_DIR="$HOME/.local/state/aerospace"
           LOG="$STATE_DIR/scratchpad.log"
@@ -38,23 +37,15 @@
           }
 
           matching_window_id() {
-            # Query all windows instead of filtering by bundle id. AeroSpace's
-            # bundle id for Homebrew Alacritty differs between releases, and an
-            # over-specific filter makes the script miss the already-running
-            # scratchpad window and launch another one on every toggle.
+            # Match only the fixed scratchpad title so normal Alacritty windows
+            # are never mistaken for the scratchpad.
             aerospace list-windows --monitor all --json \
               | jq -r \
                   --arg title "$TITLE" \
-                  --arg app_name "$APP_NAME" \
-                  --arg bundle_pattern "$BUNDLE_PATTERN" \
                   --arg scratch_workspace "$SCRATCH_WORKSPACE" '
                     [
                       .[]
-                      | select(
-                          ."window-title" == $title
-                          or ."app-name" == $app_name
-                          or ((."app-bundle-id" // "") | test($bundle_pattern; "i"))
-                        )
+                      | select(."window-title" == $title)
                     ][-1]."window-id" // empty
                   '
           }
@@ -131,7 +122,7 @@
             alacritty \
               --title "$TITLE" \
               --option window.dynamic_title=false \
-              -e tmux new-session -A -s scratch >/dev/null 2>&1 &
+              -e env HERDR_SESSION=scratch "$HERDR" >/dev/null 2>&1 &
             id="$(wait_for_window_id)"
             show_window "$id" "$target_workspace"
           }
@@ -196,7 +187,7 @@
           alt-f = "fullscreen"
           alt-t = "layout floating tiling"
 
-          # Floating tmux scratchpad terminal. The script logs to
+          # Floating Herdr scratchpad terminal. The script logs to
           # ~/.local/state/aerospace/scratchpad.log for troubleshooting.
           alt-i = "exec-and-forget ${config.home.homeDirectory}/.config/aerospace/toggle_scratch.sh"
 

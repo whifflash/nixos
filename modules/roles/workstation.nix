@@ -116,7 +116,6 @@ in {
         # pcmanfm
         sublime4
         thunderbird
-        tmux
         udiskie
         vlc
         wireguard-tools

@@ -15,6 +15,10 @@
       inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
 
+    # Herdr is not in nixpkgs 26.05 yet. Keep it pinned as its own
+    # release flake instead of moving the whole system to unstable.
+    herdr.url = "github:ogulcancelik/herdr/v0.7.3";
+
     # Core helper for structuring flakes
     flake-parts.url = "github:hercules-ci/flake-parts";
 

@@ -11,18 +11,17 @@ set $right l
 set $term alacritty
 # Your preferred application launcher
 set $menu wofi --show drun
-# set $TerminalNamed "alacritty -t 'TMUXScratchpad' -o "window.startup_mode=Fullscreen" -e /home/mhr/.config/sway/tmux/tmux_reattach.sh"
-set $TerminalNamed "alacritty -t 'TMUXScratchpad' -e /home/mhr/.config/sway/tmux/tmux_reattach.sh"
+set $TerminalNamed "env HERDR_SESSION=scratch alacritty -t 'HerdrScratchpad' -e herdr"
 
-exec --no-startup-id alacritty -t 'TMUXScratchpad' -e /home/mhr/.config/sway/tmux/tmux_reattach.sh
+exec --no-startup-id env HERDR_SESSION=scratch alacritty -t 'HerdrScratchpad' -e herdr
 
 bindsym $mod+Shift+Return exec $TerminalNamed
 
-for_window [title="TMUXScratchpad"] move window to scratchpad
-for_window [instance="TMUXScratchpad"] floating enable
-for_window [title="TMUXScratchpad" floating] resize set 400 400
+for_window [title="HerdrScratchpad"] move window to scratchpad
+for_window [instance="HerdrScratchpad"] floating enable
+for_window [title="HerdrScratchpad" floating] resize set 100 ppt 100 ppt
 
-bindsym $mod+i [title="TMUXScratchpad"] scratchpad show
+bindsym $mod+i [title="HerdrScratchpad"] scratchpad show
 
 ### Output configuration
 #

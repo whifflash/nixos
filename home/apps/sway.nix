@@ -1,5 +1,6 @@
 {
   config,
+  inputs,
   lib,
   pkgs,
   osConfig,
@@ -8,22 +9,24 @@
   sw = osConfig.programs.sway.enable or false;
   # c = config.hm.theme.tokens;
   mod = "Mod4";
+  env = "${pkgs.coreutils}/bin/env";
   term = "${pkgs.alacritty}/bin/alacritty";
-  tmux = "${pkgs.tmux}/bin/tmux";
+  herdr = lib.getExe inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
-  scratchTitle = "TMuxScratchpad";
+  scratchTitle = "HerdrScratchpad";
 in {
   # helper script to spawn-if-missing, then toggle scratchpad
   home.file.".config/sway/scripts/toggle_scratchpad.sh" = lib.mkIf sw {
     text = ''
       #!/usr/bin/env bash
       set -euo pipefail
+      env='${env}'
       term='${term}'
-      tmux='${tmux}'
+      herdr='${herdr}'
       title='${scratchTitle}'
 
       if ! pgrep -f "$term.*$title" >/dev/null; then
-        "$term" --title "$title" -e "$tmux" new-session -A -s scratch &
+        "$env" HERDR_SESSION=scratch "$term" --title "$title" -e "$herdr" &
         sleep 0.3
       fi
 
@@ -149,7 +152,7 @@ in {
           always = true;
         }
         # optional: pre-spawn scratch session (commented; script handles spawn-if-missing)
-        # { command = ''${term} --title ${scratchTitle} -e ${tmux} new-session -A -s scratch''; always = false; }
+        # { command = ''${env} HERDR_SESSION=scratch ${term} --title ${scratchTitle} -e ${herdr}''; always = false; }
       ];
 
       # send the scratch terminal to the scratchpad and make it floating/sticky by default
@@ -175,8 +178,8 @@ in {
 
           # toggle scratchpad (spawn if missing) via script — uses your existing chord
           "${mod}+i" = "exec ${config.home.homeDirectory}/.config/sway/scripts/toggle_scratchpad.sh";
-          # spawn a named tmux scratch terminal explicitly, if you still want a separate chord
-          "${mod}+Shift+Return" = "exec ${term} -t ${scratchTitle} -e ${config.home.homeDirectory}/.config/sway/tmux/tmux_reattach.sh";
+          # spawn a named Herdr scratch terminal explicitly, if you still want a separate chord
+          "${mod}+Shift+Return" = "exec ${env} HERDR_SESSION=scratch ${term} -t ${scratchTitle} -e ${herdr}";
 
           # reload/lock/exit
           "${mod}+Shift+r" = "reload";

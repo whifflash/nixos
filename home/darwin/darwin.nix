@@ -9,8 +9,8 @@
     ../apps/direnv.nix
     ../apps/sublime.nix
     ./gopass.nix
+    ../apps/herdr.nix
     ./aerospace.nix
-    ./tmux.nix
     ./alacritty.nix
   ];
 

@@ -50,9 +50,9 @@ in {
     ./themes/sway-colors.nix
     ./themes/sway-theme.nix
 
+    ./apps/herdr.nix
     ./apps/sway.nix
     ./apps/zsh.nix
-    ./apps/tmux.nix
   ];
 
   wayland.windowManager.sway = lib.mkIf swaySwitch {
@@ -76,7 +76,7 @@ in {
       swaylock.image = hostSwaylockImage; # PATH
     };
 
-    tmux.enable = true;
+    # Herdr is configured by ./apps/herdr.nix.
   };
 
   home = {
@@ -105,8 +105,6 @@ in {
       ".config/waybar/ornamental.css".source = ./dotfiles/.config/waybar/ornamental.css;
       ".config/waybar/launch_waybar.sh".source = ./dotfiles/.config/waybar/launch_waybar.sh;
       # ".config/swaylock/config".source = ./dotfiles/.config/swaylock/config;
-      ".config/sway/tmux/tmux_reattach.sh".source = ./dotfiles/.config/sway/tmux/tmux_reattach.sh;
-
       # Moved to home manager
       # ".config/sway/config".source = ./dotfiles/.config/sway/config;
     };
