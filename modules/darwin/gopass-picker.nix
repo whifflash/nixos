@@ -14,8 +14,8 @@
     else h;
 
   skhdrc = pkgs.writeText "skhdrc" ''
-    cmd - p : /bin/zsh -lc "$HOME/.local/bin/gopass-launcher"
-    shift + cmd - p : /bin/zsh -lc "$HOME/.local/bin/gopass-switcher"
+    alt - p : /bin/zsh -lc "$HOME/.local/bin/gopass-launcher"
+    shift + alt - p : /bin/zsh -lc "$HOME/.local/bin/gopass-switcher"
   '';
 
   skhdBin = "/run/current-system/sw/bin/skhd";
