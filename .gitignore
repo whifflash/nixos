@@ -10,3 +10,19 @@ deploy-clio-key.sh
 clio-vm.qcow2
 icarus/*
 .nix-dev-zsh/
+
+# macOS metadata
+.DS_Store
+**/.DS_Store
+
+# Logs
+*.log
+
+# Local deployment material
+nixos-anywhere-extra-files/
+
+# Editor and temporary files
+*.swp
+*.swo
+*~
+*.tmp
