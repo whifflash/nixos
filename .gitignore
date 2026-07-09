@@ -9,3 +9,4 @@ cliosetup.md
 deploy-clio-key.sh
 clio-vm.qcow2
 icarus/*
+.nix-dev-zsh/
