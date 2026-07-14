@@ -1,4 +1,8 @@
-{pkgs, ...}: {
+{
+  lib,
+  pkgs,
+  ...
+}: {
   system = {
     stateVersion = 6;
     primaryUser = "mhr";
@@ -57,7 +61,7 @@
   };
   # Target Apple Silicon
   nixpkgs.hostPlatform = "aarch64-darwin";
-  # nixpkgs.config.allowUnfree = true;
+  nixpkgs.config.allowUnfreePredicate = pkg: lib.getName pkg == "claude-code";
 
   # Useful tools
   environment.systemPackages = with pkgs; [

@@ -10,6 +10,7 @@
     ../apps/sublime.nix
     ./gopass.nix
     ../apps/herdr.nix
+    ../apps/claude-code.nix
     ./aerospace.nix
     ./alacritty.nix
   ];
