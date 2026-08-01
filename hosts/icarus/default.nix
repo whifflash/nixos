@@ -3,6 +3,7 @@
     ./disko.nix
     ./hardware-configuration.nix
     ../../services
+    ../../modules/core/remote-admin-ssh.nix
   ];
 
   boot.loader = {
@@ -34,25 +35,12 @@
       isNormalUser = true;
       description = "mhr";
       extraGroups = ["wheel"];
-
-      openssh.authorizedKeys.keys = [
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILf46c7nmSRrmr/6iZ0ozwxSaGyQa9YJjmCXyu3+w/HN mhr@mia"
-      ];
     };
   };
 
   security.sudo.wheelNeedsPassword = false;
 
-  services.openssh = {
-    enable = true;
-    openFirewall = true;
-
-    settings = {
-      KbdInteractiveAuthentication = false;
-      PasswordAuthentication = false;
-      PermitRootLogin = "no";
-    };
-  };
+  remote_admin_ssh.enable = true;
 
   # nixos-anywhere --copy-host-keys preserves this key across installation.
   # The corresponding public key must be a recipient for infrastructure.yaml.

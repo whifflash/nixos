@@ -13,10 +13,12 @@ in {
   };
 
   config = lib.mkIf sw {
+    programs.sway.extraSessionCommands = ''
+      export WLR_NO_HARDWARE_CURSORS=1
+    '';
+
     environment = {
       sessionVariables.NIXOS_OZONE_WL = "1";
-      sessionVariables.WLR_NO_HARDWARE_CURSORS = "1";
-
       systemPackages = with pkgs; [
         grim # screenshot functionality
         slurp # screenshot functionality

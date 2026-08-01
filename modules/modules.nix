@@ -6,6 +6,7 @@
     ./core/virtualization_guest.nix
     ./core/user_options.nix
     ./core/ssh.nix
+    ./core/remote-admin-ssh.nix
     ./desktop/lightdm.nix
     ./desktop/sddm.nix
     ./desktop/gdm.nix

@@ -9,6 +9,8 @@
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
     ./../../modules/modules.nix
+    ./../../modules/hardware/ds5-bridge-wakeup.nix
+    ./../../modules/roles/jovian-gaming.nix
     # inputs.stylix.nixosModules.stylix
     # inputs.home-manager.nixosModules.default
     # inputs.sops-nix.nixosModules.sops
@@ -56,7 +58,7 @@
   # or imports = [ ../../home/ssh.nix ../../home/shell.nix ];
 
   # Greeter
-  desktop_sddm.enable = true;
+  desktop_sddm.enable = false;
   desktop_greetd.enable = false;
 
   #Desktop Environments
@@ -75,9 +77,33 @@
 
   virtualization_guest.enable = false;
   role_workstation.enable = true;
+  role_jovian_gaming = {
+    enable = true;
+    autoStart = true;
+    user = "mhr";
+    desktopSession = "sway";
+  };
   role_hardware-development.enable = false;
   role_tailscale-node.enable = true;
+  remote_admin_ssh.enable = true;
   role_laptop.enable = false;
+
+  hardware_ds5_bridge_wakeup = {
+    enable = true;
+    enableParentWakePath = true;
+    suspendMode = null;
+  };
+
+  ui.theme = {
+    scheme = "everforest-dark";
+    wallpapersDir = ../../media/wallpapers;
+    wallpaper = "anna-scarfiello.jpg";
+    wallpaperMode = "stretch";
+    swaylock.image = ../../media/wallpapers/village.jpg;
+
+    # Keep the repository's token theme authoritative in Sway Desktop Mode.
+    stylix.enable = false;
+  };
 
   # Enable the X11 windowing system.
   services.xserver.enable = true;

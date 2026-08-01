@@ -2,8 +2,8 @@
   description = "NixOS configuration (flake-parts layout)";
 
   inputs = {
-    # nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixpkgs = {url = "github:nixos/nixpkgs/nixos-26.05";};
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     # Darwin hosts use the darwin branch of the same release
     nixpkgs-darwin = {url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";};
     nix-homebrew = {
@@ -24,15 +24,18 @@
 
     # flake-utils.url = "github:numtide/flake-utils";
 
-    # home-manager.url = "github:nix-community/home-manager";
     home-manager.url = "github:nix-community/home-manager/release-26.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    home-manager-unstable.url = "github:nix-community/home-manager";
+    home-manager-unstable.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
     # Optional but handy on real machines; import per-host as needed
     nixos-hardware.url = "github:NixOS/nixos-hardware";
 
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
+    sops-nix-unstable.url = "github:Mic92/sops-nix";
+    sops-nix-unstable.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
     firefox-addons = {
       url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
@@ -54,12 +57,18 @@
 
     # nur.url = "github:nix-community/NUR";
 
-    # stylix.url = "github:danth/stylix/release-24.11";
     stylix.url = "github:nix-community/stylix/release-26.05";
     stylix.inputs.nixpkgs.follows = "nixpkgs";
+    stylix-unstable.url = "github:nix-community/stylix";
+    stylix-unstable.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
     disko.url = "github:nix-community/disko";
     disko.inputs.nixpkgs.follows = "nixpkgs";
+    disko-unstable.url = "github:nix-community/disko";
+    disko-unstable.inputs.nixpkgs.follows = "nixpkgs-unstable";
+
+    jovian.url = "github:Jovian-Experiments/Jovian-NixOS/development";
+    jovian.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
     # nix-darwin (macOS management)
     nix-darwin = {
@@ -275,32 +284,61 @@
             then lib.strings.trim (builtins.readFile path)
             else "x86_64-linux";
 
-          mkHost = name:
-            lib.nixosSystem {
+          mkHost = name: let
+            useUnstable = name == "luna";
+            hostNixpkgs =
+              if useUnstable
+              then inputs.nixpkgs-unstable
+              else inputs.nixpkgs;
+            hostInputs =
+              inputs
+              // {
+                nixpkgs = hostNixpkgs;
+                disko =
+                  if useUnstable
+                  then inputs.disko-unstable
+                  else inputs.disko;
+                home-manager =
+                  if useUnstable
+                  then inputs.home-manager-unstable
+                  else inputs.home-manager;
+                sops-nix =
+                  if useUnstable
+                  then inputs.sops-nix-unstable
+                  else inputs.sops-nix;
+                stylix =
+                  if useUnstable
+                  then inputs.stylix-unstable
+                  else inputs.stylix;
+              };
+          in
+            hostNixpkgs.lib.nixosSystem {
               system = systemFor name;
               modules = [
                 # Your host
                 (hostsDir + "/${name}")
 
-                inputs.disko.nixosModules.disko
-                inputs.home-manager.nixosModules.home-manager
+                hostInputs.disko.nixosModules.disko
+                hostInputs.home-manager.nixosModules.home-manager
                 ({config, ...}: {
                   nixpkgs.overlays = [(import ./overlays/disable-tests.nix)];
                   home-manager = {
                     useGlobalPkgs = true;
                     useUserPackages = true;
                     extraSpecialArgs = {
-                      inherit inputs;
+                      inputs = hostInputs;
                       osConfig = config;
                     };
                   };
                 })
 
-                # System Stylix (the only Stylix we use)
-                inputs.stylix.nixosModules.stylix
+                # Match the Stylix module to each host's Nixpkgs branch.
+                hostInputs.stylix.nixosModules.stylix
               ];
-              # Pass flake inputs to modules
-              specialArgs = {inherit inputs;};
+              specialArgs = {
+                inputs = hostInputs;
+                hostname = name;
+              };
             };
         in
           lib.genAttrs hostNames mkHost;

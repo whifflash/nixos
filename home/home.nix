@@ -28,7 +28,7 @@
 
   # Read from host, never yielding null for path-typed fields
   hostWallpapersDir = getPathOr ["ui" "theme" "wallpapersDir"] defaultWallpapersDir;
-  hostSwaylockImage = getPathOr ["ui" "theme" "swaylockImage"] defaultSwaylockImage;
+  hostSwaylockImage = getPathOr ["ui" "theme" "swaylock" "image"] defaultSwaylockImage;
 
   # String-typed fields
   hostWallpaper = getStrOr ["ui" "theme" "wallpaper"] "anna-scarfiello.jpg";

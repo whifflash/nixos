@@ -22,6 +22,12 @@ in {
       description = "Wallpaper filename relative to wallpapersDir (nullable).";
     };
 
+    wallpaperMode = mkOption {
+      type = types.enum ["fill" "fit" "stretch" "tile" "center"];
+      default = "stretch";
+      description = "Sway background scaling mode.";
+    };
+
     swaylock.image = mkOption {
       type = types.nullOr types.path;
       default = null;
