@@ -91,7 +91,7 @@ Also check `/proc/acpi/wakeup`. The diagnostic command reports entries whose nam
 
 ## Remote recovery over SSH
 
-Luna enables the same key-only OpenSSH policy and administrator public keys as `icarus`. Password and keyboard-interactive authentication are disabled, root login is not permitted, and the firewall accepts SSH only from IPv4 source addresses in `10.0.0.0/8`.
+Luna enables the same key-only OpenSSH policy and administrator public keys as `icarus`. Password and keyboard-interactive authentication are disabled, root login is not permitted, and OpenSSH refuses connections whose IPv4 source address is outside `10.0.0.0/8`. Luna's workstation firewall remains disabled; the SSH restriction does not enable or otherwise alter it. On hosts that already use the NixOS nftables firewall, the module also applies the same source restriction at the packet-filter layer.
 
 From a machine holding the matching private key, connect as `mhr` using whichever Luna address is reachable:
 

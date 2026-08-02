@@ -5,6 +5,8 @@
 }: let
   id = "remote_admin_ssh";
   cfg = config.${id};
+  firewallEnabled = config.networking.firewall.enable;
+  nftablesFirewall = firewallEnabled && config.networking.firewall.backend == "nftables";
   sshPortSet = lib.concatStringsSep ", " (map toString config.services.openssh.ports);
 in {
   options.${id} = {
@@ -27,44 +29,54 @@ in {
     allowLanAccess = lib.mkOption {
       type = lib.types.bool;
       default = false;
-      description = "Allow SSH through the firewall from IPv4 source addresses in 10.0.0.0/8.";
+      description = "Allow SSH connections only from IPv4 source addresses in 10.0.0.0/8.";
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    assertions = [
-      {
-        assertion = config.users.users.${cfg.user}.isNormalUser;
-        message = "remote_admin_ssh.user must name an existing normal user";
-      }
-      {
-        assertion = !cfg.allowLanAccess || config.networking.firewall.enable;
-        message = "remote_admin_ssh.allowLanAccess requires the NixOS firewall to be enabled";
-      }
-      {
-        assertion = !cfg.allowLanAccess || config.networking.firewall.backend == "nftables";
-        message = "remote_admin_ssh.allowLanAccess requires the nftables firewall backend";
-      }
-    ];
+  config = lib.mkIf cfg.enable (lib.mkMerge [
+    {
+      assertions = [
+        {
+          assertion = config.users.users.${cfg.user}.isNormalUser;
+          message = "remote_admin_ssh.user must name an existing normal user";
+        }
+      ];
 
-    users.users.${cfg.user}.openssh.authorizedKeys.keys = cfg.authorizedKeys;
+      users.users.${cfg.user}.openssh.authorizedKeys.keys = cfg.authorizedKeys;
 
-    services.openssh = {
-      enable = true;
-      openFirewall = false;
+      services.openssh = {
+        enable = true;
 
-      settings = {
-        KbdInteractiveAuthentication = false;
-        PasswordAuthentication = false;
-        PermitRootLogin = "no";
+        # With the nftables firewall, the source range is filtered below. For
+        # other enabled firewall backends, open the configured SSH ports and
+        # let sshd enforce the same source restriction. A disabled firewall is
+        # left disabled, which is intentional for workstation hosts such as
+        # luna.
+        openFirewall = cfg.allowLanAccess && firewallEnabled && !nftablesFirewall;
+
+        settings = {
+          KbdInteractiveAuthentication = false;
+          PasswordAuthentication = false;
+          PermitRootLogin = "no";
+        };
+
+        # Keep this at the end of sshd_config so no later module setting is
+        # accidentally scoped inside the Match block. OpenSSH 9.9 and newer
+        # support RefuseConnection in Match blocks.
+        extraConfig = lib.mkAfter (lib.optionalString cfg.allowLanAccess ''
+          Match Address *,!10.0.0.0/8
+            RefuseConnection yes
+        '');
       };
-    };
+    }
 
-    networking = lib.mkIf cfg.allowLanAccess {
-      nftables.enable = true;
-      firewall.extraInputRules = ''
+    # Preserve source filtering at the packet layer on hosts that already use
+    # the NixOS nftables firewall. This does not enable or change the global
+    # firewall state on luna or any other host.
+    (lib.mkIf (cfg.allowLanAccess && nftablesFirewall) {
+      networking.firewall.extraInputRules = ''
         ip saddr 10.0.0.0/8 tcp dport { ${sshPortSet} } accept comment "allow remote administration SSH from LAN"
       '';
-    };
-  };
+    })
+  ]);
 }
