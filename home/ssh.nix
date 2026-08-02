@@ -59,6 +59,14 @@ in {
         Port = 22;
       };
 
+      "luna" = {
+        User = "mhr";
+        HostName = "10.20.40.20";
+        IdentityFile = "~/.ssh/bsw";
+        IdentitiesOnly = true;
+        Port = 22;
+      };
+
       "poseidon" = {
         User = "mhr";
         HostName = "127.0.0.1";
