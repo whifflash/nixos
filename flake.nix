@@ -370,7 +370,7 @@
                 ./modules/darwin/aerospace.nix
                 ./modules/darwin/devtools.nix
                 ./modules/darwin/gopass-picker.nix
-                ./modules/darwin/brews/sublime.nix
+                ./modules/darwin/brews/zed.nix
                 ./modules/darwin/gitea-sync.nix
 
                 # bootstrap Homebrew itself declaratively

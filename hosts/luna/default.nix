@@ -85,7 +85,10 @@
   };
   role_hardware-development.enable = false;
   role_tailscale-node.enable = true;
-  remote_admin_ssh.enable = true;
+  remote_admin_ssh = {
+    enable = true;
+    allowLanAccess = true;
+  };
   role_laptop.enable = false;
 
   hardware_ds5_bridge_wakeup = {

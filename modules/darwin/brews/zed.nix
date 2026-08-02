@@ -1,9 +1,9 @@
-# modules/darwin/sublime-brew.nix
+# modules/darwin/brews/zed.nix
 _: {
   homebrew = {
     enable = true;
     casks = [
-      "sublime-text"
+      "zed"
     ];
   };
 }

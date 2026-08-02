@@ -5,6 +5,7 @@
 }: let
   id = "remote_admin_ssh";
   cfg = config.${id};
+  sshPortSet = lib.concatStringsSep ", " (map toString config.services.openssh.ports);
 in {
   options.${id} = {
     enable = lib.mkEnableOption "key-only remote administration over SSH";
@@ -23,10 +24,10 @@ in {
       description = "Public keys permitted to log in as the administrator user.";
     };
 
-    openFirewall = lib.mkOption {
+    allowLanAccess = lib.mkOption {
       type = lib.types.bool;
-      default = true;
-      description = "Open the configured SSH port in the NixOS firewall.";
+      default = false;
+      description = "Allow SSH through the firewall from IPv4 source addresses in 10.0.0.0/8.";
     };
   };
 
@@ -36,19 +37,34 @@ in {
         assertion = config.users.users.${cfg.user}.isNormalUser;
         message = "remote_admin_ssh.user must name an existing normal user";
       }
+      {
+        assertion = !cfg.allowLanAccess || config.networking.firewall.enable;
+        message = "remote_admin_ssh.allowLanAccess requires the NixOS firewall to be enabled";
+      }
+      {
+        assertion = !cfg.allowLanAccess || config.networking.firewall.backend == "nftables";
+        message = "remote_admin_ssh.allowLanAccess requires the nftables firewall backend";
+      }
     ];
 
     users.users.${cfg.user}.openssh.authorizedKeys.keys = cfg.authorizedKeys;
 
     services.openssh = {
       enable = true;
-      inherit (cfg) openFirewall;
+      openFirewall = false;
 
       settings = {
         KbdInteractiveAuthentication = false;
         PasswordAuthentication = false;
         PermitRootLogin = "no";
       };
+    };
+
+    networking = lib.mkIf cfg.allowLanAccess {
+      nftables.enable = true;
+      firewall.extraInputRules = ''
+        ip saddr 10.0.0.0/8 tcp dport { ${sshPortSet} } accept comment "allow remote administration SSH from LAN"
+      '';
     };
   };
 }

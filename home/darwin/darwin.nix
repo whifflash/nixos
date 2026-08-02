@@ -7,7 +7,6 @@
   imports = [
     ../ssh.nix
     ../apps/direnv.nix
-    ../apps/sublime.nix
     ./gopass.nix
     ../apps/herdr.nix
     ../apps/claude-code.nix

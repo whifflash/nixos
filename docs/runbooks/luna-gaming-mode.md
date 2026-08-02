@@ -91,7 +91,7 @@ Also check `/proc/acpi/wakeup`. The diagnostic command reports entries whose nam
 
 ## Remote recovery over SSH
 
-Luna enables the same key-only OpenSSH policy and administrator public keys as `icarus`. Password and keyboard-interactive authentication are disabled, and root login is not permitted.
+Luna enables the same key-only OpenSSH policy and administrator public keys as `icarus`. Password and keyboard-interactive authentication are disabled, root login is not permitted, and the firewall accepts SSH only from IPv4 source addresses in `10.0.0.0/8`.
 
 From a machine holding the matching private key, connect as `mhr` using whichever Luna address is reachable:
 

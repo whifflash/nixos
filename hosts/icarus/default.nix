@@ -40,7 +40,10 @@
 
   security.sudo.wheelNeedsPassword = false;
 
-  remote_admin_ssh.enable = true;
+  remote_admin_ssh = {
+    enable = true;
+    allowLanAccess = true;
+  };
 
   # nixos-anywhere --copy-host-keys preserves this key across installation.
   # The corresponding public key must be a recipient for infrastructure.yaml.

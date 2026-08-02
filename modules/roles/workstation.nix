@@ -93,11 +93,6 @@ in {
     #   TOKEN=${config.sops.placeholder."gitea/token"}
     # '';
 
-    # Needed for sublime
-    nixpkgs.config.permittedInsecurePackages = [
-      "openssl-1.1.1w"
-    ];
-
     environment.systemPackages =
       (with pkgs; [
         alacritty
@@ -115,8 +110,8 @@ in {
         neovim
         networkmanagerapplet
         # pcmanfm
-        sublime4
         thunderbird
+        zed-editor
         udiskie
         vlc
         wireguard-tools
