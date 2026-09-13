@@ -162,6 +162,9 @@
       }
       // pkgs.lib.mapAttrs' (n: v: pkgs.lib.nameValuePair "nix-desktop-${n}" v) (
         inputs.nix-desktop.checks.${system} or { }
+      )
+      // pkgs.lib.mapAttrs' (n: v: pkgs.lib.nameValuePair "nix-labs-${n}" v) (
+        inputs.nix-labs.checks.${system} or { }
       );
     };
 }

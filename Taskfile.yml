@@ -13,13 +13,19 @@ vars:
         Linux) printf '%s#nixosConfigurations."%s".config.system.build.toplevel\n' "{{.FLAKE}}" "{{.HOST}}" ;;
         *) printf 'unsupported platform: %s\n' "{{.PLATFORM}}" >&2; exit 1 ;;
       esac
-  # nix-desktop dev loop: when a local checkout of the shared desktop flake
-  # exists (./nix-desktop, ../nix-desktop, or $NIX_DESKTOP_DIR), build against it
+  # Shared-flake dev loop: when a local checkout of nix-desktop / nix-labs exists
+  # (./<name>, ../<name>, or $NIX_DESKTOP_DIR / $NIX_LABS_DIR), build against it
   # instead of the pinned GitHub revision — edit there, `task switch` here,
-  # push when happy, then `task update-desktop` to re-pin.
+  # push when happy, then `task update-desktop` / `task update-labs` to re-pin.
   DESKTOP_DIR:
     sh: |
       for d in "${NIX_DESKTOP_DIR:-}" "{{.ROOT_DIR}}/nix-desktop" "{{.ROOT_DIR}}/../nix-desktop"; do
+        if [ -n "$d" ] && [ -e "$d/flake.nix" ]; then printf '%s' "$d"; break; fi
+      done
+      true
+  LABS_DIR:
+    sh: |
+      for d in "${NIX_LABS_DIR:-}" "{{.ROOT_DIR}}/nix-labs" "{{.ROOT_DIR}}/../nix-labs"; do
         if [ -n "$d" ] && [ -e "$d/flake.nix" ]; then printf '%s' "$d"; break; fi
       done
       true
@@ -27,6 +33,10 @@ vars:
   # shell does not honour `printf --` as an option terminator (it printed "--").
   DESKTOP_OVERRIDE:
     sh: '[ -n "{{.DESKTOP_DIR}}" ] && printf "%s" "--override-input nix-desktop path:{{.DESKTOP_DIR}}" || true'
+  LABS_OVERRIDE:
+    sh: '[ -n "{{.LABS_DIR}}" ] && printf "%s" "--override-input nix-labs path:{{.LABS_DIR}}" || true'
+  # Every nix invocation that evaluates this flake takes both overrides.
+  OVERRIDE: "{{.DESKTOP_OVERRIDE}} {{.LABS_OVERRIDE}}"
 
 tasks:
   default:
@@ -36,17 +46,20 @@ tasks:
     silent: true
 
   info:
-    desc: Show the selected host, flake and nix-desktop source
+    desc: Show the selected host, flake and the shared-layer sources (nix-desktop, nix-labs)
     cmds:
       - 'echo "Host:  {{.HOST}}"'
       - 'echo "Flake: {{.FLAKE}}"'
       - '[ -n "{{.DESKTOP_DIR}}" ] && echo "nix-desktop: LOCAL {{.DESKTOP_DIR}} (override active)" || echo "nix-desktop: pinned revision from flake.lock"'
+      - '[ -n "{{.LABS_DIR}}" ] && echo "nix-labs:    LOCAL {{.LABS_DIR}} (override active)" || echo "nix-labs:    pinned revision from flake.lock"'
     silent: true
 
   fmt:
     desc: Format Nix, shell, YAML, JSON, and Markdown files
+    # The overrides matter here too: resolving `formatter` evaluates the whole
+    # flake, so the shared inputs have to resolve.
     cmds:
-      - nix fmt "{{.FLAKE}}"
+      - nix fmt "{{.FLAKE}}" {{.OVERRIDE}}
 
   check:
     desc: Run flake checks with nix-output-monitor
@@ -63,7 +76,7 @@ tasks:
             --log-format internal-json \
             -v \
             "$@" 2>&1 | nom --json
-        ' -- "{{.FLAKE}}" {{.DESKTOP_OVERRIDE}} {{.CLI_ARGS}}
+        ' -- "{{.FLAKE}}" {{.OVERRIDE}} {{.CLI_ARGS}}
 
   build:
     desc: Build the selected system configuration without activating it
@@ -77,7 +90,7 @@ tasks:
         '{{.TOPLEVEL}}'
         --no-link
         --show-trace
-        {{.DESKTOP_OVERRIDE}}
+        {{.OVERRIDE}}
         {{.CLI_ARGS}}
 
   test:
@@ -113,6 +126,11 @@ tasks:
     desc: Pin the shared desktop layer (nix-desktop) to its latest pushed revision
     cmds:
       - nix flake update nix-desktop
+
+  update-labs:
+    desc: Pin the shared lab layer (nix-labs) to its latest pushed revision
+    cmds:
+      - nix flake update nix-labs
 
   upgrade:
     desc: Update all inputs and switch to the resulting configuration
@@ -171,4 +189,4 @@ tasks:
               exit 1
               ;;
           esac
-        ' -- "{{.ACTION}}" "{{.FLAKE}}#{{.HOST}}" "{{.PLATFORM}}" {{.DESKTOP_OVERRIDE}} {{.CLI_ARGS}}
+        ' -- "{{.ACTION}}" "{{.FLAKE}}#{{.HOST}}" "{{.PLATFORM}}" {{.OVERRIDE}} {{.CLI_ARGS}}

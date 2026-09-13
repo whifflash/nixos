@@ -28,6 +28,28 @@ through `hosts/<host>/config.toml`; the only nix-side values are paths
 this repo (`../nix-desktop`) — the Taskfile then builds against the checkout
 (`task info` shows which) — push there, and `task update-desktop` here.
 
+### The shared lab layer (`nix-labs`)
+
+Lab and development environments — Zephyr per chip family (`zephyr-arm`,
+`zephyr-riscv`, `zephyr-esp32`, `zephyr-full`), SDR with the LimeSDR (`sdr`,
+`sdr-full`), the Sipeed SLogic logic analyzer (`logic`) and PlatformIO — are
+devShells in the flake input `nix-labs` (`github:whifflash/nix-labs`), also
+shared with the work config. They are fetched on demand, so they never enter a
+host's closure; `[features] labs` in `hosts/<host>/config.toml` only installs the
+udev rules for that hardware, the device groups and the `labs` flake-registry
+entry pinned to this flake's revision.
+
+```sh
+lab list                       # what is available
+lab logic                      # enter an environment (= nix develop labs#logic)
+lab init zephyr-arm ~/src/blinky && cd ~/src/blinky && direnv allow
+lab vm logic                   # QEMU fallback with the USB device redirected in
+```
+
+Same dev loop as above: checkout at `../nix-labs`, `task info`, `task update-labs`.
+(The old `environments/Platformio/shell.nix` is now `lab platformio`; the SDR half
+of `role_hardware-development` is `lab sdr`.)
+
 See `AGENTS.md` for repository conventions.
 
 ## Automatic development shell

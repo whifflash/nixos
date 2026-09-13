@@ -2,6 +2,11 @@
 # bridge, SSH askpass), tmux and repo-sync here; the Wayland shell is inert.
 # Replaces the former services.giteaSync (modules/darwin/gitea-sync.nix).
 
+[features]
+# nix-labs: on macOS this is just the `labs` flake-registry entry, so
+# `lab logic` / `lab sdr` resolve to the pinned revision (no udev here).
+labs = true
+
 [gopass]
 defaultStore = "~/.password-store"
 stores       = ["~/.password-store"]

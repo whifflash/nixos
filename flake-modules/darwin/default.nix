@@ -25,6 +25,8 @@ let
     in
     inputs.nix-desktop.lib.mkHostConfig {
       raw = if builtins.pathExists f then builtins.fromTOML (builtins.readFile f) else { };
+      # nix-labs: on macOS this only adds the `labs` flake-registry entry (no udev).
+      extraDefaults.features.labs = false;
     };
 
   mkHost =
@@ -55,6 +57,16 @@ let
         # only try to install brews once CLT exists
         ../../modules/darwin/homebrew.nix
 
+        # Shared lab layer: the `labs` registry entry, so `lab <env>` /
+        # `nix develop labs#<env>` resolve to the pinned revision here too.
+        inputs.nix-labs.darwinModules.default
+        {
+          labs = {
+            enable = hostConfig.features.labs;
+            registry.flake = inputs.nix-labs;
+          };
+        }
+
         inputs.home-manager-darwin.darwinModules.home-manager
         (
           { config, ... }:
@@ -69,6 +81,8 @@ let
               sharedModules = [
                 inputs.nix-desktop.homeManagerModules.default
                 inputs.nix-desktop.homeManagerModules.hostcfg-feed
+                # `lab` CLI (list / enter / init / vm) + direnv.
+                inputs.nix-labs.homeManagerModules.default
               ];
               users."mhr" = import ../../home/darwin/darwin.nix;
             };

@@ -555,6 +555,41 @@
         "type": "github"
       }
     },
+    "nix-desktop": {
+      "inputs": {
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "home-manager": [
+          "home-manager"
+        ],
+        "home-manager-unstable": [
+          "home-manager-unstable"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "nixpkgs-unstable": [
+          "nixpkgs-unstable"
+        ],
+        "treefmt-nix": [
+          "treefmt-nix"
+        ]
+      },
+      "locked": {
+        "lastModified": 1789289058,
+        "narHash": "sha256-EpkUw2WnWLzMG3xRajXR+X1ris3Ydf6kHn5ZsAlLgmc=",
+        "owner": "whifflash",
+        "repo": "nix-desktop",
+        "rev": "0a577f894d230921fb4767074d52f1ea2167f9f9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "whifflash",
+        "repo": "nix-desktop",
+        "type": "github"
+      }
+    },
     "nix-github-actions": {
       "inputs": {
         "nixpkgs": [
@@ -801,6 +836,7 @@
         "home-manager-unstable": "home-manager-unstable",
         "jovian": "jovian",
         "nix-darwin": "nix-darwin",
+        "nix-desktop": "nix-desktop",
         "nix-homebrew": "nix-homebrew",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs_4",

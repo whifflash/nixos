@@ -86,6 +86,23 @@
         treefmt-nix.follows = "treefmt-nix";
       };
     };
+
+    # Shared lab/dev environments (Zephyr per chip family, SDR/LimeSDR, Sipeed
+    # logic analyzer, PlatformIO) as devShells, plus the udev rules for that
+    # hardware and the `lab` CLI — the same code the work config uses. Public
+    # repo; the Taskfile overrides it to a local checkout when present and
+    # `task update-labs` re-pins. Enabling `labs` adds only udev rules, device
+    # groups and the `labs` registry entry — the environments stay out of the
+    # system closure.
+    nix-labs = {
+      url = "github:whifflash/nix-labs";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        home-manager.follows = "home-manager";
+        flake-parts.follows = "flake-parts";
+        treefmt-nix.follows = "treefmt-nix";
+      };
+    };
   };
 
   outputs =

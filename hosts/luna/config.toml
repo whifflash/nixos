@@ -6,6 +6,7 @@
 [features]
 sway = true
 niri = false
+labs = false           # gaming box: no lab hardware
 
 [theme]
 scheme          = "everforest-dark"

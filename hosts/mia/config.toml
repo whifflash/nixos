@@ -5,6 +5,8 @@
 [features]
 sway = true
 niri = true            # both register a login session; SDDM offers the chooser
+labs = true            # nix-labs: udev rules for lab hardware (logic analyzer, SDR,
+                       # debug probes) + the `labs` registry entry. See `lab list`.
 
 [theme]
 scheme          = "gruvbox-dark"   # catppuccin-frappe/-macchiato everforest-dark gruvbox-dark/-light kanagawa nord solarized-dark tokyonight-storm

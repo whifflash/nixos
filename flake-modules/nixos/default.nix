@@ -25,6 +25,12 @@ let
     in
     inputs.nix-desktop.lib.mkHostConfig {
       raw = if builtins.pathExists f then builtins.fromTOML (builtins.readFile f) else { };
+      # Sections this repo adds on top of the shared schema.
+      extraDefaults = {
+        # nix-labs host support: udev rules + device groups for lab hardware
+        # (logic analyzer, SDR, debug probes) and the `labs` registry entry.
+        features.labs = false;
+      };
     };
 
   mkHost =
@@ -59,10 +65,23 @@ let
         inputs.nix-desktop.nixosModules.default
         inputs.nix-desktop.nixosModules.hostcfg-feed
 
+        # Shared lab layer: udev rules for lab hardware, device groups and the
+        # `labs` flake-registry entry. Gated by [features].labs below.
+        inputs.nix-labs.nixosModules.default
+
         (
           { config, ... }:
           {
             nixpkgs.overlays = [ (import ../../overlays/disable-tests.nix) ];
+
+            # config.toml → labs.*. Pin `labs#…` to the revision this system was
+            # built from, so `lab <env>` is reproducible per generation.
+            labs = {
+              enable = hostConfig.features.labs;
+              users = [ "mhr" ];
+              registry.flake = inputs.nix-labs;
+            };
+
             home-manager = {
               useGlobalPkgs = true;
               useUserPackages = true;
@@ -76,6 +95,8 @@ let
               sharedModules = [
                 inputs.nix-desktop.homeManagerModules.default
                 inputs.nix-desktop.homeManagerModules.hostcfg-feed
+                # `lab` CLI (list / enter / init / vm) + direnv.
+                inputs.nix-labs.homeManagerModules.default
               ];
             };
           }
