@@ -4,7 +4,8 @@
   config,
   pkgs,
   ...
-}: {
+}:
+{
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
@@ -23,8 +24,12 @@
     age.keyFile = "/home/mhr/.config/sops/age/keys.txt";
   };
   sops.secrets = {
-    "wireguard/vps/keys/public" = {owner = config.users.users."systemd-network".name;};
-    "network-manager.env" = {owner = config.users.users."systemd-network".name;};
+    "wireguard/vps/keys/public" = {
+      owner = config.users.users."systemd-network".name;
+    };
+    "network-manager.env" = {
+      owner = config.users.users."systemd-network".name;
+    };
     # "git/userName" = {};
     # "git/userEmail" = {};
   };
@@ -129,7 +134,11 @@
     system = "x86_64-linux";
     maxJobs = 8;
     speedFactor = 2;
-    supportedFeatures = ["kvm" "big-parallel" "nixos-test"];
+    supportedFeatures = [
+      "kvm"
+      "big-parallel"
+      "nixos-test"
+    ];
 
     sshKey = "/root/.ssh/builder_ed25519";
   };

@@ -2,14 +2,13 @@
   config,
   lib,
   ...
-}: let
+}:
+let
   cfg = config.infra.services.homeAssistant;
-  hostName =
-    if cfg.hostName != null
-    then cfg.hostName
-    else "ha.${config.infra.domain}";
+  hostName = if cfg.hostName != null then cfg.hostName else "ha.${config.infra.domain}";
   secretsYamlSecret = "home-assistant/secrets.yaml";
-in {
+in
+{
   options.infra.services.homeAssistant = {
     enable = lib.mkEnableOption "the shared Home Assistant container";
 
@@ -61,7 +60,7 @@ in {
       mode = "0400";
     };
 
-    security.acme.certs.${hostName} = {};
+    security.acme.certs.${hostName} = { };
 
     systemd = {
       tmpfiles.rules = [
@@ -122,6 +121,9 @@ in {
       };
     };
 
-    networking.firewall.allowedTCPPorts = [80 443];
+    networking.firewall.allowedTCPPorts = [
+      80
+      443
+    ];
   };
 }

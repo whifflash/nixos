@@ -2,32 +2,32 @@
   config,
   lib,
   ...
-}: let
+}:
+let
   cfg = config.infra.services.mosquitto;
   primaryPasswordSecret = "mosquitto/users/${cfg.username}/password_hash";
-  allUsers =
-    {
-      ${cfg.username} = {
-        passwordSecret = primaryPasswordSecret;
-        acl = ["readwrite #"];
-      };
-    }
-    // cfg.additionalUsers;
-  userSecrets = lib.mapAttrs' (_username: user:
+  allUsers = {
+    ${cfg.username} = {
+      passwordSecret = primaryPasswordSecret;
+      acl = [ "readwrite #" ];
+    };
+  }
+  // cfg.additionalUsers;
+  userSecrets = lib.mapAttrs' (
+    _username: user:
     lib.nameValuePair user.passwordSecret {
       sopsFile = ../../secrets/infrastructure.yaml;
       key = user.passwordSecret;
       format = "yaml";
       mode = "0400";
-    })
-  allUsers;
-  listenerUsers =
-    lib.mapAttrs (_username: user: {
-      hashedPasswordFile = config.sops.secrets.${user.passwordSecret}.path;
-      inherit (user) acl;
-    })
-    allUsers;
-in {
+    }
+  ) allUsers;
+  listenerUsers = lib.mapAttrs (_username: user: {
+    hashedPasswordFile = config.sops.secrets.${user.passwordSecret}.path;
+    inherit (user) acl;
+  }) allUsers;
+in
+{
   options.infra.services.mosquitto = {
     enable = lib.mkEnableOption "the shared Mosquitto MQTT broker";
 
@@ -38,21 +38,23 @@ in {
     };
 
     additionalUsers = lib.mkOption {
-      type = lib.types.attrsOf (lib.types.submodule {
-        options = {
-          passwordSecret = lib.mkOption {
-            type = lib.types.str;
-            description = "SOPS key containing the Mosquitto password hash for this user.";
-          };
+      type = lib.types.attrsOf (
+        lib.types.submodule {
+          options = {
+            passwordSecret = lib.mkOption {
+              type = lib.types.str;
+              description = "SOPS key containing the Mosquitto password hash for this user.";
+            };
 
-          acl = lib.mkOption {
-            type = lib.types.listOf lib.types.str;
-            default = [];
-            description = "Mosquitto ACL entries assigned to this user.";
+            acl = lib.mkOption {
+              type = lib.types.listOf lib.types.str;
+              default = [ ];
+              description = "Mosquitto ACL entries assigned to this user.";
+            };
           };
-        };
-      });
-      default = {};
+        }
+      );
+      default = { };
       description = "Additional declaratively provisioned MQTT users.";
     };
 
@@ -84,6 +86,6 @@ in {
       ];
     };
 
-    networking.firewall.allowedTCPPorts = [cfg.port];
+    networking.firewall.allowedTCPPorts = [ cfg.port ];
   };
 }

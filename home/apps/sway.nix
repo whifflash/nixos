@@ -5,7 +5,8 @@
   pkgs,
   osConfig,
   ...
-}: let
+}:
+let
   sw = osConfig.programs.sway.enable or false;
   # c = config.hm.theme.tokens;
   mod = "Mod4";
@@ -14,7 +15,8 @@
   herdr = lib.getExe inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
   scratchTitle = "HerdrScratchpad";
-in {
+in
+{
   # helper script to spawn-if-missing, then toggle scratchpad
   home.file.".config/sway/scripts/toggle_scratchpad.sh" = lib.mkIf sw {
     text = ''
@@ -48,22 +50,24 @@ in {
   systemd.user.services."polkit-gnome-authentication-agent-1" = {
     Unit = {
       Description = "polkit-gnome authentication agent";
-      After = ["graphical-session.target"];
-      PartOf = ["graphical-session.target"];
+      After = [ "graphical-session.target" ];
+      PartOf = [ "graphical-session.target" ];
     };
     Service = {
       ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
       Restart = "on-failure";
     };
-    Install = {WantedBy = ["graphical-session.target"];};
+    Install = {
+      WantedBy = [ "graphical-session.target" ];
+    };
   };
 
   # Run nm-applet as a user service so it shows in Waybar's tray
   systemd.user.services."nm-applet" = {
     Unit = {
       Description = "NetworkManager Applet (tray)";
-      After = ["graphical-session.target"];
-      PartOf = ["graphical-session.target"];
+      After = [ "graphical-session.target" ];
+      PartOf = [ "graphical-session.target" ];
     };
     Service = {
       # --indicator exposes a StatusNotifier item that Waybar's "tray" can show
@@ -75,7 +79,9 @@ in {
         "XDG_CURRENT_DESKTOP=sway"
       ];
     };
-    Install = {WantedBy = ["graphical-session.target"];};
+    Install = {
+      WantedBy = [ "graphical-session.target" ];
+    };
   };
 
   wayland.windowManager.sway = lib.mkIf sw {
@@ -145,7 +151,7 @@ in {
       };
 
       # use Waybar (your repo ships its files)
-      bars = [];
+      bars = [ ];
       startup = [
         {
           command = "${config.home.homeDirectory}/.config/waybar/launch_waybar.sh";
@@ -159,7 +165,9 @@ in {
       # (size & position are now handled on toggle to fill the output while keeping bars visible)
       window.commands = [
         {
-          criteria = {title = scratchTitle;};
+          criteria = {
+            title = scratchTitle;
+          };
           command = lib.concatStringsSep ", " [
             "floating enable"
             "sticky enable"
@@ -204,18 +212,22 @@ in {
           # "${mod}+space" = "floating toggle";
 
           # gopass
-          "${mod}+p" = ''exec ${config.home.homeDirectory}/.config/wofi/gopass.launcher.sh'';
-          "${mod}+Shift+p" = ''exec ${config.home.homeDirectory}/.config/wofi/gopass.switcher.sh'';
+          "${mod}+p" = "exec ${config.home.homeDirectory}/.config/wofi/gopass.launcher.sh";
+          "${mod}+Shift+p" = "exec ${config.home.homeDirectory}/.config/wofi/gopass.switcher.sh";
         })
         # workspaces 1–9 (switch & move)
-        // lib.listToAttrs (map (n: {
-          name = "${mod}+${toString n}";
-          value = "workspace number ${toString n}";
-        }) (lib.range 1 9))
-        // lib.listToAttrs (map (n: {
-          name = "${mod}+Shift+${toString n}";
-          value = "move container to workspace number ${toString n}";
-        }) (lib.range 1 9));
+        // lib.listToAttrs (
+          map (n: {
+            name = "${mod}+${toString n}";
+            value = "workspace number ${toString n}";
+          }) (lib.range 1 9)
+        )
+        // lib.listToAttrs (
+          map (n: {
+            name = "${mod}+Shift+${toString n}";
+            value = "move container to workspace number ${toString n}";
+          }) (lib.range 1 9)
+        );
     };
   };
 }

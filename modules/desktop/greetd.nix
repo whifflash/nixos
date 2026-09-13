@@ -3,10 +3,12 @@
   config,
   pkgs,
   ...
-}: let
+}:
+let
   id = "desktop_greetd";
   cfg = config.${id};
-in {
+in
+{
   options.${id} = {
     enable = lib.mkEnableOption "enables ${id} profile";
   };

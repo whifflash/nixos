@@ -3,22 +3,23 @@
   lib,
   osConfig,
   ...
-}: let
+}:
+let
   # Returns a PATH; falls back to `def` if host value is missing, null, or not a path.
-  getPathOr = attrs: def: let
-    v = lib.attrByPath attrs osConfig null;
-  in
-    if v != null && builtins.isPath v
-    then v
-    else def;
+  getPathOr =
+    attrs: def:
+    let
+      v = lib.attrByPath attrs osConfig null;
+    in
+    if v != null && builtins.isPath v then v else def;
 
   # Returns a STRING; falls back to `def` if host value is missing, null, or not a string.
-  getStrOr = attrs: def: let
-    v = lib.attrByPath attrs osConfig null;
-  in
-    if v != null && builtins.isString v
-    then v
-    else def;
+  getStrOr =
+    attrs: def:
+    let
+      v = lib.attrByPath attrs osConfig null;
+    in
+    if v != null && builtins.isString v then v else def;
 
   swaySwitch = osConfig.programs.sway.enable or false;
 
@@ -27,15 +28,16 @@
   defaultSwaylockImage = ../media/wallpapers/village.jpg;
 
   # Read from host, never yielding null for path-typed fields
-  hostWallpapersDir = getPathOr ["ui" "theme" "wallpapersDir"] defaultWallpapersDir;
-  hostSwaylockImage = getPathOr ["ui" "theme" "swaylock" "image"] defaultSwaylockImage;
+  hostWallpapersDir = getPathOr [ "ui" "theme" "wallpapersDir" ] defaultWallpapersDir;
+  hostSwaylockImage = getPathOr [ "ui" "theme" "swaylock" "image" ] defaultSwaylockImage;
 
   # String-typed fields
-  hostWallpaper = getStrOr ["ui" "theme" "wallpaper"] "anna-scarfiello.jpg";
-  hostWallpaperMode = getStrOr ["ui" "theme" "wallpaperMode"] "stretch";
+  hostWallpaper = getStrOr [ "ui" "theme" "wallpaper" ] "anna-scarfiello.jpg";
+  hostWallpaperMode = getStrOr [ "ui" "theme" "wallpaperMode" ] "stretch";
   # # Scheme: optional; don't set it if host didn't specify it
   # hostScheme = lib.attrByPath ["ui" "theme" "scheme"] osConfig null;
-in {
+in
+{
   imports = [
     ./packages.nix
     ./apps/direnv.nix

@@ -1,4 +1,4 @@
-{pkgs}:
+{ pkgs }:
 pkgs.stdenv.mkDerivation {
   name = "gruvbox-plus";
   src = pkgs.fetchurl {
@@ -36,4 +36,3 @@ pkgs.stdenv.mkDerivation {
 #     cp -r ${image} $out/Background.jpg
 #    '';
 # }
-

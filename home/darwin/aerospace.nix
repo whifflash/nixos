@@ -5,7 +5,8 @@
   pkgs,
   config,
   ...
-}: {
+}:
+{
   home.packages = [
     inputs.aerospace-scratchpad.packages.${pkgs.stdenv.hostPlatform.system}.default
     pkgs.alacritty

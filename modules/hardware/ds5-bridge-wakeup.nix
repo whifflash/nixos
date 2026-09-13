@@ -3,7 +3,8 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   id = "hardware_ds5_bridge_wakeup";
   cfg = config.${id};
 
@@ -17,11 +18,7 @@
     text = ''
       set -euo pipefail
 
-      enable_parents="${
-        if cfg.enableParentWakePath
-        then "1"
-        else "0"
-      }"
+      enable_parents="${if cfg.enableParentWakePath then "1" else "0"}"
       bridge_count=0
 
       is_supported() {
@@ -179,7 +176,7 @@
 
   statusTool = pkgs.writeShellApplication {
     name = "ds5-bridge-wakeup-status";
-    runtimeInputs = [wakeTool];
+    runtimeInputs = [ wakeTool ];
     text = ''
       exec ds5-bridge-wakeup status "$@"
     '';
@@ -200,12 +197,11 @@
     }
   ];
 
-  wakeRules =
-    lib.concatMapStringsSep "\n" (usbId: ''
-      ACTION=="add|bind|change", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="${usbId.vendor}", ATTR{idProduct}=="${usbId.product}", RUN+="${wakeTool}/bin/ds5-bridge-wakeup enable"
-    '')
-    supportedUsbIds;
-in {
+  wakeRules = lib.concatMapStringsSep "\n" (usbId: ''
+    ACTION=="add|bind|change", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="${usbId.vendor}", ATTR{idProduct}=="${usbId.product}", RUN+="${wakeTool}/bin/ds5-bridge-wakeup enable"
+  '') supportedUsbIds;
+in
+{
   options.${id} = {
     enable = lib.mkEnableOption "USB wake support for DS5 Bridge on a Raspberry Pi Pico";
 
@@ -216,7 +212,12 @@ in {
     };
 
     suspendMode = lib.mkOption {
-      type = lib.types.nullOr (lib.types.enum ["s2idle" "deep"]);
+      type = lib.types.nullOr (
+        lib.types.enum [
+          "s2idle"
+          "deep"
+        ]
+      );
       default = null;
       description = "Optional kernel suspend mode override. Null preserves the firmware/kernel default.";
     };
@@ -235,7 +236,7 @@ in {
     systemd.services = {
       ds5-bridge-wakeup = {
         description = "Enable wakeup through the DS5 Bridge USB path";
-        wantedBy = ["multi-user.target"];
+        wantedBy = [ "multi-user.target" ];
         serviceConfig = {
           Type = "oneshot";
           ExecStart = "${wakeTool}/bin/ds5-bridge-wakeup enable";
@@ -244,8 +245,8 @@ in {
 
       ds5-bridge-wakeup-before-sleep = {
         description = "Reapply DS5 Bridge USB wakeup before sleep";
-        wantedBy = ["sleep.target"];
-        before = ["sleep.target"];
+        wantedBy = [ "sleep.target" ];
+        before = [ "sleep.target" ];
         serviceConfig = {
           Type = "oneshot";
           ExecStart = "${wakeTool}/bin/ds5-bridge-wakeup enable";

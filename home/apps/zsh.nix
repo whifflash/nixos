@@ -1,7 +1,9 @@
-_: let
+_:
+let
   themeEnvPath = "$XDG_CONFIG_HOME/theme/env";
   themeEnvFallback = "$HOME/.config/theme/env";
-in {
+in
+{
   xdg.configFile = {
     "zsh/.zshrc".text = ''
       # Load system oh-my-zsh setup

@@ -3,11 +3,13 @@
   inputs,
   lib,
   ...
-}: let
+}:
+let
   id = "role_jovian_gaming";
   cfg = config.${id};
-in {
-  imports = [inputs.jovian.nixosModules.default];
+in
+{
+  imports = [ inputs.jovian.nixosModules.default ];
 
   options.${id} = {
     enable = lib.mkEnableOption "Jovian Steam Gaming Mode";
@@ -51,13 +53,12 @@ in {
       }
     ];
 
-    jovian.steam =
-      {
-        enable = true;
-        inherit (cfg) autoStart user;
-      }
-      // lib.optionalAttrs cfg.autoStart {
-        inherit (cfg) desktopSession;
-      };
+    jovian.steam = {
+      enable = true;
+      inherit (cfg) autoStart user;
+    }
+    // lib.optionalAttrs cfg.autoStart {
+      inherit (cfg) desktopSession;
+    };
   };
 }

@@ -1,12 +1,14 @@
 {
   lib,
   config,
-  inputs ? {},
+  inputs ? { },
   ...
-}: let
+}:
+let
   haveInputsSops = inputs ? sops-nix;
-in {
-  imports = lib.optionals haveInputsSops [inputs.sops-nix.homeManagerModules.sops];
+in
+{
+  imports = lib.optionals haveInputsSops [ inputs.sops-nix.homeManagerModules.sops ];
 
   # SOPS secret managed by Home Manager
   sops = {

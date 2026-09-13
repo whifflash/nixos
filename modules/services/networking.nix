@@ -2,10 +2,12 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   id = "role_workstation";
   cfg = config.${id};
-in {
+in
+{
   options.${id} = {
     enable = lib.mkEnableOption "enables ${id} profile";
   };

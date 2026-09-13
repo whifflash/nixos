@@ -3,10 +3,12 @@
   config,
   lib,
   ...
-}: let
+}:
+let
   id = "user_options";
   cfg = config.${id};
-in {
+in
+{
   options.${id} = {
     enable = lib.mkEnableOption "enables ${id} profile";
   };
@@ -34,7 +36,13 @@ in {
     users.users.mhr = {
       isNormalUser = true;
       description = "mhr";
-      extraGroups = ["networkmanager" "wheel" "video" "dialout" "plugdev"];
+      extraGroups = [
+        "networkmanager"
+        "wheel"
+        "video"
+        "dialout"
+        "plugdev"
+      ];
       packages = with pkgs; [
         #  thunderbird
       ];

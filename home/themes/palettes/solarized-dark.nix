@@ -1,4 +1,5 @@
-_: let
+_:
+let
   base = {
     base03 = "#002b36";
     base02 = "#073642";
@@ -17,7 +18,8 @@ _: let
     cyan = "#2aa198";
     green = "#859900";
   };
-in {
+in
+{
   name = "solarized-dark";
   tokens = {
     bg = base.base03;

@@ -3,65 +3,68 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   cfg = config.infra.services.ntfy;
   certificateName = "wildcard-${config.infra.domain}";
-  hostName =
-    if cfg.hostName != null
-    then cfg.hostName
-    else "ntfy.${config.infra.domain}";
+  hostName = if cfg.hostName != null then cfg.hostName else "ntfy.${config.infra.domain}";
 
-  userType = lib.types.submodule ({name, ...}: {
-    options = {
-      passwordHashSecret = lib.mkOption {
-        type = lib.types.str;
-        default = "ntfy/users/${name}/password_hash";
-        description = "SOPS key containing this ntfy user's bcrypt password hash.";
+  userType = lib.types.submodule (
+    { name, ... }: {
+      options = {
+        passwordHashSecret = lib.mkOption {
+          type = lib.types.str;
+          default = "ntfy/users/${name}/password_hash";
+          description = "SOPS key containing this ntfy user's bcrypt password hash.";
+        };
+
+        role = lib.mkOption {
+          type = lib.types.enum [
+            "user"
+            "admin"
+          ];
+          default = "user";
+          description = "ntfy account role.";
+        };
+
+        access = lib.mkOption {
+          type = lib.types.listOf (
+            lib.types.submodule {
+              options = {
+                topic = lib.mkOption {
+                  type = lib.types.str;
+                  description = "Topic name or wildcard pattern.";
+                };
+
+                permission = lib.mkOption {
+                  type = lib.types.enum [
+                    "deny-all"
+                    "read-only"
+                    "write-only"
+                    "read-write"
+                  ];
+                  description = "Permission granted on the topic.";
+                };
+              };
+            }
+          );
+          default = [ ];
+          description = "Declaratively provisioned topic ACL entries.";
+        };
       };
-
-      role = lib.mkOption {
-        type = lib.types.enum ["user" "admin"];
-        default = "user";
-        description = "ntfy account role.";
-      };
-
-      access = lib.mkOption {
-        type = lib.types.listOf (lib.types.submodule {
-          options = {
-            topic = lib.mkOption {
-              type = lib.types.str;
-              description = "Topic name or wildcard pattern.";
-            };
-
-            permission = lib.mkOption {
-              type = lib.types.enum [
-                "deny-all"
-                "read-only"
-                "write-only"
-                "read-write"
-              ];
-              description = "Permission granted on the topic.";
-            };
-          };
-        });
-        default = [];
-        description = "Declaratively provisioned topic ACL entries.";
-      };
-    };
-  });
+    }
+  );
 
   authFile = "/var/lib/ntfy-sh/user.db";
   environmentTemplateName = "ntfy/environment";
-  authUsers =
+  authUsers = lib.mapAttrsToList (
+    username: user: "${username}:${config.sops.placeholder.${user.passwordHashSecret}}:${user.role}"
+  ) cfg.users;
+  authAccess = lib.concatLists (
     lib.mapAttrsToList (
-      username: user: "${username}:${config.sops.placeholder.${user.passwordHashSecret}}:${user.role}"
-    )
-    cfg.users;
-  authAccess = lib.concatLists (lib.mapAttrsToList (
-      username: user:
-        map (entry: "${username}:${entry.topic}:${entry.permission}") user.access
-    )
-    cfg.users);
+      username: user: map (entry: "${username}:${entry.topic}:${entry.permission}") user.access
+    ) cfg.users
+  );
   authUsersValue = lib.concatStringsSep "," authUsers;
   authAccessValue = lib.concatStringsSep "," authAccess;
   environmentFile = config.sops.templates.${environmentTemplateName}.path;
@@ -125,13 +128,12 @@
         <p class="subtitle">Sign in to <code>${lib.escapeXML hostName}</code> before subscribing.</p>
         <ul>
           ${lib.concatMapStringsSep "\n" (topic: ''
-        <li>
-          <div class="severity">${lib.escapeXML topic.severity}</div>
-          <a href="https://${lib.escapeXML hostName}/${lib.escapeXML topic.name}">${lib.escapeXML topic.name}</a>
-          <p>${lib.escapeXML topic.description}</p>
-        </li>
-      '')
-      topicCatalogEntries}
+            <li>
+              <div class="severity">${lib.escapeXML topic.severity}</div>
+              <a href="https://${lib.escapeXML hostName}/${lib.escapeXML topic.name}">${lib.escapeXML topic.name}</a>
+              <p>${lib.escapeXML topic.description}</p>
+            </li>
+          '') topicCatalogEntries}
         </ul>
         <p><a href="/topics.json">Machine-readable topic catalog</a></p>
       </body>
@@ -144,7 +146,8 @@
       (pkgs.writeTextDir "topics.json" topicCatalogJson)
     ];
   };
-in {
+in
+{
   options.infra.services.ntfy = {
     enable = lib.mkEnableOption "the self-hosted ntfy notification service";
 
@@ -280,18 +283,19 @@ in {
 
     security.acme.certs.${certificateName} = {
       domain = config.infra.domain;
-      extraDomainNames = ["*.${config.infra.domain}"];
+      extraDomainNames = [ "*.${config.infra.domain}" ];
       group = "nginx";
     };
 
     sops = {
-      secrets = lib.mapAttrs' (_username: user:
+      secrets = lib.mapAttrs' (
+        _username: user:
         lib.nameValuePair user.passwordHashSecret {
           sopsFile = ../../secrets/infrastructure.yaml;
           key = user.passwordHashSecret;
           mode = "0400";
-        })
-      cfg.users;
+        }
+      ) cfg.users;
 
       templates.${environmentTemplateName} = {
         content = ''

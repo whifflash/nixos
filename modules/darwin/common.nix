@@ -2,7 +2,8 @@
   lib,
   pkgs,
   ...
-}: {
+}:
+{
   system = {
     stateVersion = 6;
     primaryUser = "mhr";
@@ -48,8 +49,14 @@
     # package = pkgs.nixVersions.stable;
 
     settings = {
-      experimental-features = ["nix-command" "flakes"];
-      trusted-users = ["root" "mhr"];
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
+      trusted-users = [
+        "root"
+        "mhr"
+      ];
       builders-use-substitutes = true;
       # builders = "ssh-ng://YOUR_LINUX_USER@icarus x86_64-linux - 4 1 big-parallel,kvm";
     };

@@ -3,9 +3,11 @@
   pkgs,
   lib,
   ...
-}: let
+}:
+let
   home = config.home.homeDirectory;
-in {
+in
+{
   home = {
     packages = with pkgs; [
       gopass
@@ -40,7 +42,7 @@ in {
     };
 
     # Reload agent after switches
-    activation.reloadGpgAgent = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    activation.reloadGpgAgent = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       ${pkgs.gnupg}/bin/gpgconf --kill gpg-agent || true
     '';
   };

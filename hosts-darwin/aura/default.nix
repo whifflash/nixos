@@ -1,4 +1,4 @@
-{pkgs, ...}: {
+{ pkgs, ... }: {
   # Set a hostname for this Mac
   networking.hostName = "aura";
 

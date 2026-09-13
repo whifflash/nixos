@@ -3,17 +3,15 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   cfg = config.infra.services.monitoring;
   certificateName = "wildcard-${config.infra.domain}";
   grafanaSecretKeySecret = "grafana/secret_key";
   mqttPasswordSecret = "monitoring/mqtt_password";
   mqttPasswordHashSecret = "mosquitto/users/monitoring/password_hash";
   ntfyPasswordSecret = "ntfy/users/alertmanager/password";
-  hostName =
-    if cfg.hostName != null
-    then cfg.hostName
-    else "health.${config.infra.domain}";
+  hostName = if cfg.hostName != null then cfg.hostName else "health.${config.infra.domain}";
   textfileDirectory = "/var/lib/prometheus-node-exporter-text-files";
 
   monitoringPython = pkgs.python3.withPackages (pythonPackages: [
@@ -38,10 +36,9 @@
     text = builtins.readFile ./scripts/monitoring-alert-canary.sh;
   };
 
-  serviceHostName = service: defaultSubdomain:
-    if service.hostName != null
-    then service.hostName
-    else "${defaultSubdomain}.${config.infra.domain}";
+  serviceHostName =
+    service: defaultSubdomain:
+    if service.hostName != null then service.hostName else "${defaultSubdomain}.${config.infra.domain}";
 
   derivedHttpTargets =
     lib.optionalAttrs config.infra.services.hub.enable {
@@ -126,7 +123,9 @@
         printf 'infra_backup_last_run_timestamp_seconds{backup="%s"} %s\n' "$backup_name" "$timestamp_seconds" >>"$temporary_file"
       }
 
-      ${lib.concatMapStringsSep "\n" (unit: "write_backup_metrics ${lib.escapeShellArg unit}") backupUnits}
+      ${lib.concatMapStringsSep "\n" (
+        unit: "write_backup_metrics ${lib.escapeShellArg unit}"
+      ) backupUnits}
 
       if [ -e ${lib.escapeShellArg config.infra.services.homeAssistant.zigbeeDevice} ]; then
         zigbee_present=1
@@ -251,8 +250,12 @@
         } >>"$temporary_file"
       }
 
-      ${lib.optionalString (config.infra.services.housekeeping.enable && config.infra.services.housekeeping.nix.enable) "write_housekeeping_metrics nix"}
-      ${lib.optionalString (config.infra.services.housekeeping.enable && config.infra.services.housekeeping.podman.enable) "write_housekeeping_metrics podman"}
+      ${lib.optionalString (
+        config.infra.services.housekeeping.enable && config.infra.services.housekeeping.nix.enable
+      ) "write_housekeeping_metrics nix"}
+      ${lib.optionalString (
+        config.infra.services.housekeeping.enable && config.infra.services.housekeeping.podman.enable
+      ) "write_housekeeping_metrics podman"}
 
       printf 'infra_monitoring_metrics_generated_timestamp_seconds %s\n' "$now" >>"$temporary_file"
 
@@ -261,9 +264,9 @@
     '';
   };
 
-  prometheusRules = pkgs.writeText "infra-monitoring-rules.yml" (builtins.toJSON {
-    groups =
-      [
+  prometheusRules = pkgs.writeText "infra-monitoring-rules.yml" (
+    builtins.toJSON {
+      groups = [
         {
           name = "icarus-host";
           rules = [
@@ -332,203 +335,202 @@
         }
         {
           name = "icarus-services";
-          rules =
-            [
-              {
-                alert = "ServiceProbeFailed";
-                expr = "probe_success == 0";
-                for = "5m";
-                labels.severity = "warning";
-                annotations.summary = "Health probe failed for {{ $labels.instance }}";
-              }
-              {
-                alert = "BackupFailed";
-                expr = "infra_backup_last_run_success == 0";
-                for = "15m";
-                labels.severity = "warning";
-                annotations.summary = "The last {{ $labels.backup }} backup did not succeed";
-              }
-              {
-                alert = "BackupStale";
-                expr = "time() - infra_backup_last_run_timestamp_seconds > 129600";
-                for = "15m";
-                labels.severity = "warning";
-                annotations.summary = "No completed {{ $labels.backup }} backup has been recorded for 36 hours";
-              }
-              {
-                alert = "HousekeepingFailed";
-                expr = "infra_housekeeping_last_run_timestamp_seconds > 0 and infra_housekeeping_last_run_success == 0";
-                for = "15m";
-                labels.severity = "warning";
-                annotations.summary = "The last {{ $labels.task }} housekeeping run failed";
-              }
-              {
-                alert = "HousekeepingStale";
-                expr = "infra_housekeeping_last_run_timestamp_seconds > 0 and time() - infra_housekeeping_last_run_timestamp_seconds > 691200";
-                for = "30m";
-                labels.severity = "warning";
-                annotations.summary = "No completed {{ $labels.task }} housekeeping run has been recorded for eight days";
-              }
-              {
-                alert = "MqttRoundtripFailed";
-                expr = "infra_mqtt_roundtrip_success == 0";
-                for = "5m";
-                labels.severity = "warning";
-                annotations.summary = "Authenticated MQTT publish/subscribe round trip is failing";
-              }
-              {
-                alert = "MqttTopicStale";
-                expr = ''infra_mqtt_topic_last_message_timestamp_seconds{name!~"inverter-(availability|state)"} > 0 and time() - infra_mqtt_topic_last_message_timestamp_seconds{name!~"inverter-(availability|state)"} > 300'';
-                for = "5m";
-                labels.severity = "warning";
-                annotations.summary = "MQTT topic {{ $labels.name }} has not produced a message for five minutes";
-              }
-              {
-                alert = "PvInverterMqttStale";
-                expr = ''infra_mqtt_topic_last_message_timestamp_seconds{name=~"inverter-(availability|state)"} > 0 and time() - infra_mqtt_topic_last_message_timestamp_seconds{name=~"inverter-(availability|state)"} > 300'';
-                for = "5m";
-                labels = {
-                  category = "property";
-                  ntfy_topic = config.infra.services.ntfy.topics.propertyCritical;
-                  severity = "critical";
-                };
-                annotations.summary = "PV inverter MQTT topic {{ $labels.name }} has not produced a message for five minutes";
-              }
-              {
-                alert = "MqttTopicUnhealthy";
-                expr = ''infra_mqtt_topic_healthy{name!~"inverter-(availability|state)"} == 0'';
-                for = "5m";
-                labels.severity = "warning";
-                annotations.summary = "MQTT topic {{ $labels.name }} is missing or reports an unhealthy payload";
-              }
-              {
-                alert = "PvInverterMqttUnhealthy";
-                expr = ''infra_mqtt_topic_healthy{name=~"inverter-(availability|state)"} == 0'';
-                for = "5m";
-                labels = {
-                  category = "property";
-                  ntfy_topic = config.infra.services.ntfy.topics.propertyWarning;
-                  severity = "warning";
-                };
-                annotations.summary = "PV inverter MQTT topic {{ $labels.name }} is missing or reports an unhealthy payload";
-              }
-              {
-                alert = "PvInverterPayloadInvalid";
-                expr = "infra_pv_inverter_payload_valid == 0";
-                for = "5m";
-                labels = {
-                  category = "property";
-                  ntfy_topic = config.infra.services.ntfy.topics.propertyWarning;
-                  severity = "warning";
-                };
-                annotations.summary = "PV inverter MQTT payload is not valid JSON";
-              }
-              {
-                alert = "PvInverterTelemetryStale";
-                expr = "time() - infra_pv_payload_timestamp_seconds > 900";
-                for = "5m";
-                labels = {
-                  category = "property";
-                  ntfy_topic = config.infra.services.ntfy.topics.propertyWarning;
-                  severity = "warning";
-                };
-                annotations.summary = "PV inverter payload timestamp is stale";
-              }
-              {
-                alert = "PvInverterFault";
-                expr = "infra_pv_inverter_fault == 1";
-                for = "5m";
-                labels = {
-                  category = "property";
-                  ntfy_topic = config.infra.services.ntfy.topics.propertyWarning;
-                  severity = "warning";
-                };
-                annotations.summary = "PV inverter reports fault state";
-              }
-              {
-                alert = "PvEnergyTotalDecreased";
-                expr = "delta(infra_pv_ac_energy_total_wh[30m]) < 0";
-                for = "5m";
-                labels = {
-                  category = "property";
-                  ntfy_topic = config.infra.services.ntfy.topics.propertyWarning;
-                  severity = "warning";
-                };
-                annotations.summary = "PV lifetime energy counter decreased";
-              }
-              {
-                alert = "PvEnergyProductionStalled";
-                expr = "increase(infra_pv_ac_energy_total_wh[36h]) <= 0 and time() - infra_pv_payload_timestamp_seconds < 900 and infra_pv_inverter_fault == 0";
-                for = "1h";
-                labels = {
-                  category = "property";
-                  ntfy_topic = config.infra.services.ntfy.topics.propertyCritical;
-                  severity = "critical";
-                };
-                annotations.summary = "PV lifetime energy counter has not increased for 36 hours";
-              }
-              {
-                alert = "MonitoringMetricsStale";
-                expr = "time() - infra_monitoring_metrics_generated_timestamp_seconds > 900";
-                for = "5m";
-                labels.severity = "warning";
-                annotations.summary = "Repository-specific monitoring metrics have stopped updating";
-              }
-              {
-                alert = "PrometheusSelfScrapeDown";
-                expr = ''up{job="prometheus"} == 0'';
-                for = "5m";
-                labels = {
-                  category = "notification";
-                  severity = "warning";
-                };
-                annotations.summary = "Prometheus self-scrape is down";
-              }
-              {
-                alert = "PrometheusRuleEvaluationFailures";
-                expr = "increase(prometheus_rule_evaluation_failures_total[15m]) > 0";
-                for = "5m";
-                labels = {
-                  category = "notification";
-                  severity = "warning";
-                };
-                annotations.summary = "Prometheus rule evaluation failures have occurred";
-              }
-            ]
-            ++ lib.optionals cfg.alerting.enable [
-              {
-                alert = "PrometheusTargetDown";
-                expr = ''up{job=~"alertmanager|alertmanager-ntfy"} == 0'';
-                for = "5m";
-                labels = {
-                  category = "notification";
-                  severity = "warning";
-                };
-                annotations.summary = "Monitoring target {{ $labels.job }} is down";
-              }
-              {
-                alert = "AlertmanagerNtfyPublishFailures";
-                expr = "increase(infra_alertmanager_ntfy_notification_failures_total[15m]) > 0";
-                for = "5m";
-                labels = {
-                  category = "notification";
-                  severity = "warning";
-                };
-                annotations.summary = "Alertmanager-to-ntfy publish attempts are failing";
-              }
-            ]
-            ++ lib.optionals cfg.alerting.testAlerts.canary.enable [
-              {
-                alert = "MonitoringDeliveryCanaryStale";
-                expr = "infra_alertmanager_ntfy_last_canary_success_timestamp_seconds > 0 and time() - infra_alertmanager_ntfy_last_canary_success_timestamp_seconds > 302400";
-                for = "30m";
-                labels = {
-                  category = "notification";
-                  severity = "warning";
-                };
-                annotations.summary = "No successful scheduled notification canary has reached ntfy for 84 hours";
-              }
-            ];
+          rules = [
+            {
+              alert = "ServiceProbeFailed";
+              expr = "probe_success == 0";
+              for = "5m";
+              labels.severity = "warning";
+              annotations.summary = "Health probe failed for {{ $labels.instance }}";
+            }
+            {
+              alert = "BackupFailed";
+              expr = "infra_backup_last_run_success == 0";
+              for = "15m";
+              labels.severity = "warning";
+              annotations.summary = "The last {{ $labels.backup }} backup did not succeed";
+            }
+            {
+              alert = "BackupStale";
+              expr = "time() - infra_backup_last_run_timestamp_seconds > 129600";
+              for = "15m";
+              labels.severity = "warning";
+              annotations.summary = "No completed {{ $labels.backup }} backup has been recorded for 36 hours";
+            }
+            {
+              alert = "HousekeepingFailed";
+              expr = "infra_housekeeping_last_run_timestamp_seconds > 0 and infra_housekeeping_last_run_success == 0";
+              for = "15m";
+              labels.severity = "warning";
+              annotations.summary = "The last {{ $labels.task }} housekeeping run failed";
+            }
+            {
+              alert = "HousekeepingStale";
+              expr = "infra_housekeeping_last_run_timestamp_seconds > 0 and time() - infra_housekeeping_last_run_timestamp_seconds > 691200";
+              for = "30m";
+              labels.severity = "warning";
+              annotations.summary = "No completed {{ $labels.task }} housekeeping run has been recorded for eight days";
+            }
+            {
+              alert = "MqttRoundtripFailed";
+              expr = "infra_mqtt_roundtrip_success == 0";
+              for = "5m";
+              labels.severity = "warning";
+              annotations.summary = "Authenticated MQTT publish/subscribe round trip is failing";
+            }
+            {
+              alert = "MqttTopicStale";
+              expr = ''infra_mqtt_topic_last_message_timestamp_seconds{name!~"inverter-(availability|state)"} > 0 and time() - infra_mqtt_topic_last_message_timestamp_seconds{name!~"inverter-(availability|state)"} > 300'';
+              for = "5m";
+              labels.severity = "warning";
+              annotations.summary = "MQTT topic {{ $labels.name }} has not produced a message for five minutes";
+            }
+            {
+              alert = "PvInverterMqttStale";
+              expr = ''infra_mqtt_topic_last_message_timestamp_seconds{name=~"inverter-(availability|state)"} > 0 and time() - infra_mqtt_topic_last_message_timestamp_seconds{name=~"inverter-(availability|state)"} > 300'';
+              for = "5m";
+              labels = {
+                category = "property";
+                ntfy_topic = config.infra.services.ntfy.topics.propertyCritical;
+                severity = "critical";
+              };
+              annotations.summary = "PV inverter MQTT topic {{ $labels.name }} has not produced a message for five minutes";
+            }
+            {
+              alert = "MqttTopicUnhealthy";
+              expr = ''infra_mqtt_topic_healthy{name!~"inverter-(availability|state)"} == 0'';
+              for = "5m";
+              labels.severity = "warning";
+              annotations.summary = "MQTT topic {{ $labels.name }} is missing or reports an unhealthy payload";
+            }
+            {
+              alert = "PvInverterMqttUnhealthy";
+              expr = ''infra_mqtt_topic_healthy{name=~"inverter-(availability|state)"} == 0'';
+              for = "5m";
+              labels = {
+                category = "property";
+                ntfy_topic = config.infra.services.ntfy.topics.propertyWarning;
+                severity = "warning";
+              };
+              annotations.summary = "PV inverter MQTT topic {{ $labels.name }} is missing or reports an unhealthy payload";
+            }
+            {
+              alert = "PvInverterPayloadInvalid";
+              expr = "infra_pv_inverter_payload_valid == 0";
+              for = "5m";
+              labels = {
+                category = "property";
+                ntfy_topic = config.infra.services.ntfy.topics.propertyWarning;
+                severity = "warning";
+              };
+              annotations.summary = "PV inverter MQTT payload is not valid JSON";
+            }
+            {
+              alert = "PvInverterTelemetryStale";
+              expr = "time() - infra_pv_payload_timestamp_seconds > 900";
+              for = "5m";
+              labels = {
+                category = "property";
+                ntfy_topic = config.infra.services.ntfy.topics.propertyWarning;
+                severity = "warning";
+              };
+              annotations.summary = "PV inverter payload timestamp is stale";
+            }
+            {
+              alert = "PvInverterFault";
+              expr = "infra_pv_inverter_fault == 1";
+              for = "5m";
+              labels = {
+                category = "property";
+                ntfy_topic = config.infra.services.ntfy.topics.propertyWarning;
+                severity = "warning";
+              };
+              annotations.summary = "PV inverter reports fault state";
+            }
+            {
+              alert = "PvEnergyTotalDecreased";
+              expr = "delta(infra_pv_ac_energy_total_wh[30m]) < 0";
+              for = "5m";
+              labels = {
+                category = "property";
+                ntfy_topic = config.infra.services.ntfy.topics.propertyWarning;
+                severity = "warning";
+              };
+              annotations.summary = "PV lifetime energy counter decreased";
+            }
+            {
+              alert = "PvEnergyProductionStalled";
+              expr = "increase(infra_pv_ac_energy_total_wh[36h]) <= 0 and time() - infra_pv_payload_timestamp_seconds < 900 and infra_pv_inverter_fault == 0";
+              for = "1h";
+              labels = {
+                category = "property";
+                ntfy_topic = config.infra.services.ntfy.topics.propertyCritical;
+                severity = "critical";
+              };
+              annotations.summary = "PV lifetime energy counter has not increased for 36 hours";
+            }
+            {
+              alert = "MonitoringMetricsStale";
+              expr = "time() - infra_monitoring_metrics_generated_timestamp_seconds > 900";
+              for = "5m";
+              labels.severity = "warning";
+              annotations.summary = "Repository-specific monitoring metrics have stopped updating";
+            }
+            {
+              alert = "PrometheusSelfScrapeDown";
+              expr = ''up{job="prometheus"} == 0'';
+              for = "5m";
+              labels = {
+                category = "notification";
+                severity = "warning";
+              };
+              annotations.summary = "Prometheus self-scrape is down";
+            }
+            {
+              alert = "PrometheusRuleEvaluationFailures";
+              expr = "increase(prometheus_rule_evaluation_failures_total[15m]) > 0";
+              for = "5m";
+              labels = {
+                category = "notification";
+                severity = "warning";
+              };
+              annotations.summary = "Prometheus rule evaluation failures have occurred";
+            }
+          ]
+          ++ lib.optionals cfg.alerting.enable [
+            {
+              alert = "PrometheusTargetDown";
+              expr = ''up{job=~"alertmanager|alertmanager-ntfy"} == 0'';
+              for = "5m";
+              labels = {
+                category = "notification";
+                severity = "warning";
+              };
+              annotations.summary = "Monitoring target {{ $labels.job }} is down";
+            }
+            {
+              alert = "AlertmanagerNtfyPublishFailures";
+              expr = "increase(infra_alertmanager_ntfy_notification_failures_total[15m]) > 0";
+              for = "5m";
+              labels = {
+                category = "notification";
+                severity = "warning";
+              };
+              annotations.summary = "Alertmanager-to-ntfy publish attempts are failing";
+            }
+          ]
+          ++ lib.optionals cfg.alerting.testAlerts.canary.enable [
+            {
+              alert = "MonitoringDeliveryCanaryStale";
+              expr = "infra_alertmanager_ntfy_last_canary_success_timestamp_seconds > 0 and time() - infra_alertmanager_ntfy_last_canary_success_timestamp_seconds > 302400";
+              for = "30m";
+              labels = {
+                category = "notification";
+                severity = "warning";
+              };
+              annotations.summary = "No successful scheduled notification canary has reached ntfy for 84 hours";
+            }
+          ];
         }
       ]
       ++ lib.optionals cfg.alerting.testAlerts.enable [
@@ -567,25 +569,29 @@
           ];
         }
       ];
-  });
+    }
+  );
 
-  blackboxConfig = pkgs.writeText "blackbox-exporter.yml" (builtins.toJSON {
-    modules = {
-      http_2xx = {
-        prober = "http";
-        timeout = "10s";
-        http = {
-          preferred_ip_protocol = "ip4";
-          follow_redirects = true;
+  blackboxConfig = pkgs.writeText "blackbox-exporter.yml" (
+    builtins.toJSON {
+      modules = {
+        http_2xx = {
+          prober = "http";
+          timeout = "10s";
+          http = {
+            preferred_ip_protocol = "ip4";
+            follow_redirects = true;
+          };
+        };
+        tcp_connect = {
+          prober = "tcp";
+          timeout = "5s";
         };
       };
-      tcp_connect = {
-        prober = "tcp";
-        timeout = "5s";
-      };
-    };
-  });
-in {
+    }
+  );
+in
+{
   options.infra.services.monitoring = {
     enable = lib.mkEnableOption "Prometheus and Grafana infrastructure monitoring";
 
@@ -615,7 +621,9 @@ in {
     };
 
     alerting = {
-      enable = lib.mkEnableOption "Alertmanager notifications through ntfy" // {default = true;};
+      enable = lib.mkEnableOption "Alertmanager notifications through ntfy" // {
+        default = true;
+      };
 
       ntfyUsername = lib.mkOption {
         type = lib.types.str;
@@ -676,7 +684,9 @@ in {
     };
 
     mqtt = {
-      enable = lib.mkEnableOption "authenticated MQTT health and topic freshness checks" // {default = true;};
+      enable = lib.mkEnableOption "authenticated MQTT health and topic freshness checks" // {
+        default = true;
+      };
 
       username = lib.mkOption {
         type = lib.types.str;
@@ -703,16 +713,18 @@ in {
       };
 
       topics = lib.mkOption {
-        type = lib.types.listOf (lib.types.submodule {
-          options = {
-            name = lib.mkOption {type = lib.types.str;};
-            topic = lib.mkOption {type = lib.types.str;};
-            expectedPayload = lib.mkOption {
-              type = lib.types.nullOr lib.types.str;
-              default = null;
+        type = lib.types.listOf (
+          lib.types.submodule {
+            options = {
+              name = lib.mkOption { type = lib.types.str; };
+              topic = lib.mkOption { type = lib.types.str; };
+              expectedPayload = lib.mkOption {
+                type = lib.types.nullOr lib.types.str;
+                default = null;
+              };
             };
-          };
-        });
+          }
+        );
         default = lib.optionals config.infra.services.inverterDataCollector.enable [
           {
             name = "inverter-availability";
@@ -730,14 +742,14 @@ in {
 
     additionalHttpTargets = lib.mkOption {
       type = lib.types.attrsOf lib.types.str;
-      default = {};
+      default = { };
       example.router = "https://192.0.2.1";
       description = "Additional HTTP or HTTPS endpoints probed by the Blackbox exporter.";
     };
 
     additionalTcpTargets = lib.mkOption {
       type = lib.types.attrsOf lib.types.str;
-      default = {};
+      default = { };
       example.ssh = "192.0.2.10:22";
       description = "Additional TCP endpoints probed by the Blackbox exporter.";
     };
@@ -758,7 +770,11 @@ in {
         message = "infra.services.monitoring.alerting.testAlerts.canary requires testAlerts.enable.";
       }
       {
-        assertion = !cfg.alerting.testAlerts.canary.enable || builtins.elem cfg.alerting.testAlerts.canary.topic (builtins.attrValues config.infra.services.ntfy.topics);
+        assertion =
+          !cfg.alerting.testAlerts.canary.enable
+          || builtins.elem cfg.alerting.testAlerts.canary.topic (
+            builtins.attrValues config.infra.services.ntfy.topics
+          );
         message = "The alert canary topic must be one of infra.services.ntfy.topics.";
       }
       {
@@ -775,7 +791,7 @@ in {
 
     security.acme.certs.${certificateName} = {
       domain = config.infra.domain;
-      extraDomainNames = ["*.${config.infra.domain}"];
+      extraDomainNames = [ "*.${config.infra.domain}" ];
       group = "nginx";
     };
 
@@ -809,11 +825,10 @@ in {
     infra.services.mosquitto.additionalUsers = lib.mkIf cfg.mqtt.enable {
       ${cfg.mqtt.username} = {
         passwordSecret = cfg.mqtt.passwordHashSecret;
-        acl =
-          [
-            "readwrite ${cfg.mqtt.roundtripTopic}"
-          ]
-          ++ map (topic: "read ${topic.topic}") cfg.mqtt.topics;
+        acl = [
+          "readwrite ${cfg.mqtt.roundtripTopic}"
+        ]
+        ++ map (topic: "read ${topic.topic}") cfg.mqtt.topics;
       };
     };
 
@@ -821,7 +836,7 @@ in {
       services = {
         infra-monitoring-metrics = {
           description = "Generate repository-specific Prometheus metrics";
-          after = ["multi-user.target"];
+          after = [ "multi-user.target" ];
           serviceConfig = {
             Type = "oneshot";
             ExecStart = "${monitoringMetrics}/bin/infra-monitoring-metrics";
@@ -830,8 +845,8 @@ in {
 
         infra-monitoring-mqtt = lib.mkIf cfg.mqtt.enable {
           description = "Probe MQTT round-trip and important topic freshness";
-          after = ["mosquitto.service"];
-          requires = ["mosquitto.service"];
+          after = [ "mosquitto.service" ];
+          requires = [ "mosquitto.service" ];
           environment = {
             MQTT_HOST = "127.0.0.1";
             MQTT_PORT = toString config.infra.services.mosquitto.port;
@@ -877,9 +892,9 @@ in {
 
         infra-alertmanager-ntfy = lib.mkIf cfg.alerting.enable {
           description = "Forward Alertmanager notifications to ntfy";
-          wantedBy = ["multi-user.target"];
-          after = ["ntfy-sh.service"];
-          requires = ["ntfy-sh.service"];
+          wantedBy = [ "multi-user.target" ];
+          after = [ "ntfy-sh.service" ];
+          requires = [ "ntfy-sh.service" ];
           environment = {
             LISTEN_PORT = toString cfg.alerting.webhookPort;
             GRAFANA_URL = "https://${hostName}";
@@ -898,7 +913,10 @@ in {
             PrivateTmp = true;
             ProtectHome = true;
             ProtectSystem = "strict";
-            RestrictAddressFamilies = ["AF_INET" "AF_INET6"];
+            RestrictAddressFamilies = [
+              "AF_INET"
+              "AF_INET6"
+            ];
           };
         };
       };
@@ -906,7 +924,7 @@ in {
       timers = {
         infra-monitoring-alert-canary = lib.mkIf cfg.alerting.testAlerts.canary.enable {
           description = "Schedule end-to-end monitoring notification canaries";
-          wantedBy = ["timers.target"];
+          wantedBy = [ "timers.target" ];
           timerConfig = {
             OnCalendar = cfg.alerting.testAlerts.canary.schedule;
             Persistent = true;
@@ -916,7 +934,7 @@ in {
 
         infra-monitoring-metrics = {
           description = "Refresh repository-specific Prometheus metrics";
-          wantedBy = ["timers.target"];
+          wantedBy = [ "timers.target" ];
           timerConfig = {
             OnBootSec = "2m";
             OnUnitActiveSec = "5m";
@@ -926,7 +944,7 @@ in {
 
         infra-monitoring-mqtt = lib.mkIf cfg.mqtt.enable {
           description = "Refresh MQTT health metrics";
-          wantedBy = ["timers.target"];
+          wantedBy = [ "timers.target" ];
           timerConfig = {
             OnBootSec = "1m";
             OnUnitActiveSec = "1m";
@@ -1026,7 +1044,10 @@ in {
           configuration = {
             route = {
               receiver = "ntfy";
-              group_by = ["alertname" "severity"];
+              group_by = [
+                "alertname"
+                "severity"
+              ];
               group_wait = "30s";
               group_interval = "5m";
               repeat_interval = "87600h";
@@ -1034,24 +1055,24 @@ in {
                 lib.optionals cfg.alerting.testAlerts.canary.enable [
                   {
                     receiver = "ntfy-canary";
-                    matchers = [''category="notification-canary"''];
+                    matchers = [ ''category="notification-canary"'' ];
                     continue = false;
                   }
                 ]
                 ++ [
                   {
                     receiver = "ntfy";
-                    matchers = [''severity="critical"''];
+                    matchers = [ ''severity="critical"'' ];
                     repeat_interval = "1h";
                   }
                   {
                     receiver = "ntfy";
-                    matchers = [''severity="warning"''];
+                    matchers = [ ''severity="warning"'' ];
                     repeat_interval = "168h";
                   }
                   {
                     receiver = "ntfy";
-                    matchers = [''severity="info"''];
+                    matchers = [ ''severity="info"'' ];
                     repeat_interval = "87600h";
                   }
                 ];
@@ -1083,12 +1104,12 @@ in {
         listenAddress = "127.0.0.1";
         port = cfg.prometheusPort;
         inherit (cfg) retentionTime;
-        ruleFiles = [prometheusRules];
+        ruleFiles = [ prometheusRules ];
         alertmanagers = lib.optionals cfg.alerting.enable [
           {
             static_configs = [
               {
-                targets = ["127.0.0.1:9093"];
+                targets = [ "127.0.0.1:9093" ];
               }
             ];
           }
@@ -1114,99 +1135,94 @@ in {
           };
         };
 
-        scrapeConfigs =
-          [
-            {
-              job_name = "prometheus";
-              static_configs = [
-                {
-                  targets = ["127.0.0.1:${toString cfg.prometheusPort}"];
-                  labels.service = "prometheus";
-                }
-              ];
-            }
-          ]
-          ++ lib.optionals cfg.alerting.enable [
-            {
-              job_name = "alertmanager";
-              static_configs = [
-                {
-                  targets = ["127.0.0.1:9093"];
-                  labels.service = "alertmanager";
-                }
-              ];
-            }
-            {
-              job_name = "alertmanager-ntfy";
-              static_configs = [
-                {
-                  targets = ["127.0.0.1:${toString cfg.alerting.webhookPort}"];
-                  labels.service = "alertmanager-ntfy";
-                }
-              ];
-            }
-          ]
-          ++ [
-            {
-              job_name = "node";
-              static_configs = [
-                {
-                  targets = ["127.0.0.1:${toString config.services.prometheus.exporters.node.port}"];
-                  labels.host = config.networking.hostName;
-                }
-              ];
-            }
-            {
-              job_name = "http-probes";
-              metrics_path = "/probe";
-              params.module = ["http_2xx"];
-              static_configs =
-                lib.mapAttrsToList (name: target: {
-                  targets = [target];
-                  labels.service = name;
-                })
-                httpTargets;
-              relabel_configs = [
-                {
-                  source_labels = ["__address__"];
-                  target_label = "__param_target";
-                }
-                {
-                  source_labels = ["__param_target"];
-                  target_label = "instance";
-                }
-                {
-                  target_label = "__address__";
-                  replacement = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
-                }
-              ];
-            }
-            {
-              job_name = "tcp-probes";
-              metrics_path = "/probe";
-              params.module = ["tcp_connect"];
-              static_configs =
-                lib.mapAttrsToList (name: target: {
-                  targets = [target];
-                  labels.service = name;
-                })
-                tcpTargets;
-              relabel_configs = [
-                {
-                  source_labels = ["__address__"];
-                  target_label = "__param_target";
-                }
-                {
-                  source_labels = ["__param_target"];
-                  target_label = "instance";
-                }
-                {
-                  target_label = "__address__";
-                  replacement = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
-                }
-              ];
-            }
-          ];
+        scrapeConfigs = [
+          {
+            job_name = "prometheus";
+            static_configs = [
+              {
+                targets = [ "127.0.0.1:${toString cfg.prometheusPort}" ];
+                labels.service = "prometheus";
+              }
+            ];
+          }
+        ]
+        ++ lib.optionals cfg.alerting.enable [
+          {
+            job_name = "alertmanager";
+            static_configs = [
+              {
+                targets = [ "127.0.0.1:9093" ];
+                labels.service = "alertmanager";
+              }
+            ];
+          }
+          {
+            job_name = "alertmanager-ntfy";
+            static_configs = [
+              {
+                targets = [ "127.0.0.1:${toString cfg.alerting.webhookPort}" ];
+                labels.service = "alertmanager-ntfy";
+              }
+            ];
+          }
+        ]
+        ++ [
+          {
+            job_name = "node";
+            static_configs = [
+              {
+                targets = [ "127.0.0.1:${toString config.services.prometheus.exporters.node.port}" ];
+                labels.host = config.networking.hostName;
+              }
+            ];
+          }
+          {
+            job_name = "http-probes";
+            metrics_path = "/probe";
+            params.module = [ "http_2xx" ];
+            static_configs = lib.mapAttrsToList (name: target: {
+              targets = [ target ];
+              labels.service = name;
+            }) httpTargets;
+            relabel_configs = [
+              {
+                source_labels = [ "__address__" ];
+                target_label = "__param_target";
+              }
+              {
+                source_labels = [ "__param_target" ];
+                target_label = "instance";
+              }
+              {
+                target_label = "__address__";
+                replacement = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
+              }
+            ];
+          }
+          {
+            job_name = "tcp-probes";
+            metrics_path = "/probe";
+            params.module = [ "tcp_connect" ];
+            static_configs = lib.mapAttrsToList (name: target: {
+              targets = [ target ];
+              labels.service = name;
+            }) tcpTargets;
+            relabel_configs = [
+              {
+                source_labels = [ "__address__" ];
+                target_label = "__param_target";
+              }
+              {
+                source_labels = [ "__param_target" ];
+                target_label = "instance";
+              }
+              {
+                target_label = "__address__";
+                replacement = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
+              }
+            ];
+          }
+        ];
       };
     };
   };

@@ -3,19 +3,18 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   herdr = inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.default;
   zsh = lib.getExe pkgs.zsh;
-  zDotDir =
-    if pkgs.stdenv.hostPlatform.isDarwin
-    then "$HOME"
-    else "$HOME/.config/zsh";
+  zDotDir = if pkgs.stdenv.hostPlatform.isDarwin then "$HOME" else "$HOME/.config/zsh";
   herdrZsh = pkgs.writeShellScriptBin "herdr-zsh" ''
     export ZDOTDIR="${zDotDir}"
     export SHELL="${zsh}"
     exec "${zsh}" -i "$@"
   '';
-in {
+in
+{
   home.packages = [
     herdr
     herdrZsh

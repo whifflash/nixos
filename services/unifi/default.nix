@@ -2,13 +2,12 @@
   config,
   lib,
   ...
-}: let
+}:
+let
   cfg = config.infra.services.unifi;
-  hostName =
-    if cfg.hostName != null
-    then cfg.hostName
-    else "unifi.${config.infra.domain}";
-in {
+  hostName = if cfg.hostName != null then cfg.hostName else "unifi.${config.infra.domain}";
+in
+{
   options.infra.services.unifi = {
     enable = lib.mkEnableOption "the shared UniFi Network Application container";
 
@@ -65,7 +64,7 @@ in {
   config = lib.mkIf cfg.enable {
     infra.acme.enable = true;
 
-    security.acme.certs.${hostName} = {};
+    security.acme.certs.${hostName} = { };
 
     systemd.tmpfiles.rules = [
       "d ${cfg.dataDir} 0750 root root - -"

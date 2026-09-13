@@ -1,3 +1,5 @@
 _: super: {
-  tailscale = super.tailscale.overrideAttrs (_: {doCheck = false;});
+  tailscale = super.tailscale.overrideAttrs (_: {
+    doCheck = false;
+  });
 }

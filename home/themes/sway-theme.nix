@@ -4,31 +4,22 @@
   config,
   osConfig,
   ...
-}: let
+}:
+let
   cfg = config.hm.swayTheme;
 
   # Host (osConfig) values if present
   hostHas = (osConfig ? ui) && (osConfig.ui ? theme);
-  hostWallpapersDir =
-    if hostHas
-    then (osConfig.ui.theme.wallpapersDir or null)
-    else null;
-  hostWallpaper =
-    if hostHas
-    then (osConfig.ui.theme.wallpaper or null)
-    else null;
-  hostMode =
-    if hostHas
-    then (osConfig.ui.theme.wallpaperMode or "fill")
-    else "fill";
-  hostSwaylockImage =
-    if hostHas
-    then (osConfig.ui.theme.swaylock.image or null)
-    else null;
+  hostWallpapersDir = if hostHas then (osConfig.ui.theme.wallpapersDir or null) else null;
+  hostWallpaper = if hostHas then (osConfig.ui.theme.wallpaper or null) else null;
+  hostMode = if hostHas then (osConfig.ui.theme.wallpaperMode or "fill") else "fill";
+  hostSwaylockImage = if hostHas then (osConfig.ui.theme.swaylock.image or null) else null;
 
-  existsIn = dir: file:
+  existsIn =
+    dir: file:
     (dir != null) && (builtins.pathExists dir) && (builtins.hasAttr file (builtins.readDir dir));
-in {
+in
+{
   options.hm.swayTheme = {
     enable = lib.mkEnableOption "Sway theming (wallpaper + mode + swaylock image)";
 
@@ -45,7 +36,13 @@ in {
     };
 
     wallpaperMode = lib.mkOption {
-      type = lib.types.enum ["fill" "fit" "stretch" "tile" "center"];
+      type = lib.types.enum [
+        "fill"
+        "fit"
+        "stretch"
+        "tile"
+        "center"
+      ];
       default = hostMode;
       description = "Sway background mode.";
     };
@@ -57,19 +54,27 @@ in {
     };
 
     perOutput = lib.mkOption {
-      type = lib.types.attrsOf (lib.types.submodule (_: {
-        options = {
-          wallpaper = lib.mkOption {
-            type = lib.types.str;
-            description = "Filename relative to wallpapersDir.";
+      type = lib.types.attrsOf (
+        lib.types.submodule (_: {
+          options = {
+            wallpaper = lib.mkOption {
+              type = lib.types.str;
+              description = "Filename relative to wallpapersDir.";
+            };
+            mode = lib.mkOption {
+              type = lib.types.enum [
+                "fill"
+                "fit"
+                "stretch"
+                "tile"
+                "center"
+              ];
+              default = cfg.wallpaperMode;
+            };
           };
-          mode = lib.mkOption {
-            type = lib.types.enum ["fill" "fit" "stretch" "tile" "center"];
-            default = cfg.wallpaperMode;
-          };
-        };
-      }));
-      default = {};
+        })
+      );
+      default = { };
       description = "Map of output-name -> { wallpaper, mode }.";
     };
 
@@ -80,58 +85,65 @@ in {
     };
   };
 
-  config = lib.mkIf (cfg.enable && config.wayland.windowManager.sway.enable) (let
-    baseBg = "${cfg.wallpapersDir}/${cfg.wallpaper} ${cfg.wallpaperMode}";
+  config = lib.mkIf (cfg.enable && config.wayland.windowManager.sway.enable) (
+    let
+      baseBg = "${cfg.wallpapersDir}/${cfg.wallpaper} ${cfg.wallpaperMode}";
 
-    perOut =
-      lib.mapAttrs (_name: o: {
+      perOut = lib.mapAttrs (_name: o: {
         bg = "${cfg.wallpapersDir}/${o.wallpaper} ${o.mode}";
-      })
-      cfg.perOutput;
+      }) cfg.perOutput;
 
-    outputs =
-      if cfg.perOutput != {}
-      then perOut
-      else {"*" = {bg = baseBg;};};
+      outputs =
+        if cfg.perOutput != { } then
+          perOut
+        else
+          {
+            "*" = {
+              bg = baseBg;
+            };
+          };
 
-    # fallback = cfg.wallpapersDir + "/${cfg.wallpaper}";
-    # resolvedSwaylockImage =
-    #   if cfg.swaylock.image != null
-    #   then cfg.swaylock.iimage
-    #   else fallback;
+      # fallback = cfg.wallpapersDir + "/${cfg.wallpaper}";
+      # resolvedSwaylockImage =
+      #   if cfg.swaylock.image != null
+      #   then cfg.swaylock.iimage
+      #   else fallback;
 
-    imagePath =
-      if cfg.swaylock.image != null
-      then toString cfg.swaylock.image
-      else toString (cfg.wallpapersDir + "/${cfg.wallpaper}");
-  in {
-    assertions = [
-      {
-        assertion = cfg.wallpapersDir != null && builtins.pathExists cfg.wallpapersDir;
-        message = "sway-theme: wallpapersDir does not exist: ${toString cfg.wallpapersDir}";
-      }
-      {
-        assertion = (cfg.perOutput != {}) || existsIn cfg.wallpapersDir cfg.wallpaper;
-        message = "sway-theme: wallpaper ‘${cfg.wallpaper}’ not found in ${toString cfg.wallpapersDir}";
-      }
-      {
-        assertion = lib.all (o: existsIn cfg.wallpapersDir o.wallpaper) (lib.attrValues cfg.perOutput);
-        message = "sway-theme: one or more perOutput wallpapers were not found in ${toString cfg.wallpapersDir}";
-      }
-    ];
+      imagePath =
+        if cfg.swaylock.image != null then
+          toString cfg.swaylock.image
+        else
+          toString (cfg.wallpapersDir + "/${cfg.wallpaper}");
+    in
+    {
+      assertions = [
+        {
+          assertion = cfg.wallpapersDir != null && builtins.pathExists cfg.wallpapersDir;
+          message = "sway-theme: wallpapersDir does not exist: ${toString cfg.wallpapersDir}";
+        }
+        {
+          assertion = (cfg.perOutput != { }) || existsIn cfg.wallpapersDir cfg.wallpaper;
+          message = "sway-theme: wallpaper ‘${cfg.wallpaper}’ not found in ${toString cfg.wallpapersDir}";
+        }
+        {
+          assertion = lib.all (o: existsIn cfg.wallpapersDir o.wallpaper) (lib.attrValues cfg.perOutput);
+          message = "sway-theme: one or more perOutput wallpapers were not found in ${toString cfg.wallpapersDir}";
+        }
+      ];
 
-    # Optional convenience symlink
-    home.file = lib.mkIf cfg.linkToPictures {
-      "Pictures/wallpapers".source = cfg.wallpapersDir;
-    };
+      # Optional convenience symlink
+      home.file = lib.mkIf cfg.linkToPictures {
+        "Pictures/wallpapers".source = cfg.wallpapersDir;
+      };
 
-    xdg.configFile."swaylock/config".text = ''
-      # Generated by your sway-theme module
-      daemonize
-      image=${imagePath}
-    '';
+      xdg.configFile."swaylock/config".text = ''
+        # Generated by your sway-theme module
+        daemonize
+        image=${imagePath}
+      '';
 
-    # Apply background(s)
-    wayland.windowManager.sway.config.output = lib.mkForce outputs;
-  });
+      # Apply background(s)
+      wayland.windowManager.sway.config.output = lib.mkForce outputs;
+    }
+  );
 }

@@ -3,7 +3,8 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   cfg = config.infra.services.housekeeping;
   stateDirectory = "/var/lib/infra-housekeeping";
 
@@ -121,16 +122,15 @@
       podman image prune --all --force
     '';
   };
-in {
+in
+{
   options.infra.services.housekeeping = {
     enable = lib.mkEnableOption "scheduled housekeeping for infrastructure hosts";
 
     nix = {
-      enable =
-        lib.mkEnableOption "Nix generation and store housekeeping"
-        // {
-          default = true;
-        };
+      enable = lib.mkEnableOption "Nix generation and store housekeeping" // {
+        default = true;
+      };
 
       schedule = lib.mkOption {
         type = lib.types.str;
@@ -153,11 +153,9 @@ in {
     };
 
     podman = {
-      enable =
-        lib.mkEnableOption "Podman image housekeeping"
-        // {
-          default = true;
-        };
+      enable = lib.mkEnableOption "Podman image housekeeping" // {
+        default = true;
+      };
 
       schedule = lib.mkOption {
         type = lib.types.str;
@@ -173,57 +171,59 @@ in {
     };
   };
 
-  config = lib.mkIf cfg.enable (lib.mkMerge [
-    (lib.mkIf cfg.nix.enable {
-      boot.loader.systemd-boot.configurationLimit = cfg.nix.configurationLimit;
+  config = lib.mkIf cfg.enable (
+    lib.mkMerge [
+      (lib.mkIf cfg.nix.enable {
+        boot.loader.systemd-boot.configurationLimit = cfg.nix.configurationLimit;
 
-      systemd.services.infra-nix-housekeeping = {
-        description = "Remove old Nix generations and optimise the Nix store";
+        systemd.services.infra-nix-housekeeping = {
+          description = "Remove old Nix generations and optimise the Nix store";
 
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = lib.getExe nixHousekeeping;
-          Nice = 10;
-          IOSchedulingClass = "idle";
-          StateDirectory = "infra-housekeeping";
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = lib.getExe nixHousekeeping;
+            Nice = 10;
+            IOSchedulingClass = "idle";
+            StateDirectory = "infra-housekeeping";
+          };
         };
-      };
 
-      systemd.timers.infra-nix-housekeeping = {
-        description = "Scheduled Nix generation and store housekeeping";
-        wantedBy = ["timers.target"];
+        systemd.timers.infra-nix-housekeeping = {
+          description = "Scheduled Nix generation and store housekeeping";
+          wantedBy = [ "timers.target" ];
 
-        timerConfig = {
-          OnCalendar = cfg.nix.schedule;
-          RandomizedDelaySec = cfg.randomizedDelaySec;
-          Persistent = true;
+          timerConfig = {
+            OnCalendar = cfg.nix.schedule;
+            RandomizedDelaySec = cfg.randomizedDelaySec;
+            Persistent = true;
+          };
         };
-      };
-    })
+      })
 
-    (lib.mkIf cfg.podman.enable {
-      systemd.services.infra-podman-housekeeping = {
-        description = "Remove Podman images unused by any container";
+      (lib.mkIf cfg.podman.enable {
+        systemd.services.infra-podman-housekeeping = {
+          description = "Remove Podman images unused by any container";
 
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = lib.getExe podmanHousekeeping;
-          Nice = 10;
-          IOSchedulingClass = "idle";
-          StateDirectory = "infra-housekeeping";
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = lib.getExe podmanHousekeeping;
+            Nice = 10;
+            IOSchedulingClass = "idle";
+            StateDirectory = "infra-housekeeping";
+          };
         };
-      };
 
-      systemd.timers.infra-podman-housekeeping = {
-        description = "Scheduled Podman image housekeeping";
-        wantedBy = ["timers.target"];
+        systemd.timers.infra-podman-housekeeping = {
+          description = "Scheduled Podman image housekeeping";
+          wantedBy = [ "timers.target" ];
 
-        timerConfig = {
-          OnCalendar = cfg.podman.schedule;
-          RandomizedDelaySec = cfg.randomizedDelaySec;
-          Persistent = true;
+          timerConfig = {
+            OnCalendar = cfg.podman.schedule;
+            RandomizedDelaySec = cfg.randomizedDelaySec;
+            Persistent = true;
+          };
         };
-      };
-    })
-  ]);
+      })
+    ]
+  );
 }

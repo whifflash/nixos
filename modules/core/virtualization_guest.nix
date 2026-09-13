@@ -2,10 +2,12 @@
   config,
   lib,
   ...
-}: let
+}:
+let
   id = "virtualization_guest";
   cfg = config.${id};
-in {
+in
+{
   options.${id} = {
     enable = lib.mkEnableOption "enables ${id} profile";
   };
@@ -21,6 +23,9 @@ in {
       host.enableExtensionPack = true;
     };
 
-    users.users.mhr.extraGroups = ["vboxusers" "vboxsf"];
+    users.users.mhr.extraGroups = [
+      "vboxusers"
+      "vboxsf"
+    ];
   };
 }

@@ -1,4 +1,4 @@
-{pkgs, ...}: {
+{ pkgs, ... }: {
   imports = [
     ./disko.nix
     ./hardware-configuration.nix
@@ -34,7 +34,7 @@
     users.mhr = {
       isNormalUser = true;
       description = "mhr";
-      extraGroups = ["wheel"];
+      extraGroups = [ "wheel" ];
     };
   };
 

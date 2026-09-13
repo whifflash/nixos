@@ -1,4 +1,5 @@
-_: let
+_:
+let
   colors = {
     bg = "#1f1f28";
     bg_alt = "#16161d";
@@ -15,7 +16,8 @@ _: let
     blue = "#7e9cd8";
     purple = "#957fb8";
   };
-in {
+in
+{
   name = "kanagawa";
   tokens = {
     inherit (colors) bg;

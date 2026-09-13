@@ -3,12 +3,10 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   cfg = config.infra.services.paperless;
-  hostName =
-    if cfg.hostName != null
-    then cfg.hostName
-    else "paperless.${config.infra.domain}";
+  hostName = if cfg.hostName != null then cfg.hostName else "paperless.${config.infra.domain}";
   consumptionDir = "/var/lib/paperless-sftp/upload";
   scannerDirectories = [
     "hannes"
@@ -189,59 +187,59 @@
   paperlessUsers = {
     "paperless-admin" = {
       fullName = "Paperless Administrator";
-      groups = [];
+      groups = [ ];
       isStaff = true;
       isSuperuser = true;
     };
 
     hannes = {
       fullName = "Hannes";
-      groups = ["familie"];
+      groups = [ "familie" ];
       isStaff = false;
       isSuperuser = false;
     };
 
     antonia = {
       fullName = "Antonia";
-      groups = ["familie"];
+      groups = [ "familie" ];
       isStaff = false;
       isSuperuser = false;
     };
 
     luise = {
       fullName = "Luise";
-      groups = ["familie"];
+      groups = [ "familie" ];
       isStaff = false;
       isSuperuser = false;
     };
 
     dietmar = {
       fullName = "Dietmar";
-      groups = ["familie"];
+      groups = [ "familie" ];
       isStaff = false;
       isSuperuser = false;
     };
   };
   userSecretName = username: "paperless/users/${username}/password";
-  provisionedAccounts =
-    lib.mapAttrsToList (username: account: {
-      inherit username;
-      inherit (account) fullName groups isStaff isSuperuser;
-      passwordFile = config.sops.secrets.${userSecretName username}.path;
-    })
-    paperlessUsers;
-  provisionedAccountsFile =
-    builtins.toFile
-    "paperless-provisioned-accounts.json"
-    (builtins.toJSON provisionedAccounts);
-  provisionedGroupsFile =
-    builtins.toFile
-    "paperless-provisioned-groups.json"
-    (builtins.toJSON paperlessGroups);
-  provisionedMetadataFile =
-    builtins.toFile
-    "paperless-provisioned-metadata.json"
-    (builtins.toJSON paperlessMetadata);
+  provisionedAccounts = lib.mapAttrsToList (username: account: {
+    inherit username;
+    inherit (account)
+      fullName
+      groups
+      isStaff
+      isSuperuser
+      ;
+    passwordFile = config.sops.secrets.${userSecretName username}.path;
+  }) paperlessUsers;
+  provisionedAccountsFile = builtins.toFile "paperless-provisioned-accounts.json" (
+    builtins.toJSON provisionedAccounts
+  );
+  provisionedGroupsFile = builtins.toFile "paperless-provisioned-groups.json" (
+    builtins.toJSON paperlessGroups
+  );
+  provisionedMetadataFile = builtins.toFile "paperless-provisioned-metadata.json" (
+    builtins.toJSON paperlessMetadata
+  );
   sftpSshdConfig = pkgs.writeText "paperless-sftp-sshd-config" ''
     Port ${toString cfg.sftpPort}
     AddressFamily any
@@ -274,7 +272,8 @@
     Subsystem sftp internal-sftp
     LogLevel VERBOSE
   '';
-in {
+in
+{
   options.infra.services.paperless = {
     enable = lib.mkEnableOption "the shared Paperless-ngx document archive";
 
@@ -308,31 +307,29 @@ in {
     infra.acme.enable = true;
 
     security = {
-      acme.certs.${hostName} = {};
+      acme.certs.${hostName} = { };
       pam.services.paperless-sftp.unixAuth = true;
     };
 
-    sops.secrets =
-      {
-        "paperless/sftp/password_hash" = {
-          sopsFile = ../../secrets/infrastructure.yaml;
-          owner = "root";
-          group = "root";
-          mode = "0400";
-          neededForUsers = true;
-        };
-      }
-      // lib.mapAttrs' (username: _: {
-        name = userSecretName username;
-        value = {
-          sopsFile = ../../secrets/infrastructure.yaml;
-          owner = "paperless";
-          group = "paperless";
-          mode = "0400";
-          restartUnits = ["paperless-provision-accounts.service"];
-        };
-      })
-      paperlessUsers;
+    sops.secrets = {
+      "paperless/sftp/password_hash" = {
+        sopsFile = ../../secrets/infrastructure.yaml;
+        owner = "root";
+        group = "root";
+        mode = "0400";
+        neededForUsers = true;
+      };
+    }
+    // lib.mapAttrs' (username: _: {
+      name = userSecretName username;
+      value = {
+        sopsFile = ../../secrets/infrastructure.yaml;
+        owner = "paperless";
+        group = "paperless";
+        mode = "0400";
+        restartUnits = [ "paperless-provision-accounts.service" ];
+      };
+    }) paperlessUsers;
 
     services = {
       paperless = {
@@ -401,8 +398,11 @@ in {
       services = {
         paperless-sftp-sshd = {
           description = "Dedicated Paperless scanner SFTP daemon";
-          after = ["network.target" "sshd.service"];
-          wantedBy = ["multi-user.target"];
+          after = [
+            "network.target"
+            "sshd.service"
+          ];
+          wantedBy = [ "multi-user.target" ];
 
           serviceConfig = {
             Type = "simple";
@@ -415,11 +415,11 @@ in {
 
         paperless-provision-accounts = {
           description = "Provision declarative Paperless accounts and metadata";
-          after = ["paperless-scheduler.service"];
-          requires = ["paperless-scheduler.service"];
-          wantedBy = ["multi-user.target"];
+          after = [ "paperless-scheduler.service" ];
+          requires = [ "paperless-scheduler.service" ];
+          wantedBy = [ "multi-user.target" ];
 
-          path = [config.services.paperless.manage];
+          path = [ config.services.paperless.manage ];
 
           serviceConfig = {
             Type = "oneshot";
@@ -552,13 +552,14 @@ in {
         };
       };
 
-      tmpfiles.rules =
-        [
-          "d /run/sshd 0755 root root -"
-          "d /var/lib/paperless-sftp 0755 root root -"
-          "z ${consumptionDir} 2770 paperless paperless -"
-        ]
-        ++ map (directory: "d ${consumptionDir}/${directory} 2770 paperless paperless -") scannerDirectories;
+      tmpfiles.rules = [
+        "d /run/sshd 0755 root root -"
+        "d /var/lib/paperless-sftp 0755 root root -"
+        "z ${consumptionDir} 2770 paperless paperless -"
+      ]
+      ++ map (
+        directory: "d ${consumptionDir}/${directory} 2770 paperless paperless -"
+      ) scannerDirectories;
     };
 
     networking.firewall.allowedTCPPorts = [

@@ -1,4 +1,4 @@
-{...}: {
+{ ... }: {
   imports = [
     ./attic/client.nix
     ./core/base_options.nix

@@ -1,4 +1,5 @@
-_: let
+_:
+let
   colors = {
     dark0 = "#282828";
     dark1 = "#3c3836";
@@ -19,7 +20,8 @@ _: let
     neutral_orange = "#af3a03";
     gray = "#928374";
   };
-in {
+in
+{
   name = "gruvbox-light";
   tokens = {
     bg = colors.light0;

@@ -2,16 +2,15 @@
   config,
   lib,
   ...
-}: let
+}:
+let
   cfg = config.infra.services.influxdb;
-  hostName =
-    if cfg.hostName != null
-    then cfg.hostName
-    else "influx.${config.infra.domain}";
+  hostName = if cfg.hostName != null then cfg.hostName else "influx.${config.infra.domain}";
   adminPasswordSecret = "influxdb/admin_password";
   operatorTokenSecret = "influxdb/operator_token";
   homeAssistantTokenSecret = "influxdb/home_assistant_token";
-in {
+in
+{
   options.infra.services.influxdb = {
     enable = lib.mkEnableOption "the shared InfluxDB 2 service";
 
@@ -79,7 +78,7 @@ in {
       };
     };
 
-    security.acme.certs.${hostName} = {};
+    security.acme.certs.${hostName} = { };
 
     services = {
       influxdb2 = {
@@ -102,7 +101,7 @@ in {
           organizations.${cfg.organization}.auths."home-assistant" = {
             description = "Home Assistant bucket writer";
             tokenFile = config.sops.secrets.${homeAssistantTokenSecret}.path;
-            writeBuckets = [cfg.bucket];
+            writeBuckets = [ cfg.bucket ];
           };
         };
       };
@@ -127,6 +126,9 @@ in {
       };
     };
 
-    networking.firewall.allowedTCPPorts = [80 443];
+    networking.firewall.allowedTCPPorts = [
+      80
+      443
+    ];
   };
 }

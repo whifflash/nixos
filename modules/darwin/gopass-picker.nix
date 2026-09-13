@@ -3,15 +3,15 @@
   pkgs,
   lib,
   ...
-}: let
+}:
+let
   user = config.system.primaryUser;
 
-  home = let
-    h = config.users.users.${user}.home or null;
-  in
-    if h == null
-    then "/Users/${user}"
-    else h;
+  home =
+    let
+      h = config.users.users.${user}.home or null;
+    in
+    if h == null then "/Users/${user}" else h;
 
   skhdrc = pkgs.writeText "skhdrc" ''
     alt - p : /bin/zsh -lc "$HOME/.local/bin/gopass-launcher"
@@ -19,7 +19,8 @@
   '';
 
   skhdBin = "/run/current-system/sw/bin/skhd";
-in {
+in
+{
   # Prevent nix-darwin from generating its own org.nixos.skhd service from services.skhd
   services.skhd = {
     enable = lib.mkForce false;

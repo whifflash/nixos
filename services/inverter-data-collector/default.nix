@@ -3,7 +3,8 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   cfg = config.infra.services.inverterDataCollector;
   mqttPasswordSecret = "inverter-data-collector/mqtt_password";
   mqttPasswordHashSecret = "mosquitto/users/${cfg.mqtt.username}/password_hash";
@@ -11,7 +12,8 @@
     pythonPackages.paho-mqtt
     pythonPackages.pysunspec2
   ]);
-in {
+in
+{
   options.infra.services.inverterDataCollector = {
     enable = lib.mkEnableOption "the SMA inverter data collector";
 
@@ -112,13 +114,13 @@ in {
 
     systemd.services.inverter-data-collector = {
       description = "SMA inverter data collector";
-      wantedBy = ["multi-user.target"];
+      wantedBy = [ "multi-user.target" ];
       after = [
         "network-online.target"
         "mosquitto.service"
       ];
-      wants = ["network-online.target"];
-      requires = ["mosquitto.service"];
+      wants = [ "network-online.target" ];
+      requires = [ "mosquitto.service" ];
 
       environment = {
         SMA_HOST = cfg.inverter.host;

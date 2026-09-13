@@ -6,7 +6,8 @@
   config,
   pkgs,
   ...
-}: let
+}:
+let
   unbind = pkgs.writeShellScript "xhci-unbind-pre" ''
     set -euo pipefail
     DEV=0000:00:14.0
@@ -27,7 +28,8 @@
       fi
     done
   '';
-in {
+in
+{
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
@@ -78,7 +80,7 @@ in {
     services = {
       xhci-unbind = {
         description = "Unbind xHCI (0000:00:14.0) on suspend; rebind on resume";
-        wantedBy = ["sleep.target"]; # run for any sleep mode
+        wantedBy = [ "sleep.target" ]; # run for any sleep mode
         before = [
           "systemd-suspend.service"
           "systemd-hibernate.service"
@@ -94,7 +96,7 @@ in {
 
       "irqbalance-x270" = {
         description = "Manually set IRQ affinity for hot devices";
-        wantedBy = ["multi-user.target"];
+        wantedBy = [ "multi-user.target" ];
         serviceConfig.ExecStart = pkgs.writeShellScript "irq-affinity" ''
           echo f > /proc/irq/123/smp_affinity  # i915
           echo f > /proc/irq/125/smp_affinity  # xhci
@@ -116,8 +118,12 @@ in {
     defaultSopsFormat = "yaml";
     age.keyFile = "/home/mhr/.config/sops/age/keys.txt";
     secrets = {
-      "wireguard/vps/keys/public" = {owner = config.users.users."systemd-network".name;};
-      "network-manager.env" = {owner = config.users.users."systemd-network".name;};
+      "wireguard/vps/keys/public" = {
+        owner = config.users.users."systemd-network".name;
+      };
+      "network-manager.env" = {
+        owner = config.users.users."systemd-network".name;
+      };
       # "git/userName" = {};
       # "git/userEmail" = {};
     };
@@ -127,7 +133,10 @@ in {
   # virtualisation.libvirtd.enable = true;
   # programs.virt-manager.enable = true;
 
-  users.users.mhr.extraGroups = ["kvm" "libvirtd"]; # add yourself to kvm group
+  users.users.mhr.extraGroups = [
+    "kvm"
+    "libvirtd"
+  ]; # add yourself to kvm group
 
   # Optional: nested virtualization (usually not needed)
   # boot.extraModprobeConfig = "options kvm-intel nested=1";
@@ -138,7 +147,10 @@ in {
       systemd-boot.enable = true;
       efi.canTouchEfiVariables = true;
     };
-    kernelModules = ["kvm" "kvm-intel"];
+    kernelModules = [
+      "kvm"
+      "kvm-intel"
+    ];
     kernelParams = [
       "psmouse.synaptics_intertouch=1" # try 0 first; if no joy, try =1
       "i915.enable_dc=0"

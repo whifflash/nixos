@@ -1,7 +1,9 @@
 # modules/ui/theme.nix
-{lib, ...}: let
+{ lib, ... }:
+let
   inherit (lib) mkEnableOption mkOption types;
-in {
+in
+{
   options.ui.theme = {
     scheme = mkOption {
       type = types.str;
@@ -23,7 +25,13 @@ in {
     };
 
     wallpaperMode = mkOption {
-      type = types.enum ["fill" "fit" "stretch" "tile" "center"];
+      type = types.enum [
+        "fill"
+        "fit"
+        "stretch"
+        "tile"
+        "center"
+      ];
       default = "stretch";
       description = "Sway background scaling mode.";
     };

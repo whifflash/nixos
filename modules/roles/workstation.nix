@@ -5,7 +5,8 @@
   hostname,
   pkgs,
   ...
-}: let
+}:
+let
   id = "role_workstation";
   cfg = config.${id};
 
@@ -72,8 +73,9 @@
       cp ${usbDriveRules} "$out/lib/udev/rules.d/99-usb-drive.rules"
     '';
   };
-in {
-  imports = [inputs.sops-nix.nixosModules.sops];
+in
+{
+  imports = [ inputs.sops-nix.nixosModules.sops ];
 
   options.${id} = {
     enable = lib.mkEnableOption "enables ${id} profile";
@@ -117,7 +119,7 @@ in {
         wireguard-tools
         zip
       ])
-      ++ [usbDrivePkg];
+      ++ [ usbDrivePkg ];
 
     hardware.bluetooth.enable = true; # enables support for Bluetooth
     hardware.bluetooth.powerOnBoot = true; # powers up the default Bluetooth controller on boot
@@ -132,15 +134,15 @@ in {
 
     services = {
       udisks2.enable = true;
-      udev.packages = [usbDriveUdevPkg];
+      udev.packages = [ usbDriveUdevPkg ];
     };
 
     systemd.services = {
       NetworkManager-wait-online.enable = false;
       NetworkManager-ensure-env-file = {
         description = "Create NetworkManager env file if it does not exist";
-        wantedBy = ["NetworkManager-ensure-profiles.service"];
-        before = ["NetworkManager-ensure-profiles.service"];
+        wantedBy = [ "NetworkManager-ensure-profiles.service" ];
+        before = [ "NetworkManager-ensure-profiles.service" ];
         serviceConfig.Type = "oneshot";
         script = ''
           if [ ! -d /etc/secrets ]; then
@@ -276,7 +278,7 @@ in {
               };
               wireguard = {
                 mtu = 1380;
-                private-key = ''"''$VPS_WG_PRIVATE_KEY_''${lib.toUpper hostname}"'';
+                private-key = ''"''$VPS_WG_PRIVATE_KEY_${lib.toUpper hostname}"'';
                 ListenPort = 51823;
               };
               "wireguard-peer.$VPS_WG_PUBLIC_KEY" = {
@@ -286,7 +288,7 @@ in {
                 # preshared-key-flags = 0;
               };
               ipv4 = {
-                address1 = ''"''${VPS_WG_IPV4_ADDR_''${lib.toUpper hostname}}"'';
+                address1 = ''"''${VPS_WG_IPV4_ADDR_${lib.toUpper hostname}}"'';
                 # address1 = "$VPS_WG_IPV4_ADDR_MIA";
                 dns = "$VPS_WG_IPV4_DNS";
                 method = "manual";

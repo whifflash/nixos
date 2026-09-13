@@ -3,10 +3,12 @@
   config,
   pkgs,
   ...
-}: let
+}:
+let
   id = "desktop_sddm";
   cfg = config.${id};
-in {
+in
+{
   options.${id} = {
     enable = lib.mkEnableOption "enables ${id} profile";
   };
@@ -15,7 +17,7 @@ in {
     # Enable the sddm Display Manager.
     services.displayManager.sddm = {
       enable = true;
-      theme = "${import ./themes/sddm-sugar-dark.nix {inherit pkgs;}}";
+      theme = "${import ./themes/sddm-sugar-dark.nix { inherit pkgs; }}";
       wayland.enable = true;
     };
 

@@ -3,9 +3,11 @@
   lib,
   config,
   ...
-}: let
-  T = config.hm.theme.tokens or {};
-in {
+}:
+let
+  T = config.hm.theme.tokens or { };
+in
+{
   wayland.windowManager.sway.config.colors = lib.mkForce {
     focused = {
       border = T.primary or "#5f87ff";

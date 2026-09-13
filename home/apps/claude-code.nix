@@ -4,7 +4,8 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   secretName = "zai/api_key";
   secretPath = config.sops.secrets.${secretName}.path;
   claude = pkgs.writeShellApplication {
@@ -20,11 +21,12 @@
       exec "${lib.getExe pkgs.claude-code}" "$@"
     '';
   };
-in {
-  imports = [inputs.sops-nix.homeManagerModules.sops];
+in
+{
+  imports = [ inputs.sops-nix.homeManagerModules.sops ];
 
   home = {
-    packages = [claude];
+    packages = [ claude ];
 
     file.".claude/settings.json".text = builtins.toJSON {
       "$schema" = "https://json.schemastore.org/claude-code-settings.json";

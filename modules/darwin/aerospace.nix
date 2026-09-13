@@ -1,12 +1,14 @@
 # modules/darwin/aerospace.nix
-{config, ...}: let
+{ config, ... }:
+let
   user = config.system.primaryUser;
   home = "/Users/${user}";
-in {
+in
+{
   homebrew = {
     enable = true;
-    taps = ["nikitabobko/tap"];
-    casks = ["nikitabobko/tap/aerospace"];
+    taps = [ "nikitabobko/tap" ];
+    casks = [ "nikitabobko/tap/aerospace" ];
     onActivation = {
       autoUpdate = false;
       upgrade = false;

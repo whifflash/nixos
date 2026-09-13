@@ -2,15 +2,14 @@
   config,
   lib,
   ...
-}: let
+}:
+let
   cfg = config.infra.services.hub;
-  hostName =
-    if cfg.hostName != null
-    then cfg.hostName
-    else "hub.${config.infra.domain}";
+  hostName = if cfg.hostName != null then cfg.hostName else "hub.${config.infra.domain}";
   certificateName = "wildcard-${config.infra.domain}";
   hubRoot = "/etc/infra-hub";
-in {
+in
+{
   options.infra.services.hub = {
     enable = lib.mkEnableOption "the infrastructure service hub";
 
@@ -35,7 +34,7 @@ in {
 
     security.acme.certs.${certificateName} = {
       domain = config.infra.domain;
-      extraDomainNames = ["*.${config.infra.domain}"];
+      extraDomainNames = [ "*.${config.infra.domain}" ];
       group = "nginx";
     };
 
@@ -72,6 +71,9 @@ in {
       };
     };
 
-    networking.firewall.allowedTCPPorts = [80 443];
+    networking.firewall.allowedTCPPorts = [
+      80
+      443
+    ];
   };
 }

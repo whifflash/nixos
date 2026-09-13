@@ -2,10 +2,12 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   id = "desktop_audio";
   cfg = config.${id};
-in {
+in
+{
   options.${id} = {
     enable = lib.mkEnableOption "enables ${id} profile";
   };

@@ -3,11 +3,13 @@
   config,
   pkgs,
   ...
-}: let
+}:
+let
   sw = config.programs.sway.enable or false; # read the host switch
   # id = "desktop_sway";
   # cfg = config.${id};
-in {
+in
+{
   options."sway" = {
     enable = lib.mkEnableOption "enables sway and corresponding helper programs";
   };

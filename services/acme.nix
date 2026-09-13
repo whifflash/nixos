@@ -2,9 +2,11 @@
   config,
   lib,
   ...
-}: let
+}:
+let
   cfg = config.infra.acme;
-in {
+in
+{
   options.infra.acme = {
     enable = lib.mkEnableOption "shared ACME configuration for infrastructure services";
 

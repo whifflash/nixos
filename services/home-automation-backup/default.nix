@@ -3,14 +3,18 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   cfg = config.infra.services.homeAutomationBackup;
-  homeAssistantUnit = "${config.virtualisation.oci-containers.containers."home-assistant".serviceName}.service";
+  homeAssistantUnit = "${
+    config.virtualisation.oci-containers.containers."home-assistant".serviceName
+  }.service";
   unifiUnit = "${config.virtualisation.oci-containers.containers.unifi.serviceName}.service";
   operatorTokenSecret = "influxdb/operator_token";
   resticPasswordSecret = "restic/home_automation/repository_password";
   resticEnvironmentSecret = "restic/home_automation/environment";
-in {
+in
+{
   options.infra.services.homeAutomationBackup = {
     enable = lib.mkEnableOption "the combined Home Assistant, Mosquitto, InfluxDB, and UniFi backup";
 
@@ -95,7 +99,7 @@ in {
       inherit (cfg) repository;
       passwordFile = config.sops.secrets.${resticPasswordSecret}.path;
       environmentFile = config.sops.secrets.${resticEnvironmentSecret}.path;
-      paths = ["${cfg.stagingRoot}/current"];
+      paths = [ "${cfg.stagingRoot}/current" ];
       initialize = true;
 
       backupPrepareCommand = ''

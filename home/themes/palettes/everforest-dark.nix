@@ -1,4 +1,5 @@
-_: let
+_:
+let
   colors = {
     bg = "#2b3339";
     bg_dim = "#232a2e";
@@ -15,7 +16,8 @@ _: let
     blue = "#7fbbb3";
     purple = "#d699b6";
   };
-in {
+in
+{
   name = "everforest-dark";
   tokens = {
     inherit (colors) bg;

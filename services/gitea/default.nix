@@ -2,13 +2,12 @@
   config,
   lib,
   ...
-}: let
+}:
+let
   cfg = config.infra.services.gitea;
-  hostName =
-    if cfg.hostName != null
-    then cfg.hostName
-    else "git.${config.infra.domain}";
-in {
+  hostName = if cfg.hostName != null then cfg.hostName else "git.${config.infra.domain}";
+in
+{
   options.infra.services.gitea = {
     enable = lib.mkEnableOption "the shared Gitea service";
 
@@ -57,7 +56,7 @@ in {
       };
     };
 
-    security.acme.certs.${hostName} = {};
+    security.acme.certs.${hostName} = { };
 
     services = {
       gitea = {
@@ -118,11 +117,9 @@ in {
       restic.backups.gitea = {
         repository = "rest:https://restic.c4rb0n.cloud/restic-gitea";
 
-        passwordFile =
-          config.sops.secrets."restic/gitea/repository_password".path;
+        passwordFile = config.sops.secrets."restic/gitea/repository_password".path;
 
-        environmentFile =
-          config.sops.secrets."restic/gitea/environment".path;
+        environmentFile = config.sops.secrets."restic/gitea/environment".path;
 
         paths = [
           "/var/lib/gitea"

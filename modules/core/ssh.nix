@@ -1,11 +1,14 @@
-{inputs, ...}: {
+{ inputs, ... }: {
   programs.ssh = {
     # enable = true;
 
     # System-wide known_hosts for the daemon & all users
     knownHosts = {
       builder = {
-        hostNames = ["10.20.31.41" "attic.c4rb0n.cloud"];
+        hostNames = [
+          "10.20.31.41"
+          "attic.c4rb0n.cloud"
+        ];
         publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMjph8qyjvqVFPbuCOro4klZjO5X1HZxrWUe32Eja2RH";
       };
     };

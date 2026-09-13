@@ -3,10 +3,12 @@
   config,
   lib,
   ...
-}: let
+}:
+let
   id = "base_packages";
   cfg = config.${id};
-in {
+in
+{
   options.${id} = {
     enable = lib.mkEnableOption "enables ${id} profile";
   };
