@@ -8,6 +8,7 @@
   imports = [
     ../ssh.nix
     ../apps/direnv.nix
+    ../apps/repo-sync-token.nix
     ./gopass.nix
     ../apps/herdr.nix
     ../apps/claude-code.nix

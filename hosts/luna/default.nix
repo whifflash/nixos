@@ -1,7 +1,9 @@
 # hosts/luna/default.nix
-# NixOS host configuration for "mia", adapted for flake-based imports.
+# NixOS host configuration for "luna" (Jovian gaming box, nixos-unstable).
+# Desktop/theming knobs are in ./config.toml (nix-desktop shared layer).
 {
   config,
+  lib,
   pkgs,
   ...
 }:
@@ -12,10 +14,6 @@
     ./../../modules/modules.nix
     ./../../modules/hardware/ds5-bridge-wakeup.nix
     ./../../modules/roles/jovian-gaming.nix
-    # inputs.stylix.nixosModules.stylix
-    # inputs.home-manager.nixosModules.default
-    # inputs.sops-nix.nixosModules.sops
-    # inputs.sops-nix.homeManagerModules.sops
   ];
 
   sops = {
@@ -60,14 +58,17 @@
 
   # Home Manager user binding for this host:
   home-manager.users.mhr = import ../../home/home.nix;
-  # or imports = [ ../../home/ssh.nix ../../home/shell.nix ];
 
-  # Greeter
+  # Greeter: none — Jovian's autostart owns the session (its assertion requires
+  # desktop_sddm off). The shared layer would otherwise provide a greetd
+  # fallback; keep it off here so Jovian stays in charge of the display.
   desktop_sddm.enable = false;
-  desktop_greetd.enable = false;
+  # mkForce: the shared wayland-common enables greetd whenever SDDM is off.
+  services.greetd.enable = lib.mkForce false;
 
-  #Desktop Environments
-  programs.sway.enable = true;
+  # Desktop environments: sway is switched from ./config.toml [features]; the
+  # stock "sway" session name is kept (desktop.sway.replaceDefaultSession =
+  # false) because Jovian's Switch-to-Desktop references it.
   desktop_budgie.enable = false;
   desktop_gdm.enable = false;
   desktop_gnome.enable = false;
@@ -102,15 +103,11 @@
     suspendMode = null;
   };
 
+  # Scalars come from ./config.toml through nix-desktop's hostcfg-feed; only the
+  # nix-path values live here.
   ui.theme = {
-    scheme = "everforest-dark";
     wallpapersDir = ../../media/wallpapers;
-    wallpaper = "anna-scarfiello.jpg";
-    wallpaperMode = "stretch";
     swaylock.image = ../../media/wallpapers/village.jpg;
-
-    # Keep the repository's token theme authoritative in Sway Desktop Mode.
-    stylix.enable = false;
   };
 
   # Enable the X11 windowing system.

@@ -1,0 +1,41 @@
+# mia — ThinkPad X270 workstation. Knobs for the shared desktop layer
+# (nix-desktop); schema + defaults: nix-desktop/docs/CONFIG-TOML.md.
+# Nix-path values (wallpapersDir, swaylock image) live in ./default.nix.
+
+[features]
+sway = true
+niri = true            # both register a login session; SDDM offers the chooser
+
+[theme]
+scheme          = "gruvbox-dark"   # catppuccin-frappe/-macchiato everforest-dark gruvbox-dark/-light kanagawa nord solarized-dark tokyonight-storm
+wallpaperEnable = true
+wallpaperFile   = "anna-scarfiello.jpg"
+wallpaperMode   = "stretch"
+stylix          = true
+
+[desktop]
+keyboardLayout      = "us"
+keyboardOptions     = "caps:ctrl_modifier"
+touchpadTap         = true
+# scratchpadCommand = ""            # default: persistent tmux "scratch" session
+# waybarVpnWg / waybarVpnOvpn      # unset: no VPN toggles in the bar
+# waybarDisplayDocked / -Laptop     # unset: no kanshi buttons (no kanshi profiles here yet)
+
+[waybar]
+batteryName      = "BAT0"
+networkInterface = "wlan0"         # TODO verify with `ip link` (X270 is usually wlp3s0)
+weatherLocation  = "heidelberg"
+tempHwmonPath    = "/sys/class/hwmon/hwmon3/temp1_input"
+
+[gopass]
+defaultStore = "~/.password-store-personal"
+stores       = ["~/.password-store-personal"]
+
+# Periodic "clone everything my token can see" from the homelab Gitea.
+# Token: secrets/gitea-token.yaml → home/apps/repo-sync-token.nix renders the env file.
+[repoSync.gitea]
+forge           = "gitea"
+baseUrl         = "https://git.c4rb0n.cloud"
+destDir         = "/home/mhr/git/git.c4rb0n.cloud"
+environmentFile = "/home/mhr/.config/sops-nix/templates/gitea.env"
+sshPort         = 2222

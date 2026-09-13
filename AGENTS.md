@@ -8,6 +8,16 @@
 - Keep persistent-service backup and restore instructions current.
 - Do not change `system.stateVersion` during routine upgrades.
 
+## Shared desktop layer
+
+- Desktop, theming, tmux, gopass and repo-sync code lives in the `nix-desktop` flake input, not
+  here. Change it there (local checkout `../nix-desktop` is picked up by the Taskfile), run its
+  `nix flake check`, push, then `task update-desktop`.
+- Per-host knobs for that layer go in `hosts/<host>/config.toml` (schema: nix-desktop
+  `docs/CONFIG-TOML.md`); only nix paths (`ui.theme.wallpapersDir`, …) belong in `default.nix`.
+- Do not re-add `hm.theme` / `hm.swayTheme` / `desktop_sway` style modules; use the `ui.*` and
+  `dynamic.*` options the shared layer exposes.
+
 ## Secrets
 
 - Never commit plaintext credentials, passwords, tokens, or private keys.

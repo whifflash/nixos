@@ -1,15 +1,11 @@
 {
-  description = "NixOS configuration (flake-parts layout)";
+  description = "NixOS + nix-darwin configurations (flake-parts layout)";
 
   inputs = {
-    nixpkgs = {
-      url = "github:nixos/nixpkgs/nixos-26.05";
-    };
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     # Darwin hosts use the darwin branch of the same release
-    nixpkgs-darwin = {
-      url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
-    };
+    nixpkgs-darwin.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
     nix-homebrew = {
       url = "github:zhaofengli/nix-homebrew";
       # inputs.nixpkgs.follows = "nixpkgs-darwin"; # follow your Darwin nixpkgs
@@ -25,8 +21,6 @@
 
     # Core helper for structuring flakes
     flake-parts.url = "github:hercules-ci/flake-parts";
-
-    # flake-utils.url = "github:numtide/flake-utils";
 
     home-manager.url = "github:nix-community/home-manager/release-26.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
@@ -50,17 +44,6 @@
     treefmt-nix.url = "github:numtide/treefmt-nix";
     git-hooks.url = "github:cachix/git-hooks.nix";
 
-    # firefox-addons.url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
-    # firefox-addons.inputs.nixpkgs.follows = "nixpkgs";
-
-    # impermanence.url = "github:nix-community/impermanence";
-    # microvm = {
-    #   url = "github:astro/microvm.nix";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
-
-    # nur.url = "github:nix-community/NUR";
-
     stylix.url = "github:nix-community/stylix/release-26.05";
     stylix.inputs.nixpkgs.follows = "nixpkgs";
     stylix-unstable.url = "github:nix-community/stylix";
@@ -71,6 +54,8 @@
     disko-unstable.url = "github:nix-community/disko";
     disko-unstable.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
+    # Jovian tracks nixos-unstable (no stable branch) — hence luna stays on
+    # unstable while every other host is on 26.05 (see flake-modules/nixos).
     jovian.url = "github:Jovian-Experiments/Jovian-NixOS/development";
     jovian.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
@@ -83,21 +68,28 @@
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
+
+    # Shared desktop layer (sway/niri/waybar/swaync, token theming + runtime
+    # switcher, gopass switcher/bridge/SSH-askpass, tmux persistence, repo-sync,
+    # config.toml feeds) — the same code the work config uses. Public repo. The
+    # Taskfile overrides it to a local checkout (./nix-desktop or ../nix-desktop)
+    # when present; `task update-desktop` re-pins to the pushed revision. Its own
+    # inputs are only used by its checks; follow ours where the names overlap.
+    nix-desktop = {
+      url = "github:whifflash/nix-desktop";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        nixpkgs-unstable.follows = "nixpkgs-unstable";
+        home-manager.follows = "home-manager";
+        home-manager-unstable.follows = "home-manager-unstable";
+        flake-parts.follows = "flake-parts";
+        treefmt-nix.follows = "treefmt-nix";
+      };
+    };
   };
 
   outputs =
-    inputs@{
-      self,
-      nixpkgs,
-      flake-parts,
-      # home-manager,
-      # nixos-hardware,
-      treefmt-nix,
-      git-hooks,
-      # sops-nix,
-      # disko,
-      ...
-    }:
+    inputs@{ flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [
         "x86_64-linux"
@@ -106,292 +98,9 @@
       ];
 
       imports = [
-        treefmt-nix.flakeModule
-        git-hooks.flakeModule
+        ./flake-modules/dev # devShell, task app, formatter, pre-commit, checks
+        ./flake-modules/nixos # nixosConfigurations (auto-discovered from hosts/)
+        ./flake-modules/darwin # darwinConfigurations (auto-discovered from hosts-darwin/)
       ];
-
-      perSystem =
-        {
-          pkgs,
-          config,
-          ...
-        }:
-        {
-          ##### Developer UX #####
-          devShells.default = pkgs.mkShell {
-            packages = with pkgs; [
-              git
-              jq
-              nixfmt
-              shfmt
-              prettier
-              statix
-              deadnix
-              pre-commit
-              config.treefmt.build.wrapper
-              ripgrep
-              go-task
-              nix-output-monitor
-              direnv
-              zsh
-              oh-my-zsh
-              zsh-autosuggestions
-              zsh-syntax-highlighting
-            ];
-            shellHook = ''
-                          # Install/refresh the git hooks; git-hooks.nix generates the
-                          # (gitignored) .pre-commit-config.yaml from `pre-commit.settings`.
-                          ${config.pre-commit.installationScript}
-
-                           # --- oh-my-zsh-in-devshell setup (isolated, no dotfiles touched) ---
-                    export NIX_DEV_ZDOTDIR="$PWD/.nix-dev-zsh"
-                    mkdir -p "$NIX_DEV_ZDOTDIR"
-
-                    cat >"$NIX_DEV_ZDOTDIR/.zshrc" <<'EOF_ZSHRC'
-              # ---- nix devshell zshrc (generated) ----
-              export ZSH="${pkgs.oh-my-zsh}/share/oh-my-zsh"
-              ZSH_THEME="robbyrussell"
-              plugins=(git)   # <- enables ga, gco, gst, etc.
-
-              # Make sure the dev shell's tools are first on PATH
-              # (Nix already sets PATH, this is just a friendly reminder spot.)
-              # export PATH="$PATH"
-
-              # Don’t let omz auto-update in ephemeral shells
-              DISABLE_AUTO_UPDATE="true"
-              DISABLE_UPDATE_PROMPT="true"
-
-              source "$ZSH/oh-my-zsh.sh"
-
-              # Automatically load and unload project environments inside
-              # interactive dev-shell zsh sessions, including Herdr panes.
-              if command -v direnv >/dev/null 2>&1; then
-                eval "$(direnv hook zsh)"
-              fi
-              # ---- end generated ----
-              EOF_ZSHRC
-
-                    # Point zsh to our isolated config
-                    export ZDOTDIR="$NIX_DEV_ZDOTDIR"
-
-                    # If this shell was entered through `nix develop`, hop into the
-                    # managed zsh. Do not use a TTY/interactivity check here: Herdr
-                    # panes do not always expose stdout as a traditional TTY to this
-                    # hook, and nix runs shellHook through bash before handing over to
-                    # the final interactive shell.
-                    #
-                    # nix-direnv evaluates dev shells from .envrc; in that path we
-                    # must not replace the evaluator with zsh.
-                    if [ -z "''${DIRENV_IN_ENVRC:-}" ] && [ -z "''${IN_NIX_DEV_ZSH:-}" ]; then
-                      export IN_NIX_DEV_ZSH=1
-                      export SHELL=${pkgs.zsh}/bin/zsh
-                      exec ${pkgs.zsh}/bin/zsh -i
-                    fi
-            '';
-          };
-
-          # Project-local task runner. This allows commands such as
-          # `nix run .#task -- switch` without globally installing Task or nom.
-          apps.task = {
-            type = "app";
-
-            meta.description = "Run this repository's Taskfile with Go Task and nix-output-monitor.";
-
-            program = "${
-              pkgs.writeShellApplication {
-                name = "nixos-task";
-                runtimeInputs = with pkgs; [
-                  go-task
-                  nix-output-monitor
-                ];
-                text = ''
-                  exec task "$@"
-                '';
-              }
-            }/bin/nixos-task";
-          };
-
-          pre-commit = {
-            # optional: adds a flake check so `nix flake check` runs the hooks
-            check.enable = true;
-
-            # this is the correct nesting:
-            settings.hooks = {
-              # Use treefmt as the single formatter (covers Nix/Shell/Prettier, etc.)
-              treefmt = {
-                enable = true;
-                package = config.treefmt.build.wrapper;
-              };
-
-              # Keep linters:
-              statix.enable = true;
-              deadnix.enable = true;
-
-              # Avoid double-formatting (treefmt already runs nixfmt/shfmt/prettier)
-              shfmt.enable = false;
-              prettier.enable = false;
-            };
-          };
-
-          # `nix fmt` will run this formatter;
-          formatter = config.treefmt.build.wrapper;
-
-          # treefmt settings (format Nix/Shell/JSON/YAML/Markdown)
-          treefmt = {
-            projectRootFile = "flake.nix";
-            # flakeCheck = false;
-            programs = {
-              # nixfmt (RFC 166): the same formatter as nix-desktop and the work
-              # repo, so shared code never churns on style.
-              nixfmt.enable = true; # Nix
-              shfmt.enable = true; # Shell
-              prettier.enable = true; # JSON/MD/YAML/etc.
-            };
-          };
-
-          # Lightweight “all-in-one” check you can call in CI:
-          #   nix build .#checks.<system>.ci
-          checks = {
-            # Formatting is checked by treefmt-nix's own `checks.treefmt`.
-            lint = pkgs.runCommand "lint-check" { } ''
-              ${pkgs.statix}/bin/statix check ${self}
-              ${pkgs.deadnix}/bin/deadnix ${self}
-              touch $out
-            '';
-
-            ci = pkgs.runCommand "ci-checks" { src = ./.; } ''
-              set -e
-              cd "$src"
-              ${config.treefmt.build.wrapper}/bin/treefmt --ci
-              ${pkgs.statix}/bin/statix check .
-              ${pkgs.deadnix}/bin/deadnix .
-              touch $out
-            '';
-          };
-        };
-
-      ##### System-wide (cross-system) outputs #####
-
-      flake = {
-        # Auto-discover linux hosts from ./hosts
-        nixosConfigurations =
-          let
-            inherit (nixpkgs) lib;
-            hostsDir = ./hosts;
-            dir = if builtins.pathExists hostsDir then builtins.readDir hostsDir else { };
-            hostNames = builtins.attrNames (lib.filterAttrs (_: v: v == "directory") dir);
-
-            systemFor =
-              name:
-              let
-                path = hostsDir + "/${name}/system";
-              in
-              if builtins.pathExists path then lib.strings.trim (builtins.readFile path) else "x86_64-linux";
-
-            mkHost =
-              name:
-              let
-                useUnstable = name == "luna";
-                hostNixpkgs = if useUnstable then inputs.nixpkgs-unstable else inputs.nixpkgs;
-                hostInputs = inputs // {
-                  nixpkgs = hostNixpkgs;
-                  disko = if useUnstable then inputs.disko-unstable else inputs.disko;
-                  home-manager = if useUnstable then inputs.home-manager-unstable else inputs.home-manager;
-                  sops-nix = if useUnstable then inputs.sops-nix-unstable else inputs.sops-nix;
-                  stylix = if useUnstable then inputs.stylix-unstable else inputs.stylix;
-                };
-              in
-              hostNixpkgs.lib.nixosSystem {
-                system = systemFor name;
-                modules = [
-                  # Your host
-                  (hostsDir + "/${name}")
-
-                  hostInputs.disko.nixosModules.disko
-                  hostInputs.home-manager.nixosModules.home-manager
-                  ({ config, ... }: {
-                    nixpkgs.overlays = [ (import ./overlays/disable-tests.nix) ];
-                    home-manager = {
-                      useGlobalPkgs = true;
-                      useUserPackages = true;
-                      extraSpecialArgs = {
-                        inputs = hostInputs;
-                        osConfig = config;
-                      };
-                    };
-                  })
-
-                  # Match the Stylix module to each host's Nixpkgs branch.
-                  hostInputs.stylix.nixosModules.stylix
-                ];
-                specialArgs = {
-                  inputs = hostInputs;
-                  hostname = name;
-                };
-              };
-          in
-          lib.genAttrs hostNames mkHost;
-
-        # macOS hosts (auto-discovered like NixOS, but from ./hosts-darwin)
-        darwinConfigurations =
-          let
-            inherit (nixpkgs) lib;
-            darwin = inputs.nix-darwin;
-            hostsDir = ./hosts-darwin;
-            dir = if builtins.pathExists hostsDir then builtins.readDir hostsDir else { };
-            hostNames = builtins.attrNames (lib.filterAttrs (_: v: v == "directory") dir);
-
-            systemFor =
-              name:
-              let
-                path = hostsDir + "/${name}/system";
-              in
-              if builtins.pathExists path then lib.strings.trim (builtins.readFile path) else "aarch64-darwin";
-
-            mkHost =
-              name:
-              darwin.lib.darwinSystem {
-                system = systemFor name;
-                modules = [
-                  (hostsDir + "/${name}") # the host's ./default.nix
-                  ./modules/darwin/common.nix # shared macOS settings
-                  ./modules/darwin/aerospace.nix
-                  ./modules/darwin/devtools.nix
-                  ./modules/darwin/gopass-picker.nix
-                  ./modules/darwin/brews/zed.nix
-                  ./modules/darwin/gitea-sync.nix
-
-                  # bootstrap Homebrew itself declaratively
-                  inputs.nix-homebrew.darwinModules.nix-homebrew
-                  {
-                    nix-homebrew = {
-                      enable = true;
-                      user = "mhr";
-                      autoMigrate = true;
-                    };
-                  }
-
-                  # only try to install brews once CLT exists
-                  ./modules/darwin/homebrew.nix
-
-                  inputs.home-manager-darwin.darwinModules.home-manager
-                  ({ config, ... }: {
-                    home-manager = {
-                      useGlobalPkgs = true;
-                      useUserPackages = true;
-                      extraSpecialArgs = {
-                        inherit inputs;
-                        osConfig = config;
-                      };
-                      users."mhr" = import ./home/darwin/darwin.nix; # adjust username if needed
-                    };
-                  })
-                ];
-                # Pass full flake inputs to modules (like you do for NixOS)
-                specialArgs = { inherit inputs; };
-              };
-          in
-          lib.genAttrs hostNames mkHost;
-      };
     };
 }

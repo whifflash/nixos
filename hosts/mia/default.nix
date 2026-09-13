@@ -1,5 +1,6 @@
 # hosts/mia/default.nix
-# NixOS host configuration for "mia", adapted for flake-based imports.
+# NixOS host configuration for "mia" (ThinkPad X270). Desktop/theming knobs
+# are in ./config.toml (consumed by the nix-desktop shared layer).
 {
   inputs,
   lib,
@@ -35,9 +36,6 @@ in
     ./hardware-configuration.nix
     ./../../modules/modules.nix
     ./../../services
-
-    ./../../modules/ui/theme.nix
-    ./../../modules/ui/stylix-bridge.nix
 
     inputs.nixos-hardware.nixosModules.lenovo-thinkpad-x270
   ];
@@ -160,18 +158,12 @@ in
     # blacklistedKernelModules = ["rmi_smbus" "rmi_core" "rmi4_f01" "rmi4_f11" "rmi4_f12"];
   };
 
+  # Everything scalar (scheme, wallpaper file/mode, stylix, WM switches,
+  # keyboard, waybar facts, gopass stores, repo-sync) comes from ./config.toml
+  # through nix-desktop's hostcfg-feed; only the nix-path values live here.
   ui.theme = {
-    # enable = true;
-
-    # palettesDir = ../../home/themes/palettes;
-    scheme = "gruvbox-dark"; # catppucin-frappe everforest-dark gruvbox-dark gruvbox-light kanagawa nord solarized-dark tokyonight-storm
     wallpapersDir = ../../media/wallpapers;
-    wallpaper = "anna-scarfiello.jpg";
-    # wallpaperMode = "stretch";
-
     swaylock.image = ../../media/wallpapers/village.jpg;
-
-    stylix.enable = true;
     qt.enable = false;
   };
 
@@ -208,14 +200,11 @@ in
 
   # Home Manager user binding for this host:
   home-manager.users.mhr = import ../../home/home.nix;
-  # or imports = [ ../../home/ssh.nix ../../home/shell.nix ];
 
-  # Greeter
+  # Greeter (the shared layer's greetd/tuigreet fallback is skipped while SDDM is on)
   desktop_sddm.enable = true;
-  desktop_greetd.enable = false;
 
-  #Desktop Environments
-  programs.sway.enable = true;
+  # Desktop environments: sway + niri are switched from ./config.toml [features].
   desktop_budgie.enable = false;
   desktop_gdm.enable = false;
   desktop_gnome.enable = false;

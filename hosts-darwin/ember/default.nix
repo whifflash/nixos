@@ -1,8 +1,9 @@
-{ pkgs, ... }: {
+{ pkgs, ... }:
+{
   # Set a hostname for this Mac
-  networking.hostName = "aura";
+  networking.hostName = "ember";
 
-  system.defaults.smb.NetBIOSName = "aura";
+  system.defaults.smb.NetBIOSName = "ember";
 
   # Host-specific overrides go here
   environment.systemPackages = with pkgs; [

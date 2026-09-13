@@ -1,0 +1,17 @@
+# aura — macOS. The shared layer contributes gopass (CLI wrappers, browser
+# bridge, SSH askpass), tmux and repo-sync here; the Wayland shell is inert.
+# Replaces the former services.giteaSync (modules/darwin/gitea-sync.nix).
+
+[gopass]
+defaultStore = "~/.password-store"
+stores       = ["~/.password-store"]
+
+[repoSync.gitea]
+forge              = "gitea"
+baseUrl            = "https://git.c4rb0n.cloud"
+destDir            = "/Users/mhr/git/git.c4rb0n.cloud"
+environmentFile    = "/Users/mhr/.config/sops-nix/templates/gitea.env"
+sshPort            = 2222
+intervalSec        = 3600
+randomizedDelaySec = 0
+logLevel           = "DEBUG"

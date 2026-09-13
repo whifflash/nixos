@@ -76,7 +76,18 @@ in
         DynamicForward = "1080";
       };
     };
+
+    # Optional: let nix-desktop's gopass helpers pull a key's PASSPHRASE from
+    # gopass on first use instead of prompting (see nix-desktop docs/OPTIONS.md).
+    # Store the passphrase first — `gopass insert ssh/<name>` — then pin per host:
+    #
+    # extraConfig = ''
+    #   Match host github.com exec "gopass-ssh-load githubwhifflash ssh/github || true"
+    #       IdentityFile ~/.ssh/githubwhifflash
+    #       IdentitiesOnly yes
+    # '';
   };
 
+  # gpg-agent (enabled by the shared gopass module) is the SSH agent.
   services.ssh-agent.enable = false;
 }

@@ -2,7 +2,7 @@
 {
   pkgs ? import <nixpkgs> { },
 }:
-(pkgs.buildFHSUserEnvBubblewrap {
+(pkgs.buildFHSEnv {
   name = "platformio";
   targetPkgs =
     pkgs: with pkgs; [

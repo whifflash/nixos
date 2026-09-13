@@ -4,14 +4,29 @@ NixOS and nix-darwin configurations for workstations, laptops, and self-hosted i
 
 ## Repository layout
 
-- `hosts/`: NixOS host placement and machine-specific configuration
-- `hosts-darwin/`: nix-darwin hosts
+- `hosts/<host>/`: NixOS host placement and machine-specific configuration; a
+  `config.toml` next to `default.nix` holds the desktop knobs (WM switches, theme,
+  keyboard, Waybar facts, gopass stores, repo-sync) consumed by the shared layer
+- `hosts-darwin/<host>/`: nix-darwin hosts (same optional `config.toml`)
+- `flake-modules/`: flake-parts wiring — `nixos/` (auto-discovered `nixosConfigurations`),
+  `darwin/` (`darwinConfigurations`), `dev/` (devShell, task app, formatter, checks)
 - `services/`: reusable self-hosted service modules
 - `modules/`: reusable workstation, role, and platform modules
-- `inventory/`: machine-readable service placement
-- `docs/`: architecture, migrations, and runbooks
-- `decisions/`: architecture decision records
+- `home/`: home-manager — repo-specific apps (firefox, git, ssh, herdr, zsh, …) and `darwin/`
+- `docs/`: architecture, migrations, runbooks, and `inventory/services.yaml` (service placement)
 - `secrets/`: SOPS-encrypted data only
+
+### The shared desktop layer (`nix-desktop`)
+
+Sway/niri/Waybar/swaync, token theming with a runtime switcher, tmux session
+persistence, gopass (store switcher, browser bridge, SSH-passphrase askpass) and
+the periodic repository sync (`services.repo-sync`, ex `gitea-sync`) are **not**
+in this repo: they come from the flake input `nix-desktop`
+(`github:whifflash/nix-desktop`), shared with the work config. Hosts feed it
+through `hosts/<host>/config.toml`; the only nix-side values are paths
+(`ui.theme.wallpapersDir`, `swaylock.image`). To hack on it, clone it next to
+this repo (`../nix-desktop`) — the Taskfile then builds against the checkout
+(`task info` shows which) — push there, and `task update-desktop` here.
 
 See `AGENTS.md` for repository conventions.
 

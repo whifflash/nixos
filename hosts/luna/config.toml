@@ -1,0 +1,30 @@
+# luna — Jovian gaming box (nixos-unstable). Knobs for the shared desktop layer
+# (nix-desktop); schema + defaults: nix-desktop/docs/CONFIG-TOML.md.
+# Sway only: Jovian's "Switch to Desktop" targets the stock session named
+# "sway", so desktop.sway.replaceDefaultSession stays at its default (false).
+
+[features]
+sway = true
+niri = false
+
+[theme]
+scheme          = "everforest-dark"
+wallpaperEnable = true
+wallpaperFile   = "anna-scarfiello.jpg"
+wallpaperMode   = "stretch"
+stylix          = false            # keep the repository's token theme authoritative in Desktop Mode
+
+[desktop]
+keyboardLayout  = "us"
+keyboardOptions = "caps:ctrl_modifier"
+touchpadTap     = true
+
+[waybar]
+batteryName      = "BAT0"          # no battery here; the module simply stays empty
+networkInterface = "wlan0"         # TODO verify with `ip link`
+weatherLocation  = "heidelberg"
+tempHwmonPath    = "/sys/class/hwmon/hwmon0/temp1_input"
+
+[gopass]
+defaultStore = "~/.password-store-personal"
+stores       = ["~/.password-store-personal"]
