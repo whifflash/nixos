@@ -72,7 +72,12 @@ let
         (
           { config, ... }:
           {
-            nixpkgs.overlays = [ (import ../../overlays/disable-tests.nix) ];
+            # nix-labs' overlay first (its darwin test fixes for the lab
+            # stack), then this repo's own disables.
+            nixpkgs.overlays = [
+              inputs.nix-labs.overlays.default
+              (import ../../overlays/disable-tests.nix)
+            ];
 
             # config.toml → labs.*. Pin `labs#…` to the revision this system was
             # built from, so `lab <env>` is reproducible per generation.

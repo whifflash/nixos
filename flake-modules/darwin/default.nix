@@ -38,6 +38,16 @@ let
       system = systemFor name;
       modules = [
         (hostsDir + "/${name}") # the host's ./default.nix
+
+        # nix-labs' overlay first (darwin test fixes for the lab stack —
+        # manifold under hardened libc++), then this repo's own disables.
+        {
+          nixpkgs.overlays = [
+            inputs.nix-labs.overlays.default
+            (import ../../overlays/disable-tests.nix)
+          ];
+        }
+
         ../../modules/darwin/common.nix # shared macOS settings
         ../../modules/darwin/aerospace.nix
         ../../modules/darwin/devtools.nix

@@ -577,11 +577,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789574313,
-        "narHash": "sha256-vGeFicl8nvvHWkR36RStM/5WKfD1Rlx/luHG24VdRqA=",
+        "lastModified": 1789748877,
+        "narHash": "sha256-tECFRcTRPu8EnN4HtgWQzJwkQPtDMUPHvmtpqd+z/14=",
         "owner": "whifflash",
         "repo": "nix-desktop",
-        "rev": "c5a59feaade8560ea0cd3a91d21ef1f390fb0549",
+        "rev": "7ee76ba2b73e0beb0a68ed5de1a90e5eb85f4b15",
         "type": "github"
       },
       "original": {
@@ -669,11 +669,11 @@
         "zephyr-nix": "zephyr-nix"
       },
       "locked": {
-        "lastModified": 1789478519,
-        "narHash": "sha256-ZdhxLxefba+wbyCeM1VxZehMJGWQvj7DHXwDFe6NHpw=",
+        "lastModified": 1789719992,
+        "narHash": "sha256-lBw+G23/lD4zAWCGhY4cnPJ1g3sU1MZsC2eW39bnn+I=",
         "owner": "whifflash",
         "repo": "nix-labs",
-        "rev": "b8dd1dfcc45a61a9d106420d9eca4f66c6129df3",
+        "rev": "d7716f35f285ce7e2710a774d6c7bf83951d784b",
         "type": "github"
       },
       "original": {
