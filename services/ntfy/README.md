@@ -161,7 +161,7 @@ compatibility. Android clients can connect directly to the self-hosted server.
 
 ```bash
 curl \
-  --user 'alertmanager:REPLACE_WITH_PASSWORD' \
+  --user 'alertmanager:$NTFY_PASSWORD' \
   --header 'Title: Icarus test' \
   --header 'Priority: high' \
   --data 'Self-hosted ntfy delivery works.' \

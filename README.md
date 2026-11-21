@@ -32,18 +32,25 @@ this repo (`../nix-desktop`) — the Taskfile then builds against the checkout
 
 Lab and development environments — Zephyr per chip family (`zephyr-arm`,
 `zephyr-riscv`, `zephyr-esp32`, `zephyr-full`), SDR with the LimeSDR (`sdr`,
-`sdr-full`), the Sipeed SLogic logic analyzer (`logic`) and PlatformIO — are
-devShells in the flake input `nix-labs` (`github:whifflash/nix-labs`), also
-shared with the work config. They are fetched on demand, so they never enter a
-host's closure; `[features] labs` in `hosts/<host>/config.toml` only installs the
-udev rules for that hardware, the device groups and the `labs` flake-registry
-entry pinned to this flake's revision.
+`sdr-full`), the Sipeed SLogic logic analyzer (`slogic`), circuit design and
+simulation (`eda`: KiCad, ngspice, Qucs-s), a pinned bench of AI coding agents
+(`ai`: opencode, pi, claude-code, codex, …) and PlatformIO — are devShells in the
+flake input `nix-labs` (`github:whifflash/nix-labs`), also shared with the work
+config. They are fetched on demand, so they never enter a host's closure;
+`[features] labs` in `hosts/<host>/config.toml` only installs the udev rules for
+that hardware, the device groups and the `labs` flake-registry entry pinned to
+this flake's revision.
+
+Each hardware environment also ships an MCP server (sigrok, SoapySDR, KiCad), so
+an agent can capture a trace, sweep a band or read a schematic — `lab mcp <env>`
+writes the config for Claude Code, opencode, codex, gemini, qwen or pi.
 
 ```sh
 lab list                       # what is available
-lab logic                      # enter an environment (= nix develop labs#logic)
+lab slogic                     # enter an environment (= nix develop labs#slogic)
 lab init zephyr-arm ~/src/blinky && cd ~/src/blinky && direnv allow
-lab vm logic                   # QEMU fallback with the USB device redirected in
+lab mcp slogic --write         # let this project's AI agent drive the analyzer
+lab vm slogic                  # QEMU fallback with the USB device redirected in
 ```
 
 Same dev loop as above: checkout at `../nix-labs`, `task info`, `task update-labs`.
