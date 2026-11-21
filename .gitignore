@@ -34,3 +34,6 @@ result-*
 # sibling checkouts of the shared flakes (dev loop)
 /nix-desktop
 /nix-labs
+
+# nested checkout of the homelab repo (whifflash/nix-homelab, split out of here)
+/nix-homelab

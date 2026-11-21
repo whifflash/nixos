@@ -652,8 +652,36 @@
         "type": "github"
       }
     },
-==== BASE ====
-==== BASE ====
+    "nix-labs": {
+      "inputs": {
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "home-manager": [
+          "home-manager"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "treefmt-nix": [
+          "treefmt-nix"
+        ],
+        "zephyr-nix": "zephyr-nix"
+      },
+      "locked": {
+        "lastModified": 1792932079,
+        "narHash": "sha256-fwyN7v60rCNC8iLTfmyKu8e22O+F9s7CGyltP01Wn6c=",
+        "owner": "whifflash",
+        "repo": "nix-labs",
+        "rev": "90890b97c0f2d1d34c4754e217d53e7e6d971c78",
+        "type": "github"
+      },
+      "original": {
+        "owner": "whifflash",
+        "repo": "nix-labs",
+        "type": "github"
+      }
+    },
     "nixos-hardware": {
       "inputs": {
         "nixpkgs": "nixpkgs_3"
